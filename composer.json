@@ -1,0 +1,57 @@
+{
+    "name": "jsadaa/php-core-library",
+    "description": "A PHP ecosystem library very loosely inspired by Rust, providing type-safe collections (Vec, Option, Result) and immutable data structures with filesystem, path, and time utilities.",
+    "type": "library",
+    "keywords": [
+        "types",
+        "type-safety",
+        "rust-inspired",
+        "functional-programming",
+        "immutable",
+        "collections",
+        "option",
+        "result",
+        "vector",
+        "filesystem",
+        "path",
+        "time",
+        "utilities",
+        "core"
+    ],
+    "homepage": "https://github.com/jsadaa/php-core-library",
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/jsadaa/php-core-library/issues",
+        "source": "https://github.com/jsadaa/php-core-library"
+    },
+    "autoload": {
+        "psr-4": {
+            "Jsadaa\\PhpCoreLibrary\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Jsadaa\\PhpCoreLibrary\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Léo Paillard",
+            "email": "lpaillard@efalia.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "ext-mbstring": "*",
+        "ext-intl": "*",
+        "ext-iconv": "*",
+        "ext-posix": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12",
+        "vimeo/psalm": "^6.10",
+        "friendsofphp/php-cs-fixer": "^3.75",
+        "mikey179/vfsstream": "^1.6"
+    }
+}

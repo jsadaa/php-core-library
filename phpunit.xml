@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.1/phpunit.xsd" bootstrap="vendor/autoload.php" executionOrder="depends,defects" beStrictAboutOutputDuringTests="true" failOnRisky="true" failOnWarning="true" colors="true">
+  <testsuites>
+    <testsuite name="Vec">
+      <directory>tests/Vec</directory>
+    </testsuite>
+    <testsuite name="Str">
+      <directory>tests/Str</directory>
+    </testsuite>
+    <testsuite name="Integer">
+      <directory>tests/Integer</directory>
+    </testsuite>
+    <testsuite name="Double">
+      <directory>tests/Double</directory>
+    </testsuite>
+    <testsuite name="FileSystem">
+      <directory>tests/FileSystem</directory>
+    </testsuite>
+    <testsuite name="Time">
+      <directory>tests/Time</directory>
+    </testsuite>
+  </testsuites>
+  <source restrictNotices="true" restrictWarnings="true" ignoreIndirectDeprecations="true">
+    <include>
+      <directory>src</directory>
+    </include>
+  </source>
+</phpunit>
