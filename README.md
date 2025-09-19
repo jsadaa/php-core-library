@@ -476,7 +476,7 @@ This approach reflects a **hybrid** between Rust’s conceptual strengths and PH
 
 ## Requirements
 
-- PHP 8.1 or higher
+- PHP 8.3 or higher
 - PHP Extensions:
   - `ext-mbstring`: For proper UTF-8 string handling (required for `Str` type)
   - `ext-intl`: For Unicode normalization and other internationalization features (required for `Str` type)
