@@ -38,7 +38,7 @@ final class Sequence
      */
     public function __toString(): string
     {
-        if (empty($this->collection)) {
+        if ($this->isEmpty()) {
             return 'Sequence<>';
         }
 
@@ -251,7 +251,7 @@ final class Sequence
      */
     public function isEmpty(): bool
     {
-        return empty($this->collection);
+        return \count($this->collection) === 0;
     }
 
     /**
@@ -528,7 +528,7 @@ final class Sequence
      */
     public function first(): Option
     {
-        if (empty($this->collection)) {
+        if ($this->isEmpty()) {
             return Option::none();
         }
 
@@ -542,7 +542,7 @@ final class Sequence
      */
     public function last(): Option
     {
-        if (empty($this->collection)) {
+        if ($this->isEmpty()) {
             return Option::none();
         }
 
@@ -559,7 +559,7 @@ final class Sequence
      */
     public function dedup(): self
     {
-        if (empty($this->collection)) {
+        if ($this->isEmpty()) {
             return new self();
         }
 
@@ -615,7 +615,7 @@ final class Sequence
         $size = $size instanceof Integer ? $size : Integer::from($size);
         $size = $size->max(0);
 
-        if (empty($this->collection)) {
+        if ($this->isEmpty()) {
             return new self(\array_fill(0, $size->toInt(), $value));
         }
 
@@ -800,7 +800,7 @@ final class Sequence
      */
     public function sort(): self
     {
-        if (empty($this->collection)) {
+        if ($this->isEmpty()) {
             return new self([]);
         }
 

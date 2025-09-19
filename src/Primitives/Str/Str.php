@@ -339,10 +339,10 @@ final readonly class Str implements \Stringable
         // For simple string delimiter, use explode which is more efficient
         if (
             \strlen($delimiter) === \mb_strlen($delimiter, self::UTF8) &&
-            !empty($delimiter)
+            $delimiter !== ''
         ) {
             $parts = \explode($delimiter, $this->value);
-        } elseif (empty($delimiter)) {
+        } elseif ($delimiter === '') {
             // For empty delimiter, split into characters
             // mb_str_split always returns an array for valid UTF-8 strings in PHP 7.4+
             $parts = \mb_str_split($this->value, 1, self::UTF8);
@@ -421,7 +421,7 @@ final readonly class Str implements \Stringable
         $currentLength = $this->chars()->len();
 
         // If target length is less than or equal to current length, return as is
-        if ($targetLength->le($currentLength) || empty($padString)) {
+        if ($targetLength->le($currentLength) || $padString === '') {
             return new self($this->value);
         }
 
@@ -455,7 +455,7 @@ final readonly class Str implements \Stringable
         $currentLength = $this->chars()->len();
 
         // If target length is less than or equal to current length, return as is
-        if ($targetLength->le($currentLength) || empty($padString)) {
+        if ($targetLength->le($currentLength) || $padString === '') {
             return new self($this->value);
         }
 
@@ -597,7 +597,7 @@ final readonly class Str implements \Stringable
     {
         $prefix = $prefix instanceof self ? $prefix->toString() : $prefix;
 
-        if ($this->isEmpty() || empty($prefix)) {
+        if ($this->isEmpty() || $prefix === '') {
             return new self($this->value);
         }
 
@@ -620,7 +620,7 @@ final readonly class Str implements \Stringable
     {
         $suffix = $suffix instanceof self ? $suffix->toString() : $suffix;
 
-        if ($this->isEmpty() || empty($suffix)) {
+        if ($this->isEmpty() || $suffix === '') {
             return new self($this->value);
         }
 
