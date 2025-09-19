@@ -2,9 +2,9 @@
 
 declare(strict_types = 1);
 
-namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Vec;
+namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Error\IndexOutOfBounds;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Error\IndexOutOfBounds;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
@@ -16,7 +16,7 @@ use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
  * @psalm-immutable
  * @template T
  */
-final class Vec
+final class Sequence
 {
     /**
      * @var array<int, T>
@@ -39,14 +39,14 @@ final class Vec
     public function __toString(): string
     {
         if (empty($this->collection)) {
-            return 'Vec<>';
+            return 'Sequence<>';
         }
 
         $type = \is_object($this->collection[0])
             ? $this->collection[0]::class
             : \get_debug_type($this->collection[0]);
 
-        return 'Vec<' . $type . '>';
+        return 'Sequence<' . $type . '>';
     }
 
     /**
@@ -130,10 +130,10 @@ final class Vec
     }
 
     /**
-     * Check if two Vecs are equal
+     * Check if two Sequences are equal
      *
-     * @param Vec<T> $other The Vec to compare with
-     * @return bool True if the Vecs are equal, false otherwise
+     * @param Sequence<T> $other The Sequence to compare with
+     * @return bool True if the Sequences are equal, false otherwise
      */
     public function eq(self $other): bool
     {
@@ -161,12 +161,12 @@ final class Vec
     }
 
     /**
-     * Zip two Vecs together
+     * Zip two Sequences together
      *
-     * If the Vecs are of different lengths, the resulting Vec will be as long as the shorter one.
+     * If the Sequence are of different lengths, the resulting Sequence will be as long as the shorter one.
      *
-     * @param self<T> $other The Vec to zip with
-     * @return self<Vec<T>> A Vec containing pairs of elements as Vecs
+     * @param self<T> $other The Sequence to zip with
+     * @return self<Sequence<T>> A Sequence containing pairs of elements as Sequences
      */
     public function zip(self $other): self
     {
@@ -197,7 +197,7 @@ final class Vec
     /**
      * Create a new collection from the given array
      *
-     * This is a helper constructor to avoid performances issues with variadic arguments in the Vec::from method when you work with large arrays.
+     * This is a helper constructor to avoid performances issues with variadic arguments in the Sequence::from method when you work with large arrays.
      *
      * @template U
      * @param array<U> $elements The array to create the collection from
@@ -341,13 +341,13 @@ final class Vec
      * Generate windows of the given size from the collection
      *
      * Creates sliding windows of a specified size over the elements in the collection.
-     * For example, a Vec with [1, 2, 3, 4] and a window size of 2 will produce
+     * For example, a Sequence with [1, 2, 3, 4] and a window size of 2 will produce
      * [[1, 2], [2, 3], [3, 4]].
      *
-     * If the size provided is a negative, it will be treated as zero and will return an empty Vec.
+     * If the size provided is a negative, it will be treated as zero and will return an empty Sequence.
      *
      * @param positive-int|Integer $size The size of the windows (must be positive)
-     * @return self<Vec<T>> A new collection containing the windows
+     * @return self<Sequence<T>> A new collection containing the windows
      */
     public function windows(int | Integer $size): self
     {
@@ -378,8 +378,8 @@ final class Vec
      * Map elements to iterables and then flatten the result into a single collection
      *
      * This method applies a transformation to each element in the collection, where each
-     * transformation produces an iterable (such as an array or another Vec). It then
-     * flattens all these iterables into a single Vec.
+     * transformation produces an iterable (such as an array or another Sequence). It then
+     * flattens all these iterables into a single Sequence.
      *
      * This is equivalent to calling map() followed by flatten().
      *
@@ -395,9 +395,9 @@ final class Vec
     /**
      * Flattens a collection of collections into a single collection
      *
-     * If the collection contains Vec instances or other iterables (like arrays),
+     * If the collection contains Sequence instances or other iterables (like arrays),
      * this method extracts all elements from those nested collections and combines
-     * them into a single Vec. Only one level of nesting is flattened.
+     * them into a single Sequence. Only one level of nesting is flattened.
      *
      * @template U
      * @return self<U> A new collection with the elements flattened
@@ -408,7 +408,7 @@ final class Vec
         $flattened = [];
 
         foreach ($this->collection as $item) {
-            // Handle Vec objects
+            // Handle Sequence objects
             if ($item instanceof self) {
                 /** @var array<int, U> $array */
                 $array = $item->toArray();
@@ -550,12 +550,12 @@ final class Vec
     }
 
     /**
-     * Return a new Vec with duplicate elements removed
+     * Return a new Sequence with duplicate elements removed
      *
      * For scalar types (integer, float, string, boolean), this uses a hash map approach.
      * For objects, objects are compared by reference, so only identical object instances are considered duplicates.
      *
-     * @return self<T> A new Vec with duplicate elements removed
+     * @return self<T> A new Sequence with duplicate elements removed
      */
     public function dedup(): self
     {
@@ -632,10 +632,10 @@ final class Vec
     }
 
     /**
-     * Truncates the Vec to the specified size.
+     * Truncates the Sequence to the specified size.
      *
      * @param int<0, max>|Integer $size The size to truncate to.
-     * @return self<T> The new Vec with the specified size.
+     * @return self<T> The new Sequence with the specified size.
      */
     public function truncate(int | Integer $size): self
     {
@@ -651,9 +651,9 @@ final class Vec
     }
 
     /**
-     * Reverses the order of elements in the Vec.
+     * Reverses the order of elements in the Sequence.
      *
-     * @return self<T> The new Vec with elements in reverse order.
+     * @return self<T> The new Sequence with elements in reverse order.
      */
     public function reverse(): self
     {
@@ -661,10 +661,10 @@ final class Vec
     }
 
     /**
-     * Takes elements from the beginning of the Vec while the predicate is true and returns a new Vec.
+     * Takes elements from the beginning of the Sequence while the predicate is true and returns a new Sequence.
      *
      * @param callable(T): bool $predicate The predicate to apply to each element.
-     * @return self<T> The new Vec containing the elements that satisfy the predicate.
+     * @return self<T> The new Sequence containing the elements that satisfy the predicate.
      */
     public function takeWhile(callable $predicate): self
     {
@@ -682,10 +682,10 @@ final class Vec
     }
 
     /**
-     * Creates a new Vec by skipping elements from the beginning of the Vec while the predicate is true.
+     * Creates a new Sequence by skipping elements from the beginning of the Sequence while the predicate is true.
      *
      * @param callable(T): bool $predicate The predicate to apply to each element.
-     * @return self<T> The new Vec containing the elements that do not satisfy the predicate.
+     * @return self<T> The new Sequence containing the elements that do not satisfy the predicate.
      */
     public function skipWhile(callable $predicate): self
     {
@@ -703,12 +703,12 @@ final class Vec
     }
 
     /**
-     * Takes elements from the beginning of the Vec up to the specified count and returns a new Vec.
+     * Takes elements from the beginning of the Sequence up to the specified count and returns a new Sequence.
      *
      * If the provided count is a negative Integer, it will be treated as zero.
      *
      * @param int<0, max>|Integer $count The number of elements to take.
-     * @return self<T> The new Vec containing the taken elements.
+     * @return self<T> The new Sequence containing the taken elements.
      */
     public function take(int | Integer $count): self
     {
@@ -719,12 +719,12 @@ final class Vec
     }
 
     /**
-     * Skips elements from the beginning of the Vec up to the specified count and returns a new Vec.
+     * Skips elements from the beginning of the Sequence up to the specified count and returns a new Sequence.
      *
      * If the provided count is a negative Integer, it will be treated as zero.
      *
      * @param int<0, max>|Integer $count The number of elements to skip.
-     * @return self<T> The new Vec containing the elements after skipping.
+     * @return self<T> The new Sequence containing the elements after skipping.
      */
     public function skip(int | Integer $count): self
     {
@@ -735,7 +735,7 @@ final class Vec
     }
 
     /**
-     * Swaps two elements in the Vec and returns a new Vec.
+     * Swaps two elements in the Sequence and returns a new Sequence.
      *
      * @param int|Integer $index1 The index of the first element to swap.
      * @param int|Integer $index2 The index of the second element to swap.
@@ -781,7 +781,7 @@ final class Vec
      * Sorts the collection using a custom comparator.
      *
      * @param callable(T, T): int $comparator The comparison function must return an integer less than, equal to, or greater than zero if the first argument is considered to be respectively less than, equal to, or greater than the second.
-     * @return self<T> A new Vec instance with the elements sorted
+     * @return self<T> A new Sequence instance with the elements sorted
      */
     public function sortBy(callable $comparator): self
     {
@@ -796,7 +796,7 @@ final class Vec
     /**
      * Sorts the collection using the default sorting algorithm.
      *
-     * @return self<T> A new Vec instance with the elements sorted
+     * @return self<T> A new Sequence instance with the elements sorted
      */
     public function sort(): self
     {

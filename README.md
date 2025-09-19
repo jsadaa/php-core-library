@@ -15,7 +15,7 @@ This ecosystem provides a growing collection of types and modules that work toge
 
 ### Core Types
 
-- `Vec`: An ordered collection of elements of the same type
+- `Sequence`: An ordered collection of elements of the same type
 - `Option`: A type that represents optional values (Some or None)
 - `Result`: A type that represents either success (Ok) or failure (Err)
 - `Str`: A UTF-8 string type with extensive manipulation methods
@@ -45,22 +45,22 @@ composer require jsadaa/php-core-library
 
 >See the [tests](tests) for more examples and edge cases.
 
-### Vec (Vector)
+### Sequence
 
-A `Vec` is an ordered, immutable collection of elements of the same type that provides many functional operations:
+A `Sequence` is an ordered, immutable collection of elements of the same type that provides many functional operations:
 
 ```php
-// Create a vector and apply operations
-$vec = Vec::from(1, 2, 3, 4, 5);
+// Create a Sequence and apply operations
+$seq = Sequence::from(1, 2, 3, 4, 5);
 
 // Map, filter, fold operations
-$result = $vec
+$result = $seq
     ->map(fn($n) => $n * 2)                 // [2, 4, 6, 8, 10]
     ->filter(fn($n) => $n > 5)               // [6, 8, 10]
     ->fold(fn($acc, $n) => $acc + $n, 0);    // 24
 
 // Get elements safely with Option type
-$thirdItem = $vec
+$thirdItem = $seq
     ->get(2) // Option::some(3)
     ->match(
         fn($value) => "Found: $value",
@@ -70,14 +70,14 @@ $thirdItem = $vec
 // ... And more
 ```
 
-Vec provides many more powerful operations for working with collections, including:
+Sequence provides many more powerful operations for working with collections, including:
 - Creation methods: `from()`, `fromArray()`, `new()`
 - Inspection: `all()`, `any()`, `contains()`, `isEmpty()`
 - Transformation: `map()`, `filter()`, `flatMap()`, `flatten()`
 - Combination: `append()`, `zip()`, `push()`
 - Advanced operations: `windows()`, `dedup()`, `sortBy()`
 
-For complete documentation with examples, see [Vec Documentation](./docs/vec.md).
+For complete documentation with examples, see [Sequence Documentation](./docs/sequence.md).
 
 ### Option Type
 
@@ -174,9 +174,9 @@ $beginning = $str->take(5);              // "Hello"
 $end = $str->drop(6);                    // "World"
 
 // String splitting
-$parts = $str->split(' ');               // Vec containing ["Hello", "World"]
-$words = $str->splitWhitespace();        // Vec of words
-$chars = $str->chars();                  // Vec containing ['H','e','l','l','o',...]
+$parts = $str->split(' ');               // Sequence containing ["Hello", "World"]
+$words = $str->splitWhitespace();        // Sequence of words
+$chars = $str->chars();                  // Sequence containing ['H','e','l','l','o',...]
 
 // Parsing to other types
 $number = Str::from('42')->parseInt();    // Result::ok(42)
@@ -396,11 +396,11 @@ This library uses PHPDoc annotations to provide type information that can be ver
 
 Without static analysis, you lose most of the type safety benefits of this library.
 
-For example, with the Vec collection, which is an ordered list of elements of the same type, nothing technically prevents you from adding mixed types to the collection, but most of the Vec APIs will not work as expected and might throw exceptions at runtime.
+For example, with the Sequence collection, which is an ordered list of elements of the same type, nothing technically prevents you from adding mixed types to the collection, but most of the Sequence APIs will not work as expected and might throw exceptions at runtime.
 
 ```php
-$vec = Vec::from(1, 2, 3)->push('string');
-$vec->map(fn($n) => $n * 2); // Uncaught TypeError: Unsupported operand types: string * int
+$seq = Sequence::from(1, 2, 3)->push('string');
+$seq->map(fn($n) => $n * 2); // Uncaught TypeError: Unsupported operand types: string * int
 ```
 This enforces you to really think about your implementation and the types you are using.
 
@@ -418,7 +418,7 @@ Unlike Rust, where **mutability is explicit** (`mut`) and tightly enforced by th
 ### Why Immutability Makes Sense in PHP
 
 - **Avoiding Side Effects**
-In PHP, objects are passed by reference, so mutations can easily propagate unexpectedly across different parts of an application. For example, modifying a `Vec` or `Str` in one place could unintentionally affect other references to the same object. Immutability eliminates this risk by ensuring every operation returns a new instance, making code more predictable and robust.
+In PHP, objects are passed by reference, so mutations can easily propagate unexpectedly across different parts of an application. For example, modifying a `Sequence` or `Str` in one place could unintentionally affect other references to the same object. Immutability eliminates this risk by ensuring every operation returns a new instance, making code more predictable and robust.
 - **No Native Mutability Controls**
 Rust gives you fine-grained control over mutability and ownership (`&mut`, borrow checker), ensuring thread safety and preventing data races at compile time. PHP lacks these mechanisms. By enforcing immutability at the API level, this library provides a similar guarantee—purely through convention and design—mirroring patterns seen in PHP’s own `DateTimeImmutable`.
 - **Memory and Lifecycle Management**
@@ -432,17 +432,17 @@ This design choice leads to some important differences from Rust’s original AP
 
 | Operation | Rust (Mutable) | PHP Core Library (Immutable)  |
 | :-- | :-- |:------------------------------|
-| Add element to Vec | `vec.push(item)` (in-place) | `$vec->push($item)` (new Vec) |
+| Add element to collection | `vec.push(item)` (in-place) | `$seq->push($item)` (new Sequence) |
 | String concatenation | `s1.push_str(&s2)` | `$s1->append($s2)` (new Str)  |
 
-**Example with `Vec::map`:**
+**Example with `Sequence::map`:**
 
 ```php
 // PHP: Immutable chaining
-$result = $vec->map(fn($x) => $x * 2)->filter(...);
+$result = $seq->map(fn($x) => $x * 2)->filter(...);
 
 // Rust: Mutable iterators
-let result: Vec<_> = vec.iter().map(|x| x * 2).filter(...).collect();
+let result: Sequence<_> = Sequence.iter().map(|x| x * 2).filter(...).collect();
 ```
 
 ### Performance and Practical Trade-offs
@@ -486,7 +486,7 @@ This approach reflects a **hybrid** between Rust’s conceptual strengths and PH
 
 This library is designed as a cohesive ecosystem where modules complement each other:
 
-- **Core Types** (`Vec`, `Option`, `Result`, `Str`, `Integer`, `Double`) provide the foundation
+- **Core Types** (`Sequence`, `Option`, `Result`, `Str`, `Integer`, `Double`) provide the foundation
 - **FileSystem** uses `Path`, `Result`, and core types for safe file operations
 - **Path** integrates with `Option` and `Result` for path validation and manipulation
 - **Time** provides `SystemTime` and `Duration` with overflow-safe arithmetic using `Integer`

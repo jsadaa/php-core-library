@@ -311,7 +311,7 @@ if ($headerResult->isOk()) {
 > [!TIP]
 > Each byte is represented as an `Integer` (0-255), making it easy to perform byte-level operations and comparisons.
 
-Reads the file as a Vec of byte values.
+Reads the file as a Sequence of byte values.
 
 ```php
 $file = File::from('/path/to/image.jpg')->unwrap();

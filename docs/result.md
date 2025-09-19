@@ -329,7 +329,7 @@ This is useful when you only care about the success value and want to discard an
 ```php
 // Validation functions that return Result
 function validateUsername(string $username): Result {
-    return strlen($username) >= 3 
+    return strlen($username) >= 3
         ? Result::ok($username)
         : Result::err("Username must be at least 3 characters");
 }
@@ -359,10 +359,10 @@ $validUser = $usernameResult->match(
 Results work well with collection types:
 
 ```php
-$ids = Vec::from(1, 2, 3, 4);
+$ids = Sequence::from(1, 2, 3, 4);
 
 // Find users by ID (some might not exist)
-$userResults = $ids->map(fn($id) => findUser($id)); // Vec<Result<User, Error>>
+$userResults = $ids->map(fn($id) => findUser($id)); // Sequence<Result<User, Error>>
 
 // Extract only the successful results
 $validUsers = $userResults

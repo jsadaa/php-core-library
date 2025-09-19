@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\Integer\Functional;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use PHPUnit\Framework\TestCase;
@@ -107,7 +107,7 @@ final class IntegerFunctionalTest extends TestCase
 
     public function testStatisticsCalculation(): void
     {
-        $values = Vec::from(
+        $values = Sequence::from(
             Integer::from(12),
             Integer::from(5),
             Integer::from(8),

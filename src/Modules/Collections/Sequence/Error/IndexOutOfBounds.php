@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Error;
+namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Error;
 
 final class IndexOutOfBounds extends \RuntimeException
 {

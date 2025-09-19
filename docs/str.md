@@ -293,26 +293,26 @@ $outOfBounds = $str->getRange(20, 5); // Option::none()
 
 ### Bytes
 
-Converts the string to a Vec of bytes (integers representing byte values).
+Converts the string to a Sequence of bytes (integers representing byte values).
 
 ```php
 $str = Str::from('AB');
-$bytes = $str->bytes(); // Vec [65, 66]
+$bytes = $str->bytes(); // Sequence [65, 66]
 
 $str = Str::from('é'); // UTF-8 multi-byte character
-$bytes = $str->bytes(); // Vec [195, 169] (UTF-8 representation of é)
+$bytes = $str->bytes(); // Sequence [195, 169] (UTF-8 representation of é)
 ```
 
 ### Chars
 
-Converts the string to a Vec of individual characters (each as a string).
+Converts the string to a Sequence of individual characters (each as a string).
 
 ```php
 $str = Str::from('hello');
-$chars = $str->chars(); // Vec ["h", "e", "l", "l", "o"]
+$chars = $str->chars(); // Sequence ["h", "e", "l", "l", "o"]
 
 $str = Str::from('😀😀😀'); // UTF-8 multi-byte characters
-$chars = $str->chars(); // Vec ["😀", "😀", "😀"] (properly handles UTF-8)
+$chars = $str->chars(); // Sequence ["😀", "😀", "😀"] (properly handles UTF-8)
 ```
 
 **Note:** This method splits by Unicode code points, so characters in decomposed form will be split into multiple code points.
@@ -324,11 +324,11 @@ $nfd = Str::from('é')->normalize('NFD')->unwrap()->chars()->len()->toInt(); // 
 
 ### Lines
 
-Splits the string into lines, returning a Vec of Str instances.
+Splits the string into lines, returning a Sequence of Str instances.
 
 ```php
 $str = Str::from("Line 1\nLine 2\nLine 3");
-$lines = $str->lines(); // Vec of Str with ["Line 1", "Line 2", "Line 3"]
+$lines = $str->lines(); // Sequence of Str with ["Line 1", "Line 2", "Line 3"]
 ```
 
 ## Searching
@@ -389,10 +389,10 @@ Finds all matches of a regex pattern and returns their positions.
 
 ```php
 $str = Str::from('apple banana apple cherry');
-$indices = $str->matchIndices('/apple/'); // Vec [[0, 5], [12, 5]]
+$indices = $str->matchIndices('/apple/'); // Sequence [[0, 5], [12, 5]]
 ```
 
-**Note:** Each match is returned as a Vec with [start_position, length].
+**Note:** Each match is returned as a Sequence with [start_position, length].
 
 ## Padding and Trimming
 
@@ -445,14 +445,14 @@ $trimmed = $str->trimEnd(); // '  Hello World'
 
 ### Split
 
-Splits the string into a Vec of Str instances using the given delimiter.
+Splits the string into a Sequence of Str instances using the given delimiter.
 
 ```php
 $str = Str::from('apple,banana,cherry');
-$parts = $str->split(','); // Vec of Str with ['apple', 'banana', 'cherry']
+$parts = $str->split(','); // Sequence of Str with ['apple', 'banana', 'cherry']
 
 $str = Str::from('Hello');
-$chars = $str->split(''); // Vec of Str with ['H', 'e', 'l', 'l', 'o']
+$chars = $str->split(''); // Sequence of Str with ['H', 'e', 'l', 'l', 'o']
 ```
 
 ### Split At
@@ -461,16 +461,16 @@ Splits the string into two Str instances at the given index.
 
 ```php
 $str = Str::from('Hello World');
-$parts = $str->splitAt(5); // Vec of Str with ['Hello', ' World']
+$parts = $str->splitAt(5); // Sequence of Str with ['Hello', ' World']
 ```
 
 ### Split Whitespace
 
-Splits the string into a Vec of Str instances at whitespace characters.
+Splits the string into a Sequence of Str instances at whitespace characters.
 
 ```php
 $str = Str::from('Hello World  Test');
-$words = $str->splitWhitespace(); // Vec of Str with ['Hello', 'World', 'Test']
+$words = $str->splitWhitespace(); // Sequence of Str with ['Hello', 'World', 'Test']
 ```
 
 ## Case Conversion

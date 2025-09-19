@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Path;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Error\PathInvalid;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Error\PrefixNotFound;
@@ -189,21 +189,21 @@ final readonly class Path {
     }
 
     /**
-     * Get a Vector of all ancestors of the path
+     * Get a Sequence of all ancestors of the path
      *
-     * This returns a vector containing all parent directories, starting from the immediate
-     * parent and ending with the root directory. The vector is ordered from the closest
+     * This returns a Sequence containing all parent directories, starting from the immediate
+     * parent and ending with the root directory. The Sequence is ordered from the closest
      * ancestor to the furthest ancestor, with the last element always being None.
      *
-     * The last element of the vector is always None to indicate that we've reached
+     * The last element of the Sequence is always None to indicate that we've reached
      * the end of the hierarchy.
      *
-     * @return Vec<Option<Path>> Vector of parent paths as Options
+     * @return Sequence<Option<Path>> Sequence of parent paths as Options
      */
-    public function ancestors(): Vec
+    public function ancestors(): Sequence
     {
-        /** @var Vec<Option<Path>> $ancestors */
-        $ancestors = Vec::new();
+        /** @var Sequence<Option<Path>> $ancestors */
+        $ancestors = Sequence::new();
         $parent = $this->parent();
 
         if ($parent->isNone()) {

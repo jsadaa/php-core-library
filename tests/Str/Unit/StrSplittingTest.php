@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\Str\Unit;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 use PHPUnit\Framework\TestCase;
 
@@ -15,7 +15,7 @@ final class StrSplittingTest extends TestCase
         $str = Str::from('apple,banana,cherry');
         $parts = $str->split(',');
 
-        $this->assertInstanceOf(Vec::class, $parts);
+        $this->assertInstanceOf(Sequence::class, $parts);
         $this->assertSame(3, $parts->len()->toInt());
 
         $this->assertInstanceOf(Str::class, $parts->get(0)->unwrapOr(null));
@@ -71,7 +71,7 @@ final class StrSplittingTest extends TestCase
         $str = Str::from('Hello world');
         $parts = $str->splitAt(5);
 
-        $this->assertInstanceOf(Vec::class, $parts);
+        $this->assertInstanceOf(Sequence::class, $parts);
         $this->assertSame(2, $parts->len()->toInt());
 
         $this->assertInstanceOf(Str::class, $parts->get(0)->unwrapOr(null));

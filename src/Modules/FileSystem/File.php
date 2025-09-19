@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\FileSystem;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\AlreadyExists;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\CreateFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\FileNotFound;
@@ -303,18 +303,18 @@ final readonly class File {
     }
 
     /**
-     * Read the file as a Vec of byte values
+     * Read the file as a Sequence of byte values
      *
-     * Reads the entire file and returns its content as a vector of bytes (integers 0-255).
+     * Reads the entire file and returns its content as a Sequence of bytes (integers 0-255).
      * This is useful for binary file processing or when you need to work with individual bytes.
      *
-     * @return Result<Vec<Integer>, ReadFailed|PermissionDenied> A Result containing a vector of bytes or a read error
+     * @return Result<Sequence<Integer>, ReadFailed|PermissionDenied> A Result containing a Sequence of bytes or a read error
      * @psalm-suppress ImpureFunctionCall
      */
     public function bytes(): Result
     {
         if (!Permissions::from($this->path)->isReadable()) {
-            /** @var Result<Vec<Integer>, ReadFailed|PermissionDenied> */
+            /** @var Result<Sequence<Integer>, ReadFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf(
                 'Failed to read file: %s (Permission denied)',
                 $this->path->toString(),
@@ -324,7 +324,7 @@ final readonly class File {
         $content = @\file_get_contents($this->path->toString());
 
         if ($content === false) {
-            /** @var Result<Vec<Integer>, ReadFailed|PermissionDenied> */
+            /** @var Result<Sequence<Integer>, ReadFailed|PermissionDenied> */
             return Result::err(new ReadFailed(\sprintf(
                 'Failed to read file: %s',
                 $this->path->toString(),
@@ -334,16 +334,16 @@ final readonly class File {
         $bytes = \unpack('C*', $content);
 
         if ($bytes === false) {
-            /** @var Result<Vec<Integer>, ReadFailed|PermissionDenied> */
+            /** @var Result<Sequence<Integer>, ReadFailed|PermissionDenied> */
             return Result::err(new ReadFailed(\sprintf(
                 'Failed to unpack bytes from file: %s',
                 $this->path->toString(),
             )));
         }
 
-        /** @var Result<Vec<Integer>, ReadFailed|PermissionDenied> */
+        /** @var Result<Sequence<Integer>, ReadFailed|PermissionDenied> */
         return Result::ok(
-            Vec::fromArray($bytes)->map(static fn(int $byte) => Integer::from($byte)),
+            Sequence::fromArray($bytes)->map(static fn(int $byte) => Integer::from($byte)),
         );
     }
 

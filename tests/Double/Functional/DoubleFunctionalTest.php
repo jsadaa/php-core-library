@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\Double\Functional;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Primitives\Double\Double;
 use Jsadaa\PhpCoreLibrary\Primitives\Double\Error\DivisionByZero;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
@@ -141,7 +141,7 @@ final class DoubleFunctionalTest extends TestCase
 
     public function testStatisticsCalculations(): void
     {
-        $values = Vec::from(
+        $values = Sequence::from(
             Double::from(12.5),
             Double::from(5.2),
             Double::from(8.7),

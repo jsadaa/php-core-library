@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\FileSystem;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\AlreadyExists;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\CopyFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\CreateFailed;
@@ -97,11 +97,11 @@ final readonly class FileSystem {
     /**
      * Read file contents as bytes
      *
-     * Reads the entire file as a vector of integers (bytes). This is useful when
+     * Reads the entire file as a Sequence of integers (bytes). This is useful when
      * you need to process binary data or need the raw byte representation of a file.
      *
      * @param string|Path $path The path to the file to read
-     * @return Result<Vec<Integer>, FileNotFound|ReadFailed|InvalidFileType|PermissionDenied> A Result containing a vector of bytes or an error
+     * @return Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType|PermissionDenied> A Result containing a Sequence of bytes or an error
      */
     public static function readBytes(string | Path $path): Result
     {
@@ -111,18 +111,18 @@ final readonly class FileSystem {
         $fileResult = File::from($pathStr);
 
         if ($fileResult->isErr()) {
-            /** @var Result<Vec<Integer>, FileNotFound|ReadFailed|InvalidFileType|PermissionDenied> */
+            /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType|PermissionDenied> */
             return $fileResult;
         }
 
-        /** @var Result<Vec<Integer>, FileNotFound|ReadFailed|InvalidFileType|PermissionDenied> */
+        /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType|PermissionDenied> */
         return $fileResult->unwrap()->bytes();
     }
 
     /**
      * Read directory contents
      *
-     * Lists all entries in a directory, returning a vector of DirectoryEntry objects.
+     * Lists all entries in a directory, returning a Sequence of DirectoryEntry objects.
      * This gives you access to all files and subdirectories within the specified directory.
      *
      * The directory path must be a valid directory.
@@ -130,32 +130,32 @@ final readonly class FileSystem {
      * Note: The result does not include "." and ".." entries.
      *
      * @param string|Path $path The directory path to read
-     * @return Result<Vec<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> A Result containing directory entries or an error
+     * @return Result<Sequence<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> A Result containing directory entries or an error
      */
     public static function readDir(string | Path $path): Result
     {
         $path = \is_string($path) ? Path::from($path) : $path;
 
         if (!$path->exists()) {
-            /** @var Result<Vec<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
+            /** @var Result<Sequence<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
             return Result::err(new DirectoryNotFound(\sprintf('Path does not exist: %s', $path)));
         }
 
         if (!$path->isDir()) {
-            /** @var Result<Vec<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
+            /** @var Result<Sequence<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
             return Result::err(new InvalidFileType(\sprintf('Path is not a directory: %s', $path)));
         }
 
         $contents = @\scandir($path->toString());
 
         if ($contents === false) {
-            /** @var Result<Vec<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
+            /** @var Result<Sequence<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
             return Result::err(new ReadFailed(\sprintf('Failed to read directory: %s', $path)));
         }
 
-        /** @var Result<Vec<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
+        /** @var Result<Sequence<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
         return Result::ok(
-            Vec::fromArray($contents)
+            Sequence::fromArray($contents)
                 ->filter(static fn(string $item) => $item !== '.' && $item !== '..')
                 ->map(static fn(string $item) => DirectoryEntry::from($path->join(Path::from($item)))),
         );

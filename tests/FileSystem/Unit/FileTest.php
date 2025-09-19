@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\FileSystem\Unit;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\AlreadyExists;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\CreateFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\FileNotFound;
@@ -217,7 +217,7 @@ final class FileTest extends TestCase
         $this->assertTrue($result->isOk());
         $bytes = $result->unwrap();
 
-        $this->assertInstanceOf(Vec::class, $bytes);
+        $this->assertInstanceOf(Sequence::class, $bytes);
         $this->assertEquals(6, $bytes->len()->toInt());
         $this->assertEquals(0x00, $bytes->get(0)->unwrap()->toInt());
         $this->assertEquals(0xFF, $bytes->get(4)->unwrap()->toInt());
