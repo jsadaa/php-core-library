@@ -22,7 +22,7 @@ use Jsadaa\PhpCoreLibrary\Primitives\Str\Error\ParseError;
  *
  * @psalm-immutable
  */
-final readonly class Str
+final readonly class Str implements \Stringable
 {
     /**
      * @var string The UTF-8 encoding constant
@@ -40,6 +40,7 @@ final readonly class Str
         $this->value = $value;
     }
 
+    #[\Override]
     /**
      * Returns a string representation when the object is used as a string
      *
