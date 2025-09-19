@@ -314,7 +314,7 @@ This will return the email as Some only if the user exists and is active, otherw
 Options work well with collection types:
 
 ```php
-$users = Vec::from($user1, $user2, $user3);
+$users = Sequence::from($user1, $user2, $user3);
 
 // Get the emails of all active users
 $activeEmails = $users

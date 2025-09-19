@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Primitives\Str;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Primitives\Double\Double;
@@ -275,65 +275,65 @@ final readonly class Str implements \Stringable
     }
 
     /**
-     * Converts the string to a Vec of bytes (integers representing byte values)
+     * Converts the string to a Sequence of bytes (integers representing byte values)
      *
-     * @return Vec<Integer> A Vec containing the byte values of the string
+     * @return Sequence<Integer> A Sequence containing the byte values of the string
      */
-    public function bytes(): Vec
+    public function bytes(): Sequence
     {
-        // If string is empty, return empty Vec
+        // If string is empty, return empty Sequence
         if ($this->isEmpty()) {
-            /** @var Vec<Integer> */
-            return Vec::new();
+            /** @var Sequence<Integer> */
+            return Sequence::new();
         }
 
         $unpacked = \unpack('C*', $this->value);
 
         if ($unpacked === false) {
-            /** @var Vec<Integer> */
-            return Vec::new();
+            /** @var Sequence<Integer> */
+            return Sequence::new();
         }
 
-        /** @var Vec<Integer> */
-        return Vec::fromArray(\array_values($unpacked))->map(static fn(int $byte) => Integer::from($byte));
+        /** @var Sequence<Integer> */
+        return Sequence::fromArray(\array_values($unpacked))->map(static fn(int $byte) => Integer::from($byte));
     }
 
     /**
-     * Converts the string to a Vec of individual characters (each as a string)
+     * Converts the string to a Sequence of individual characters (each as a string)
      *
      * This method cuts the string by code points, not graphemes.
      * Depending on the normalization form, it may not always produce the same length with multibyte characters.
      *
-     * @return Vec<Str> A Vec containing the individual characters of the string
+     * @return Sequence<Str> A Sequence containing the individual characters of the string
      */
-    public function chars(): Vec
+    public function chars(): Sequence
     {
         if ($this->isEmpty()) {
-            /** @var Vec<Str> */
-            return Vec::new();
+            /** @var Sequence<Str> */
+            return Sequence::new();
         }
 
         // Use mb_str_split with a length of 1 to split into individual characters
         // mb_str_split always returns an array in PHP 7.4+ for valid UTF-8
         $chars = \mb_str_split($this->value, 1, self::UTF8);
 
-        /** @var Vec<Str> */
-        return Vec::fromArray($chars)->map(static fn(string $char) => Str::from($char));
+        /** @var Sequence<Str> */
+        return Sequence::fromArray($chars)->map(static fn(string $char) => Str::from($char));
     }
 
     /**
      * Splits the string into an array of substrings using the given delimiter
      *
      * @param string|Str $delimiter The delimiter to use for splitting the string
-     * @return Vec<Str> A Vec containing the substrings resulting from the split
+     * @return Sequence<Str> A Sequence containing the substrings resulting from the split
      */
-    public function split(string | self $delimiter): Vec
+    public function split(string | self $delimiter): Sequence
     {
         $delimiter = $delimiter instanceof self ? $delimiter->toString() : $delimiter;
 
         if ($this->isEmpty()) {
-            /** @var Vec<Str> */
-            return Vec::new();
+            /** @var Sequence<Str> */
+            return Sequence::new();
         }
 
         // For simple string delimiter, use explode which is more efficient
@@ -355,8 +355,8 @@ final readonly class Str implements \Stringable
             $parts = $result !== false ? $result : [];
         }
 
-        /** @var Vec<Str> */
-        return Vec::fromArray($parts)->map(
+        /** @var Sequence<Str> */
+        return Sequence::fromArray($parts)->map(
             static fn(string $part) => Str::from($part),
         );
     }
@@ -365,20 +365,20 @@ final readonly class Str implements \Stringable
      * Splits the string into two substrings at the given index
      *
      * @param int|Integer $index The index at which to split the string
-     * @return Vec<Str> A Vec containing two substrings (before and after the index),
+     * @return Sequence<Str> A Sequence containing two substrings (before and after the index),
      */
-    public function splitAt(int | Integer $index): Vec
+    public function splitAt(int | Integer $index): Sequence
     {
         $index = $index instanceof Integer ? $index->toInt() : $index;
 
         if ($this->isEmpty()) {
-            return Vec::new();
+            return Sequence::new();
         }
 
         $before = \mb_substr($this->value, 0, $index, self::UTF8);
         $after = \mb_substr($this->value, $index, null, self::UTF8);
 
-        return Vec::fromArray([
+        return Sequence::fromArray([
             new self($before),
             new self($after),
         ]);
@@ -387,20 +387,20 @@ final readonly class Str implements \Stringable
     /**
      * Splits the string into an array of substrings at whitespace characters
      *
-     * @return Vec<Str> A Vec containing the substrings resulting from the split
+     * @return Sequence<Str> A Sequence containing the substrings resulting from the split
      */
-    public function splitWhitespace(): Vec
+    public function splitWhitespace(): Sequence
     {
         if ($this->isEmpty()) {
-            /** @var Vec<Str> */
-            return Vec::new();
+            /** @var Sequence<Str> */
+            return Sequence::new();
         }
 
         $parts = \preg_split("/\s+/u", $this->value);
         $parts = \is_array($parts) ? $parts : [];
 
-        /** @var Vec<Str> */
-        return Vec::fromArray($parts)->map(
+        /** @var Sequence<Str> */
+        return Sequence::fromArray($parts)->map(
             static fn(string $part) => Str::from($part),
         );
     }
@@ -945,21 +945,21 @@ final readonly class Str implements \Stringable
     }
 
     /**
-     * Returns a Vec of all matches of a pattern in the string
+     * Returns a Sequence of all matches of a pattern in the string
      *
      * @param string|Str $pattern The regex pattern to match with "u" modifier for UTF-8
-     * @return Vec<Str> A Vec with all matching substrings
+     * @return Sequence<Str> A Sequence with all matching substrings
      */
-    public function matches(string | self $pattern): Vec
+    public function matches(string | self $pattern): Sequence
     {
         $pattern = $pattern instanceof self ? $pattern->toString() : $pattern;
 
         if ($pattern === '') {
-            return Vec::new();
+            return Sequence::new();
         }
 
         if ($this->isEmpty()) {
-            return Vec::new();
+            return Sequence::new();
         }
 
         // Ensure that the pattern has the 'u' modifier for UTF-8
@@ -983,30 +983,30 @@ final readonly class Str implements \Stringable
         \preg_match_all($pattern, $this->value, $matches);
 
         if (!isset($matches[0]) || \count($matches[0]) === 0) {
-            return Vec::new();
+            return Sequence::new();
         }
 
-        return Vec::fromArray($matches[0])->map(
+        return Sequence::fromArray($matches[0])->map(
             static fn(string $match) => Str::from($match),
         );
     }
 
     /**
-     * Returns a Vec over the indices of all matches of a pattern in the string
+     * Returns a Sequence over the indices of all matches of a pattern in the string
      *
      * @param string|Str $pattern The regex pattern to match with "u" modifier for UTF-8
-     * @return Vec<array{Integer, Str}> A Vec with tuples of [index, match]
+     * @return Sequence<array{Integer, Str}> A Sequence with tuples of [index, match]
      */
-    public function matchIndices(string | self $pattern): Vec
+    public function matchIndices(string | self $pattern): Sequence
     {
         $pattern = $pattern instanceof self ? $pattern->toString() : $pattern;
 
         if ($pattern === '') {
-            return Vec::new();
+            return Sequence::new();
         }
 
         if ($this->isEmpty()) {
-            return Vec::new();
+            return Sequence::new();
         }
 
         // Ensure that the pattern has the 'u' modifier for UTF-8
@@ -1038,11 +1038,11 @@ final readonly class Str implements \Stringable
                 \PREG_OFFSET_CAPTURE,
             ) === false
         ) {
-            return Vec::new();
+            return Sequence::new();
         }
 
         if (!isset($matches[0]) || \count($matches[0]) === 0) {
-            return Vec::new();
+            return Sequence::new();
         }
 
         // Convert byte offsets to UTF-8 character offsets
@@ -1059,7 +1059,7 @@ final readonly class Str implements \Stringable
             $offsets[] = $offset;
         }
 
-        return Vec::fromArray($offsets);
+        return Sequence::fromArray($offsets);
     }
 
     /**
@@ -1241,24 +1241,24 @@ final readonly class Str implements \Stringable
     /**
      * Splits the string into lines
      *
-     * @return Vec<Str> A Vec of Str lines
+     * @return Sequence<Str> A Sequence of Str lines
      */
-    public function lines(): Vec
+    public function lines(): Sequence
     {
         if ($this->isEmpty()) {
-            /** @var Vec<Str> */
-            return Vec::new();
+            /** @var Sequence<Str> */
+            return Sequence::new();
         }
 
         $lines = \mb_split("\n", $this->value);
 
         if (!\is_array($lines)) {
-            /** @var Vec<Str> */
-            return Vec::new();
+            /** @var Sequence<Str> */
+            return Sequence::new();
         }
 
-        /** @var Vec<Str> */
-        return Vec::fromArray($lines)->map(
+        /** @var Sequence<Str> */
+        return Sequence::fromArray($lines)->map(
             static fn(string $line) => Str::from($line),
         );
     }

@@ -2,17 +2,17 @@
 
 declare(strict_types = 1);
 
-namespace Jsadaa\PhpCoreLibrary\Tests\Vec\Functional;
+namespace Jsadaa\PhpCoreLibrary\Tests\Sequence\Functional;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use PHPUnit\Framework\TestCase;
 
-final class VecFunctionalExtendedTest extends TestCase
+final class SequenceFunctionalExtendedTest extends TestCase
 {
     public function testDataValidationWithAllAny(): void
     {
-        $formSubmissions = Vec::from(
+        $formSubmissions = Sequence::from(
             ['name' => 'John Doe', 'age' => 17, 'email' => 'john@example.com', 'termsAccepted' => true],
             ['name' => 'Jane Smith', 'age' => 25, 'email' => 'jane@example.com', 'termsAccepted' => true],
             ['name' => 'Bob Johnson', 'age' => 42, 'email' => 'bob@example.com', 'termsAccepted' => false],
@@ -25,7 +25,7 @@ final class VecFunctionalExtendedTest extends TestCase
         $hasAcceptedTerms = static fn($submission) => $submission['termsAccepted'] === true;
 
         $validSubmissions = $formSubmissions->filter(static function($submission) use ($isAdult, $hasValidEmail, $hasAcceptedTerms) {
-            $requirements = Vec::from($isAdult($submission), $hasValidEmail($submission), $hasAcceptedTerms($submission));
+            $requirements = Sequence::from($isAdult($submission), $hasValidEmail($submission), $hasAcceptedTerms($submission));
 
             return $requirements->all(static fn($req) => $req === true);
         });
@@ -42,15 +42,15 @@ final class VecFunctionalExtendedTest extends TestCase
         $this->assertFalse($allAdultsAcceptedTerms);
     }
 
-    public function testVecEqualityInDataProcessing(): void
+    public function testSequenceEqualityInDataProcessing(): void
     {
-        $stockA = Vec::from(145.30, 147.80, 146.90, 149.20, 148.80);
-        $stockB = Vec::from(145.30, 147.80, 146.90, 149.20, 148.80);
-        $stockC = Vec::from(245.10, 242.50, 240.30, 247.80, 251.20);
+        $stockA = Sequence::from(145.30, 147.80, 146.90, 149.20, 148.80);
+        $stockB = Sequence::from(145.30, 147.80, 146.90, 149.20, 148.80);
+        $stockC = Sequence::from(245.10, 242.50, 240.30, 247.80, 251.20);
 
-        $expectedPattern = Vec::from(145.30, 147.80, 146.90, 149.20, 148.80);
+        $expectedPattern = Sequence::from(145.30, 147.80, 146.90, 149.20, 148.80);
 
-        $matchingStocks = Vec::from(
+        $matchingStocks = Sequence::from(
             ['name' => 'Stock A', 'data' => $stockA],
             ['name' => 'Stock B', 'data' => $stockB],
             ['name' => 'Stock C', 'data' => $stockC],
@@ -61,16 +61,16 @@ final class VecFunctionalExtendedTest extends TestCase
         $matchingNames = $matchingStocks->map(static fn($stock) => $stock['name'])->toArray();
         $this->assertSame(['Stock A', 'Stock B'], $matchingNames);
 
-        $slightlyDifferentStock = Vec::from(145.30, 147.81, 146.90, 149.20, 148.80); // Small difference
+        $slightlyDifferentStock = Sequence::from(145.30, 147.81, 146.90, 149.20, 148.80); // Small difference
         $this->assertFalse($stockA->eq($slightlyDifferentStock));
     }
 
     public function testDataStreamZipping(): void
     {
         // Simulated sensor data from different sources that need to be combined
-        $timestamps = Vec::from(1625097600, 1625097660, 1625097720, 1625097780, 1625097840);
-        $temperatures = Vec::from(22.5, 23.0, 23.2, 23.4, 23.8);
-        $humidity = Vec::from(48.2, 48.5, 48.7, 49.0, 49.2);
+        $timestamps = Sequence::from(1625097600, 1625097660, 1625097720, 1625097780, 1625097840);
+        $temperatures = Sequence::from(22.5, 23.0, 23.2, 23.4, 23.8);
+        $humidity = Sequence::from(48.2, 48.5, 48.7, 49.0, 49.2);
 
         // Zip timestamps with temperature and humidity for a combined dataset
         $sensorData = $timestamps
@@ -107,7 +107,7 @@ final class VecFunctionalExtendedTest extends TestCase
     public function testDataProcessingWithBoundaryOperations(): void
     {
         // Simulated time series data with some outliers
-        $timeSeriesData = Vec::from(999.9, 25.4, 26.1, 25.9, 26.3, 27.0, 26.8, 26.5, 999.9);
+        $timeSeriesData = Sequence::from(999.9, 25.4, 26.1, 25.9, 26.3, 27.0, 26.8, 26.5, 999.9);
 
         // Check if first and last elements are outliers (999.9)
         $firstElement = $timeSeriesData->first()->unwrap();
@@ -140,7 +140,7 @@ final class VecFunctionalExtendedTest extends TestCase
     public function testLogProcessingWithRangeOperations(): void
     {
         // Simulated log entries with timestamps and severity
-        $logs = Vec::from(
+        $logs = Sequence::from(
             ['timestamp' => '2023-01-01 00:01:23', 'severity' => 'INFO', 'message' => 'Application started'],
             ['timestamp' => '2023-01-01 00:02:15', 'severity' => 'DEBUG', 'message' => 'User login attempt'],
             ['timestamp' => '2023-01-01 00:02:45', 'severity' => 'ERROR', 'message' => 'Database connection failed'],
@@ -172,14 +172,14 @@ final class VecFunctionalExtendedTest extends TestCase
 
     public function testArrayManipulationForSorting(): void
     {
-        // Simulate implementing a sort algorithm with Vec operations
-        $data = Vec::from(7, 2, 5, 8, 3, 1, 6, 4);
+        // Simulate implementing a sort algorithm with Sequence operations
+        $data = Sequence::from(7, 2, 5, 8, 3, 1, 6, 4);
 
         $reversedData = $data->reverse();
         $this->assertSame([4, 6, 1, 3, 8, 5, 2, 7], $reversedData->toArray());
 
         // Manual bubble sort implementation using swap
-        $sortedData = $this->bubbleSortUsingVec($data);
+        $sortedData = $this->bubbleSortUsingSequence($data);
         $this->assertSame([1, 2, 3, 4, 5, 6, 7, 8], $sortedData->toArray());
 
         $modifiedData = $data->swap(0, $data->len()->sub(1)->toInt())->unwrap(); // Swap first and last elements
@@ -190,7 +190,7 @@ final class VecFunctionalExtendedTest extends TestCase
     public function testIterationAndDisplayProcessing(): void
     {
         // Simulate generating a formatted report
-        $employees = Vec::from(
+        $employees = Sequence::from(
             ['name' => 'John Doe', 'department' => 'Engineering', 'years' => 5],
             ['name' => 'Jane Smith', 'department' => 'Marketing', 'years' => 7],
             ['name' => 'Bob Johnson', 'department' => 'Finance', 'years' => 3],
@@ -221,7 +221,7 @@ final class VecFunctionalExtendedTest extends TestCase
     public function testHandlingSparseDataWithOptionals(): void
     {
         // Simulated API response with some data gaps (missing values represented as null)
-        $apiData = Vec::from(
+        $apiData = Sequence::from(
             ['id' => 1, 'value' => 42, 'metadata' => ['valid' => true]],
             ['id' => 2, 'value' => null, 'metadata' => ['valid' => false]],
             ['id' => 3, 'value' => 28, 'metadata' => null],
@@ -256,12 +256,12 @@ final class VecFunctionalExtendedTest extends TestCase
     }
 
     /**
-     * Implement a bubble sort using Vec's swap method
+     * Implement a bubble sort using Sequence's swap method
      *
-     * @param Vec<int> $data The data to sort
-     * @return Vec<int> The sorted data
+     * @param Sequence<int> $data The data to sort
+     * @return Sequence<int> The sorted data
      */
-    private function bubbleSortUsingVec(Vec $data): Vec
+    private function bubbleSortUsingSequence(Sequence $data): Sequence
     {
         $len = $data->len()->toInt();
         $result = $data; // Clone of original data

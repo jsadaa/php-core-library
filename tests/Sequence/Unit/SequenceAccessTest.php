@@ -2,17 +2,17 @@
 
 declare(strict_types = 1);
 
-namespace Jsadaa\PhpCoreLibrary\Tests\Vec\Unit;
+namespace Jsadaa\PhpCoreLibrary\Tests\Sequence\Unit;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use PHPUnit\Framework\TestCase;
 
-final class VecAccessTest extends TestCase
+final class SequenceAccessTest extends TestCase
 {
     public function testGetExistingItem(): void
     {
-        $vec = Vec::from('a', 'b', 'c');
-        $option = $vec->get(1);
+        $seq = Sequence::from('a', 'b', 'c');
+        $option = $seq->get(1);
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -24,16 +24,16 @@ final class VecAccessTest extends TestCase
 
     public function testGetNonExistingItem(): void
     {
-        $vec = Vec::from('a', 'b', 'c');
-        $option = $vec->get(5);
+        $seq = Sequence::from('a', 'b', 'c');
+        $option = $seq->get(5);
 
         $this->assertTrue($option->isNone());
     }
 
     public function testGetItemAtZeroIndex(): void
     {
-        $vec = Vec::from('a', 'b', 'c');
-        $option = $vec->get(0);
+        $seq = Sequence::from('a', 'b', 'c');
+        $option = $seq->get(0);
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -45,8 +45,8 @@ final class VecAccessTest extends TestCase
 
     public function testGetItemAtLastIndex(): void
     {
-        $vec = Vec::from('a', 'b', 'c');
-        $option = $vec->get(2);
+        $seq = Sequence::from('a', 'b', 'c');
+        $option = $seq->get(2);
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -56,18 +56,18 @@ final class VecAccessTest extends TestCase
         $this->assertSame('c', $value);
     }
 
-    public function testGetItemFromEmptyVec(): void
+    public function testGetItemFromEmptySequence(): void
     {
-        $vec = Vec::new();
-        $option = $vec->get(0);
+        $seq = Sequence::new();
+        $option = $seq->get(0);
 
         $this->assertTrue($option->isNone());
     }
 
     public function testGetItemWithNegativeIndex(): void
     {
-        $vec = Vec::from(1, 2, 3);
-        $option = $vec->get(-1);
+        $seq = Sequence::from(1, 2, 3);
+        $option = $seq->get(-1);
 
         $this->assertTrue($option->isNone());
     }
@@ -76,9 +76,9 @@ final class VecAccessTest extends TestCase
     {
         $obj1 = new \stdClass();
         $obj2 = new \stdClass();
-        $vec = Vec::from($obj1, $obj2);
+        $seq = Sequence::from($obj1, $obj2);
 
-        $option = $vec->get(1);
+        $option = $seq->get(1);
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -90,8 +90,8 @@ final class VecAccessTest extends TestCase
 
     public function testFirstElement(): void
     {
-        $vec = Vec::from('a', 'b', 'c');
-        $option = $vec->first();
+        $seq = Sequence::from('a', 'b', 'c');
+        $option = $seq->first();
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -101,18 +101,18 @@ final class VecAccessTest extends TestCase
         $this->assertSame('a', $value);
     }
 
-    public function testFirstElementFromEmptyVec(): void
+    public function testFirstElementFromEmptySequence(): void
     {
-        $vec = Vec::new();
-        $option = $vec->first();
+        $seq = Sequence::new();
+        $option = $seq->first();
 
         $this->assertTrue($option->isNone());
     }
 
-    public function testFirstElementFromSingleItemVec(): void
+    public function testFirstElementFromSingleItemSequence(): void
     {
-        $vec = Vec::from('single');
-        $option = $vec->first();
+        $seq = Sequence::from('single');
+        $option = $seq->first();
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -124,8 +124,8 @@ final class VecAccessTest extends TestCase
 
     public function testLastElement(): void
     {
-        $vec = Vec::from('a', 'b', 'c');
-        $option = $vec->last();
+        $seq = Sequence::from('a', 'b', 'c');
+        $option = $seq->last();
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -135,18 +135,18 @@ final class VecAccessTest extends TestCase
         $this->assertSame('c', $value);
     }
 
-    public function testLastElementFromEmptyVec(): void
+    public function testLastElementFromEmptySequence(): void
     {
-        $vec = Vec::new();
-        $option = $vec->last();
+        $seq = Sequence::new();
+        $option = $seq->last();
 
         $this->assertTrue($option->isNone());
     }
 
-    public function testLastElementFromSingleItemVec(): void
+    public function testLastElementFromSingleItemSequence(): void
     {
-        $vec = Vec::from('single');
-        $option = $vec->last();
+        $seq = Sequence::from('single');
+        $option = $seq->last();
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -156,16 +156,16 @@ final class VecAccessTest extends TestCase
         $this->assertSame('single', $value);
     }
 
-    public function testFirstAndLastOnSameVec(): void
+    public function testFirstAndLastOnSameSequence(): void
     {
-        $vec = Vec::from(1, 2, 3, 4, 5);
+        $seq = Sequence::from(1, 2, 3, 4, 5);
 
-        $first = $vec->first()->match(
+        $first = $seq->first()->match(
             static fn($v) => $v,
             static fn() => null,
         );
 
-        $last = $vec->last()->match(
+        $last = $seq->last()->match(
             static fn($v) => $v,
             static fn() => null,
         );
@@ -176,8 +176,8 @@ final class VecAccessTest extends TestCase
 
     public function testFindExistingElement(): void
     {
-        $vec = Vec::from(1, 2, 3, 4, 5);
-        $option = $vec->find(static fn($x) => $x > 3);
+        $seq = Sequence::from(1, 2, 3, 4, 5);
+        $option = $seq->find(static fn($x) => $x > 3);
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -189,24 +189,24 @@ final class VecAccessTest extends TestCase
 
     public function testFindNonExistingElement(): void
     {
-        $vec = Vec::from(1, 2, 3, 4, 5);
-        $option = $vec->find(static fn($x) => $x > 10);
+        $seq = Sequence::from(1, 2, 3, 4, 5);
+        $option = $seq->find(static fn($x) => $x > 10);
 
         $this->assertTrue($option->isNone());
     }
 
-    public function testFindInEmptyVec(): void
+    public function testFindInEmptySequence(): void
     {
-        $vec = Vec::new();
-        $option = $vec->find(static fn($x) => true);
+        $seq = Sequence::new();
+        $option = $seq->find(static fn($x) => true);
 
         $this->assertTrue($option->isNone());
     }
 
     public function testFindFirstElement(): void
     {
-        $vec = Vec::from(1, 2, 3, 4, 5);
-        $option = $vec->find(static fn($x) => $x === 1);
+        $seq = Sequence::from(1, 2, 3, 4, 5);
+        $option = $seq->find(static fn($x) => $x === 1);
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -218,8 +218,8 @@ final class VecAccessTest extends TestCase
 
     public function testFindLastElement(): void
     {
-        $vec = Vec::from(1, 2, 3, 4, 5);
-        $option = $vec->find(static fn($x) => $x === 5);
+        $seq = Sequence::from(1, 2, 3, 4, 5);
+        $option = $seq->find(static fn($x) => $x === 5);
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -231,8 +231,8 @@ final class VecAccessTest extends TestCase
 
     public function testFindWithMultipleMatches(): void
     {
-        $vec = Vec::from(1, 2, 3, 4, 2, 5);
-        $option = $vec->find(static fn($x) => $x === 2);
+        $seq = Sequence::from(1, 2, 3, 4, 2, 5);
+        $option = $seq->find(static fn($x) => $x === 2);
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -253,8 +253,8 @@ final class VecAccessTest extends TestCase
         $obj3 = new \stdClass();
         $obj3->id = 3;
 
-        $vec = Vec::from($obj1, $obj2, $obj3);
-        $option = $vec->find(static fn($obj) => $obj->id === 2);
+        $seq = Sequence::from($obj1, $obj2, $obj3);
+        $option = $seq->find(static fn($obj) => $obj->id === 2);
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -266,8 +266,8 @@ final class VecAccessTest extends TestCase
 
     public function testIndexOfExistingElement(): void
     {
-        $vec = Vec::from('a', 'b', 'c', 'd');
-        $option = $vec->indexOf('c');
+        $seq = Sequence::from('a', 'b', 'c', 'd');
+        $option = $seq->indexOf('c');
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -279,8 +279,8 @@ final class VecAccessTest extends TestCase
 
     public function testIndexOfFirstElement(): void
     {
-        $vec = Vec::from('a', 'b', 'c');
-        $option = $vec->indexOf('a');
+        $seq = Sequence::from('a', 'b', 'c');
+        $option = $seq->indexOf('a');
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -292,8 +292,8 @@ final class VecAccessTest extends TestCase
 
     public function testIndexOfLastElement(): void
     {
-        $vec = Vec::from('a', 'b', 'c');
-        $option = $vec->indexOf('c');
+        $seq = Sequence::from('a', 'b', 'c');
+        $option = $seq->indexOf('c');
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -305,24 +305,24 @@ final class VecAccessTest extends TestCase
 
     public function testIndexOfNonExistingElement(): void
     {
-        $vec = Vec::from('a', 'b', 'c');
-        $option = $vec->indexOf('z');
+        $seq = Sequence::from('a', 'b', 'c');
+        $option = $seq->indexOf('z');
 
         $this->assertTrue($option->isNone());
     }
 
-    public function testIndexOfInEmptyVec(): void
+    public function testIndexOfInEmptySequence(): void
     {
-        $vec = Vec::new();
-        $option = $vec->indexOf('a');
+        $seq = Sequence::new();
+        $option = $seq->indexOf('a');
 
         $this->assertTrue($option->isNone());
     }
 
     public function testIndexOfDuplicateElement(): void
     {
-        $vec = Vec::from('a', 'b', 'a', 'c');
-        $option = $vec->indexOf('a');
+        $seq = Sequence::from('a', 'b', 'a', 'c');
+        $option = $seq->indexOf('a');
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -336,9 +336,9 @@ final class VecAccessTest extends TestCase
     {
         $obj1 = new \stdClass();
         $obj2 = new \stdClass();
-        $vec = Vec::from($obj1, $obj2);
+        $seq = Sequence::from($obj1, $obj2);
 
-        $option = $vec->indexOf($obj2);
+        $option = $seq->indexOf($obj2);
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
@@ -356,8 +356,8 @@ final class VecAccessTest extends TestCase
         $obj2 = new \stdClass();
         $obj2->id = 1;
 
-        $vec = Vec::from($obj1);
-        $option = $vec->indexOf($obj2);
+        $seq = Sequence::from($obj1);
+        $option = $seq->indexOf($obj2);
 
         $this->assertTrue($option->isNone());
     }

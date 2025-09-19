@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\Str\Functional;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 use PHPUnit\Framework\TestCase;
 
@@ -46,7 +46,7 @@ final class StrFunctionalTest extends TestCase
         $this->assertSame(3, $headerFields->len()->toInt());
 
         // Parse data rows
-        $dataRows = Vec::new();
+        $dataRows = Sequence::new();
 
         for ($i = 1; $i < $lines->len()->toInt(); $i++) {
             $row = $lines->get($i)->unwrapOr(null);

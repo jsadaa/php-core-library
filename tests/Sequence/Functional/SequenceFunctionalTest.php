@@ -2,16 +2,16 @@
 
 declare(strict_types = 1);
 
-namespace Jsadaa\PhpCoreLibrary\Tests\Vec\Functional;
+namespace Jsadaa\PhpCoreLibrary\Tests\Sequence\Functional;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use PHPUnit\Framework\TestCase;
 
-final class VecFunctionalTest extends TestCase
+final class SequenceFunctionalTest extends TestCase
 {
     public function testComplexNumberProcessing(): void
     {
-        $numbers = Vec::from(1, -2, 3, -4, 5, -6, 7, -8, 9, -10);
+        $numbers = Sequence::from(1, -2, 3, -4, 5, -6, 7, -8, 9, -10);
 
         $result = $numbers
             ->map(static fn($n) => \abs($n))                   // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -24,11 +24,11 @@ final class VecFunctionalTest extends TestCase
 
     public function testTextProcessing(): void
     {
-        $sentences = Vec::from(
+        $sentences = Sequence::from(
             'Hello world',
             'PHP is great',
             'Simple collections',
-            'Vector implementation',
+            'Sequence implementation',
             'Functional programming',
         );
 
@@ -40,12 +40,12 @@ final class VecFunctionalTest extends TestCase
             ->sortBy(static fn($a, $b) => \strlen($a) <=> \strlen($b))
             ->fold(static fn($acc, $word) => $acc ? "$acc, $word" : $word, '');
 
-        $this->assertSame('HELLO, WORLD, GREAT, SIMPLE, VECTOR, FUNCTIONAL, COLLECTIONS, PROGRAMMING, IMPLEMENTATION', $result);
+        $this->assertSame('HELLO, WORLD, GREAT, SIMPLE, SEQUENCE, FUNCTIONAL, COLLECTIONS, PROGRAMMING, IMPLEMENTATION', $result);
     }
 
     public function testComplexObjectManipulation(): void
     {
-        $users = Vec::from(
+        $users = Sequence::from(
             $this->createUser('Alice', 28, ['PHP', 'JavaScript', 'Python']),
             $this->createUser('Bob', 22, ['Java', 'C#']),
             $this->createUser('Charlie', 35, ['Rust', 'Go', 'C++']),
@@ -73,7 +73,7 @@ final class VecFunctionalTest extends TestCase
     public function testDataTransformationPipeline(): void
     {
         // Raw data: [userId, amount, status]
-        $transactions = Vec::from(
+        $transactions = Sequence::from(
             [1, 100.0, 'completed'],
             [2, 150.0, 'pending'],
             [1, 200.0, 'completed'],
@@ -125,7 +125,7 @@ final class VecFunctionalTest extends TestCase
     public function testSlidingWindowAnalysis(): void
     {
         // Sample time series data (e.g., stock prices)
-        $timeSeriesData = Vec::from(10, 12, 15, 14, 13, 17, 19, 20, 18, 22);
+        $timeSeriesData = Sequence::from(10, 12, 15, 14, 13, 17, 19, 20, 18, 22);
 
         // Calculate moving averages using windows
         $movingAverages = $timeSeriesData
@@ -173,10 +173,10 @@ final class VecFunctionalTest extends TestCase
 
     public function testNestedDataProcessing(): void
     {
-        $departments = Vec::from(
+        $departments = Sequence::from(
             [
                 'name' => 'Engineering',
-                'employees' => Vec::from(
+                'employees' => Sequence::from(
                     ['name' => 'Alice', 'salary' => 85000, 'skills' => ['PHP', 'SQL', 'JavaScript']],
                     ['name' => 'Bob', 'salary' => 92000, 'skills' => ['Java', 'Python', 'Kubernetes']],
                     ['name' => 'Charlie', 'salary' => 78000, 'skills' => ['PHP', 'DevOps', 'AWS']],
@@ -184,14 +184,14 @@ final class VecFunctionalTest extends TestCase
             ],
             [
                 'name' => 'Marketing',
-                'employees' => Vec::from(
+                'employees' => Sequence::from(
                     ['name' => 'David', 'salary' => 72000, 'skills' => ['SEO', 'Content', 'Analytics']],
                     ['name' => 'Eve', 'salary' => 68000, 'skills' => ['Social Media', 'Copywriting']],
                 ),
             ],
             [
                 'name' => 'Product',
-                'employees' => Vec::from(
+                'employees' => Sequence::from(
                     ['name' => 'Frank', 'salary' => 89000, 'skills' => ['UX', 'Agile', 'Jira']],
                     ['name' => 'Grace', 'salary' => 95000, 'skills' => ['Product Strategy', 'Data Analysis']],
                     ['name' => 'Heidi', 'salary' => 82000, 'skills' => ['UX', 'UI', 'User Research']],

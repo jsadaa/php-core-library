@@ -1,6 +1,6 @@
 {
     "name": "jsadaa/php-core-library",
-    "description": "A PHP ecosystem library very loosely inspired by Rust, providing type-safe collections (Vec, Option, Result) and immutable data structures with filesystem, path, and time utilities.",
+    "description": "A PHP ecosystem library very loosely inspired by Rust, providing type-safe collections (Sequence, Option, Result) and immutable data structures with filesystem, path, and time utilities.",
     "type": "library",
     "keywords": [
         "types",
@@ -11,7 +11,7 @@
         "collections",
         "option",
         "result",
-        "vector",
+        "sequence",
         "filesystem",
         "path",
         "time",

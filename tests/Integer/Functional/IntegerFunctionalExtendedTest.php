@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\Integer\Functional;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Vec\Vec;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use PHPUnit\Framework\TestCase;
 
@@ -13,7 +13,7 @@ final class IntegerFunctionalExtendedTest extends TestCase
     public function testSieveOfEratosthenes(): void
     {
         // Generate primes up to a given limit
-        $generatePrimes = static function(int $limit): Vec {
+        $generatePrimes = static function(int $limit): Sequence {
             // Initialize all as potential primes (true)
             $sieve = [];
 
@@ -40,8 +40,8 @@ final class IntegerFunctionalExtendedTest extends TestCase
                 $p++;
             }
 
-            // Collect the primes into a Vec
-            $primes = Vec::new();
+            // Collect the primes into a Sequence
+            $primes = Sequence::new();
 
             for ($i = 2; $i <= $limit; $i++) {
                 if ($sieve[$i]) {
