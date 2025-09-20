@@ -903,7 +903,7 @@ final readonly class Str implements \Stringable
         if ($this->isEmpty()) {
             /** @var Result<bool, ParseError> */
             return Result::err(
-                new ParseError('Cannot convert empty string to boolean - expected values: true/false, yes/no, y/n, 1/0'),
+                new ParseError('Cannot convert empty string to boolean - expected values: true/false, 1/0'),
             );
         }
 
@@ -1213,14 +1213,14 @@ final readonly class Str implements \Stringable
      * Finds the first occurrence of a substring in the string
      *
      * @param string|Str $needle The substring to search for
-     * @return Option<int> The index of the first occurrence, or None if not found
+     * @return Option<Integer> The index of the first occurrence, or None if not found
      */
     public function find(string | self $needle): Option
     {
         $needle = $needle instanceof self ? $needle->toString() : $needle;
         $pos = \mb_strpos($this->value, $needle);
 
-        return $pos === false ? Option::none() : Option::some($pos);
+        return $pos === false ? Option::none() : Option::some(Integer::of($pos));
     }
 
     /**
