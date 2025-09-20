@@ -5,14 +5,15 @@ declare(strict_types = 1);
 namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Map;
 
 /**
- * @template T
- * @template S
+ * @template K
+ * @template V
  * @psalm-immutable
  */
-final readonly class Pair {
+final readonly class Pair
+{
     /**
-     * @param T $key
-     * @param S $value
+     * @param K $key
+     * @param V $value
      */
     private function __construct(private mixed $key, private mixed $value) {}
 
@@ -28,14 +29,14 @@ final readonly class Pair {
     }
 
     /**
-     * @return T
+     * @return K
      */
     public function key(): mixed {
         return $this->key;
     }
 
     /**
-     * @return S
+     * @return V
      */
     public function value(): mixed {
         return $this->value;

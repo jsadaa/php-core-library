@@ -11,16 +11,17 @@ use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
  * A collection of key-value pairs
  * Type safety is enforced via static analysis only - no runtime type checking.
  *
- * @template T
- * @template S
+ * @template K
+ * @template V
  * @psalm-immutable
  */
-final readonly class Map {
-    /** @var Sequence<Pair<T, S>> */
+final readonly class Map
+{
+    /** @var Sequence<Pair<K, V>> */
     private Sequence $values;
 
     /**
-     * @param Sequence<Pair<T, S>> $values
+     * @param Sequence<Pair<K, V>> $values
      */
     private function __construct(Sequence $values)
     {
@@ -58,7 +59,7 @@ final readonly class Map {
     /**
      * Clear the collection
      *
-     * @return self<T, S>
+     * @return self<K, V>
      */
     public function clear(): self
     {
@@ -68,7 +69,7 @@ final readonly class Map {
     /**
      * Check if the collection contains a key
      *
-     * @param T $key The key to check
+     * @param K $key The key to check
      */
     public function containsKey(mixed $key): bool
     {
@@ -78,7 +79,7 @@ final readonly class Map {
     /**
      * Check if the collection contains a value
      *
-     * @param S $value The value to check
+     * @param V $value The value to check
      */
     public function containsValue(mixed $value): bool
     {
@@ -88,8 +89,8 @@ final readonly class Map {
     /**
      * Filter the collection based on a predicate function
      *
-     * @param callable(T, S): bool $predicate The predicate function
-     * @return self<T, S>
+     * @param callable(K, V): bool $predicate The predicate function
+     * @return self<K, V>
      */
     public function filter(callable $predicate): self
     {
@@ -104,8 +105,8 @@ final readonly class Map {
      * Map the collection based on a mapper function
      *
      * @template U
-     * @param callable(T, S): U $mapper The mapper function
-     * @return self<T, U>
+     * @param callable(K, V): U $mapper The mapper function
+     * @return self<K, U>
      */
     public function map(callable $mapper): self
     {
@@ -119,8 +120,8 @@ final readonly class Map {
     /**
      * Get the value associated with a key
      *
-     * @param T $key The key to retrieve the value for
-     * @return Option<S>
+     * @param K $key The key to retrieve the value for
+     * @return Option<V>
      */
     public function get(mixed $key): Option
     {
@@ -136,9 +137,9 @@ final readonly class Map {
     /**
      * Insert a key-value pair into the map
      *
-     * @param T $key The key to insert
-     * @param S $value The value to insert
-     * @return self<T, S>
+     * @param K $key The key to insert
+     * @param V $value The value to insert
+     * @return self<K, V>
      */
     public function insert(mixed $key, mixed $value): self
     {
@@ -152,8 +153,8 @@ final readonly class Map {
     /**
      * Remove a key-value pair from the map
      *
-     * @param T $key The key of the pair to remove
-     * @return self<T, S>
+     * @param K $key The key of the pair to remove
+     * @return self<K, V>
      */
     public function remove(mixed $key): self
     {
@@ -176,7 +177,7 @@ final readonly class Map {
     /**
      * Return a sequence of all keys in the map
      *
-     * @return Sequence<T>
+     * @return Sequence<K>
      */
     public function keys(): Sequence
     {
@@ -186,7 +187,7 @@ final readonly class Map {
     /**
      * Return a sequence of all values in the map
      *
-     * @return Sequence<S>
+     * @return Sequence<V>
      */
     public function values(): Sequence
     {
@@ -196,7 +197,7 @@ final readonly class Map {
     /**
      * Check if the map is equal to another map
      *
-     * @param self<T, S> $other The map to compare with
+     * @param self<K, V> $other The map to compare with
      */
     public function eq(self $other): bool
     {
@@ -210,8 +211,8 @@ final readonly class Map {
     /**
      * Find a key-value pair in the map that satisfies the given predicate
      *
-     * @param callable(T, S): bool $predicate The predicate to apply to each key-value pair
-     * @return Option<Pair<T, S>>
+     * @param callable(K, V): bool $predicate The predicate to apply to each key-value pair
+     * @return Option<Pair<K, V>>
      */
     public function find(callable $predicate): Option
     {
@@ -221,8 +222,8 @@ final readonly class Map {
     /**
      * Append all key-value pairs from another map to this map
      *
-     * @param self<T, S> $other The map to append
-     * @return self<T, S>
+     * @param self<K, V> $other The map to append
+     * @return self<K, V>
      */
     public function append(self $other): self
     {
