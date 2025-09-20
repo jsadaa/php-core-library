@@ -15,7 +15,8 @@ use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
  *
  * @psalm-immutable
  */
-final readonly class Json {
+final readonly class Json
+{
     /**
      * Encode a PHP value to JSON string.
      *
