@@ -91,7 +91,7 @@ final class StrAccessTest extends TestCase
         $position = $str->find('world');
 
         $this->assertTrue($position->isSome());
-        $this->assertSame(6, $position->unwrapOr(-1));
+        $this->assertSame(6, $position->unwrapOr(-1)->toInt());
     }
 
     public function testFindUtf8Substring(): void
@@ -101,7 +101,7 @@ final class StrAccessTest extends TestCase
         $position = $str->find('ö');
 
         $this->assertTrue($position->isSome());
-        $this->assertEquals(4, $position->unwrapOr(-1));
+        $this->assertEquals(4, $position->unwrapOr(-1)->toInt());
     }
 
     public function testFindNonExistentSubstring(): void
@@ -118,7 +118,7 @@ final class StrAccessTest extends TestCase
         $position = $str->find('');
 
         $this->assertTrue($position->isSome());
-        $this->assertSame(0, $position->unwrapOr(-1));
+        $this->assertSame(0, $position->unwrapOr(-1)->toInt());
     }
 
     public function testFindOnEmptyString(): void
