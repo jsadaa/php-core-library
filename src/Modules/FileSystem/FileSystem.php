@@ -155,7 +155,7 @@ final readonly class FileSystem {
 
         /** @var Result<Sequence<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
         return Result::ok(
-            Sequence::fromArray($contents)
+            Sequence::ofArray($contents)
                 ->filter(static fn(string $item) => $item !== '.' && $item !== '..')
                 ->map(static fn(string $item) => DirectoryEntry::from($path->join(Path::from($item)))),
         );

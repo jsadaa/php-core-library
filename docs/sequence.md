@@ -30,17 +30,17 @@ Creates a new collection from the given individual elements.
 
 ```php
 // Create a Sequence from individual elements
-$seq = Sequence::from(1, 2, 3, 4, 5);
+$seq = Sequence::of(1, 2, 3, 4, 5);
 ```
 
 ### From Array
 
-Creates a new collection from the given array. This is a helper method to avoid performance issues with variadic arguments in the `Sequence::from` method when working with large arrays.
+Creates a new collection from the given array. This is a helper method to avoid performance issues with variadic arguments in the `Sequence::of` method when working with large arrays.
 
 ```php
 // Create a Sequence from an existing array
 $array = [1, 2, 3, 4, 5];
-$seq = Sequence::fromArray($array);
+$seq = Sequence::ofArray($array);
 ```
 
 ### Empty Sequence
@@ -59,7 +59,7 @@ $emptySequence = Sequence::new();
 Gets the number of elements in the collection.
 
 ```php
-$seq = Sequence::from(1, 2, 3);
+$seq = Sequence::of(1, 2, 3);
 $length = $seq->len(); // 3
 
 $empty = Sequence::new();
@@ -74,7 +74,7 @@ Checks if the collection contains no elements.
 $seq = Sequence::new();
 $isEmpty = $seq->isEmpty(); // true
 
-$seq = Sequence::from(1);
+$seq = Sequence::of(1);
 $isEmpty = $seq->isEmpty(); // false
 ```
 
@@ -83,7 +83,7 @@ $isEmpty = $seq->isEmpty(); // false
 Returns a string representation of the collection, including the type of elements it contains.
 
 ```php
-$seq = Sequence::from(1, 2, 3);
+$seq = Sequence::of(1, 2, 3);
 echo $seq; // "Sequence<integer> [1, 2, 3]"
 
 $empty = Sequence::new();
@@ -95,11 +95,11 @@ echo $empty; // "Sequence<> []"
 Checks if two Sequences contain the same elements in the same order. The comparison is done using strict equality (`===`).
 
 ```php
-$seq1 = Sequence::from(1, 2, 3);
-$seq2 = Sequence::from(1, 2, 3);
+$seq1 = Sequence::of(1, 2, 3);
+$seq2 = Sequence::of(1, 2, 3);
 $areEqual = $seq1->eq($seq2); // true
 
-$seq3 = Sequence::from(3, 2, 1);
+$seq3 = Sequence::of(3, 2, 1);
 $areEqual = $seq1->eq($seq3); // false
 ```
 
@@ -110,7 +110,7 @@ $areEqual = $seq1->eq($seq3); // false
 Checks if the collection contains the given element. Uses strict comparison (`===`).
 
 ```php
-$seq = Sequence::from(1, 2, 3);
+$seq = Sequence::of(1, 2, 3);
 $hasTwo = $seq->contains(2); // true
 $hasFour = $seq->contains(4); // false
 ```
@@ -120,7 +120,7 @@ $hasFour = $seq->contains(4); // false
 Checks if all elements in the collection satisfy the given predicate. Returns true if all elements satisfy the predicate, false otherwise.
 
 ```php
-$seq = Sequence::from(1, 2, 3);
+$seq = Sequence::of(1, 2, 3);
 $allPositive = $seq->all(fn($n) => $n > 0); // true
 $allEven = $seq->all(fn($n) => $n % 2 === 0); // false
 ```
@@ -130,7 +130,7 @@ $allEven = $seq->all(fn($n) => $n % 2 === 0); // false
 Checks if any element in the collection satisfies the given predicate. Returns true if at least one element satisfies the predicate, false otherwise.
 
 ```php
-$seq = Sequence::from(1, 2, 3);
+$seq = Sequence::of(1, 2, 3);
 $anyEven = $seq->any(fn($n) => $n % 2 === 0); // true
 $anyNegative = $seq->any(fn($n) => $n < 0); // false
 ```
@@ -140,7 +140,7 @@ $anyNegative = $seq->any(fn($n) => $n < 0); // false
 Gets the index of the first occurrence of the given element. Returns an Option containing the index if found, or None if not found.
 
 ```php
-$seq = Sequence::from("apple", "banana", "cherry");
+$seq = Sequence::of("apple", "banana", "cherry");
 $index = $seq->indexOf("banana"); // Option::some(1)
 $notFound = $seq->indexOf("grape"); // Option::none()
 ```
@@ -152,10 +152,10 @@ $notFound = $seq->indexOf("grape"); // Option::none()
 Maps each element in the collection to a new value using the given callback function. Returns a new Sequence containing the transformed elements.
 
 ```php
-$seq = Sequence::from(1, 2, 3);
+$seq = Sequence::of(1, 2, 3);
 $doubled = $seq->map(fn($n) => $n * 2); // Sequence [2, 4, 6]
 
-$seq = Sequence::from('a', 'b', 'c');
+$seq = Sequence::of('a', 'b', 'c');
 $upper = $seq->map(fn($s) => strtoupper($s)); // Sequence [A, B, C]
 ```
 
@@ -164,10 +164,10 @@ $upper = $seq->map(fn($s) => strtoupper($s)); // Sequence [A, B, C]
 Filters the elements of the collection using the given callback. Returns a new Sequence containing only the elements for which the callback returns true.
 
 ```php
-$seq = Sequence::from(1, 2, 3, 4, 5);
+$seq = Sequence::of(1, 2, 3, 4, 5);
 $evenNumbers = $seq->filter(fn($n) => $n % 2 === 0); // Sequence [2, 4]
 
-$seq = Sequence::from('apple', 'banana', 'cherry');
+$seq = Sequence::of('apple', 'banana', 'cherry');
 $longWords = $seq->filter(fn($s) => strlen($s) > 5); // Sequence [banana, cherry]
 ```
 
@@ -178,7 +178,7 @@ $longWords = $seq->filter(fn($s) => strlen($s) > 5); // Sequence [banana, cherry
 Maps each element to an optional value and filters out the None values. This combines the functionality of `map` and `filter` in a single operation.
 
 ```php
-$seq = Sequence::from(1, -2, 3, -4, 5);
+$seq = Sequence::of(1, -2, 3, -4, 5);
 $positiveSquared = $seq->filterMap(function($n) {
     if ($n > 0) {
         return Option::some($n * $n);
@@ -192,8 +192,8 @@ $positiveSquared = $seq->filterMap(function($n) {
 Maps elements to iterables and then flattens the result into a single collection. This is equivalent to calling `map()` followed by `flatten()`.
 
 ```php
-$seq = Sequence::from(1, 2, 3);
-$result = $seq->flatMap(fn($n) => Sequence::from($n, $n * 10)); // Sequence [1, 10, 2, 20, 3, 30]
+$seq = Sequence::of(1, 2, 3);
+$result = $seq->flatMap(fn($n) => Sequence::of($n, $n * 10)); // Sequence [1, 10, 2, 20, 3, 30]
 ```
 
 ### Flatten
@@ -201,9 +201,9 @@ $result = $seq->flatMap(fn($n) => Sequence::from($n, $n * 10)); // Sequence [1, 
 Flattens a collection of collections into a single collection. If the collection contains Sequence instances or other iterables (like arrays), this method extracts all elements from those nested collections and combines them into a single Sequence. Only one level of nesting is flattened.
 
 ```php
-$nested = Sequence::from(
-    Sequence::from(1, 2),
-    Sequence::from(3, 4),
+$nested = Sequence::of(
+    Sequence::of(1, 2),
+    Sequence::of(3, 4),
     5
 );
 $flat = $nested->flatten(); // Sequence [1, 2, 3, 4, 5]
@@ -214,7 +214,7 @@ $flat = $nested->flatten(); // Sequence [1, 2, 3, 4, 5]
 Reverses the order of elements in the Sequence.
 
 ```php
-$seq = Sequence::from(1, 2, 3);
+$seq = Sequence::of(1, 2, 3);
 $reversed = $seq->reverse(); // Sequence [3, 2, 1]
 ```
 
@@ -226,7 +226,7 @@ Sorts the collection using the default sorting algorithm. The sorting type is de
 - Other types use PHP's default comparison
 
 ```php
-$seq = Sequence::from(3, 1, 2);
+$seq = Sequence::of(3, 1, 2);
 $sorted = $seq->sort(); // Sequence [1, 2, 3]
 ```
 
@@ -238,7 +238,7 @@ Sorts the collection using a custom comparator. The comparison function must ret
 - Greater than 0 if the first argument is greater than the second
 
 ```php
-$people = Sequence::from(
+$people = Sequence::of(
     ["name" => "Alice", "age" => 30],
     ["name" => "Bob", "age" => 25],
     ["name" => "Charlie", "age" => 35]
@@ -253,7 +253,7 @@ $sortedByAge = $people->sortBy(fn($person) => $person["age"]);
 Returns a new Sequence with duplicate elements removed. For scalar types (integer, float, string, boolean), this uses a hash map approach. For objects, objects are compared by reference, so only identical object instances are considered duplicates.
 
 ```php
-$seq = Sequence::from(1, 2, 2, 3, 3, 3, 4);
+$seq = Sequence::of(1, 2, 2, 3, 3, 3, 4);
 $unique = $seq->dedup(); // Sequence [1, 2, 3, 4]
 ```
 
@@ -264,7 +264,7 @@ $unique = $seq->dedup(); // Sequence [1, 2, 3, 4]
 Gets an element from the collection at the given index. Returns an Option containing the element if the index is valid, or None if the index is out of bounds.
 
 ```php
-$seq = Sequence::from("apple", "banana", "cherry");
+$seq = Sequence::of("apple", "banana", "cherry");
 $second = $seq->get(1); // Option::some("banana")
 $outOfBounds = $seq->get(10); // Option::none()
 ```
@@ -274,7 +274,7 @@ $outOfBounds = $seq->get(10); // Option::none()
 Returns the first element of the collection. If the collection is empty, returns None.
 
 ```php
-$seq = Sequence::from("apple", "banana", "cherry");
+$seq = Sequence::of("apple", "banana", "cherry");
 $first = $seq->first(); // Option::some("apple")
 
 $empty = Sequence::new();
@@ -286,7 +286,7 @@ $noFirst = $empty->first(); // Option::none()
 Returns the last element of the collection. If the collection is empty, returns None.
 
 ```php
-$seq = Sequence::from("apple", "banana", "cherry");
+$seq = Sequence::of("apple", "banana", "cherry");
 $last = $seq->last(); // Option::some("cherry")
 
 $empty = Sequence::new();
@@ -300,7 +300,7 @@ $noLast = $empty->last(); // Option::none()
 Finds the first element in the collection that satisfies the given predicate. Returns an Option containing the first matching element, or None if no element matches.
 
 ```php
-$seq = Sequence::from(1, 2, 3, 4, 5);
+$seq = Sequence::of(1, 2, 3, 4, 5);
 $found = $seq->find(fn($n) => $n > 3); // Option::some(4)
 $notFound = $seq->find(fn($n) => $n > 10); // Option::none()
 ```
@@ -310,7 +310,7 @@ $notFound = $seq->find(fn($n) => $n > 10); // Option::none()
 Maps each element to an optional value and returns the first Some value. This is useful when you want to transform elements while searching for a specific condition. It combines the functionality of `find` and `map` in a single operation.
 
 ```php
-$seq = Sequence::from(1, -2, 3, -4, 5);
+$seq = Sequence::of(1, -2, 3, -4, 5);
 $found = $seq->findMap(function($n) {
     if ($n < 0) {
         return Option::some($n * -1);
@@ -324,7 +324,7 @@ $found = $seq->findMap(function($n) {
 Takes elements from the beginning of the Sequence up to the specified count and returns a new Sequence.
 
 ```php
-$seq = Sequence::from(1, 2, 3, 4, 5);
+$seq = Sequence::of(1, 2, 3, 4, 5);
 $firstThree = $seq->take(3); // Sequence [1, 2, 3]
 ```
 
@@ -333,10 +333,10 @@ $firstThree = $seq->take(3); // Sequence [1, 2, 3]
 Takes elements from the beginning of the Sequence while the predicate is true and returns a new Sequence.
 
 ```php
-$seq = Sequence::from(1, 2, 3, 4, 5);
+$seq = Sequence::of(1, 2, 3, 4, 5);
 $lessThanFour = $seq->takeWhile(fn($n) => $n < 4); // Sequence [1, 2, 3]
 
-$seq = Sequence::from(2, 4, 6, 7, 8);
+$seq = Sequence::of(2, 4, 6, 7, 8);
 $evens = $seq->takeWhile(fn($n) => $n % 2 === 0); // Sequence [2, 4, 6]
 ```
 
@@ -345,7 +345,7 @@ $evens = $seq->takeWhile(fn($n) => $n % 2 === 0); // Sequence [2, 4, 6]
 Skips elements from the beginning of the Sequence up to the specified count and returns a new Sequence with the remaining elements.
 
 ```php
-$seq = Sequence::from(1, 2, 3, 4, 5);
+$seq = Sequence::of(1, 2, 3, 4, 5);
 $withoutFirstTwo = $seq->skip(2); // Sequence [3, 4, 5]
 ```
 
@@ -354,10 +354,10 @@ $withoutFirstTwo = $seq->skip(2); // Sequence [3, 4, 5]
 Creates a new Sequence by skipping elements from the beginning of the Sequence while the predicate is true.
 
 ```php
-$seq = Sequence::from(1, 2, 3, 4, 5);
+$seq = Sequence::of(1, 2, 3, 4, 5);
 $skipLessThanThree = $seq->skipWhile(fn($n) => $n < 3); // Sequence [3, 4, 5]
 
-$seq = Sequence::from(2, 4, 6, 7, 8, 10);
+$seq = Sequence::of(2, 4, 6, 7, 8, 10);
 $afterFirstOdd = $seq->skipWhile(fn($n) => $n % 2 === 0); // Sequence [7, 8, 10]
 ```
 
@@ -368,7 +368,7 @@ $afterFirstOdd = $seq->skipWhile(fn($n) => $n % 2 === 0); // Sequence [7, 8, 10]
 Applies the given callback to each element of the collection. This should be used when you want to perform an action that has a side effect, such as printing, logging, or updating a database.
 
 ```php
-$seq = Sequence::from(1, 2, 3);
+$seq = Sequence::of(1, 2, 3);
 $seq->forEach(fn($n) => echo "$n, "); // Outputs: 1, 2, 3,
 ```
 
@@ -379,7 +379,7 @@ $seq->forEach(fn($n) => echo "$n, "); // Outputs: 1, 2, 3,
 Returns an iterable for the collection, allowing you to use the Sequence in foreach loops.
 
 ```php
-$seq = Sequence::from(1, 2, 3);
+$seq = Sequence::of(1, 2, 3);
 foreach ($seq->iter() as $item) {
     echo "$item, "; // Outputs: 1, 2, 3,
 }
@@ -392,11 +392,11 @@ foreach ($seq->iter() as $item) {
 Folds the collection to a single value using the given callback. The callback takes an accumulator and the current element, and returns a new accumulator value.
 
 ```php
-$seq = Sequence::from(1, 2, 3, 4, 5);
+$seq = Sequence::of(1, 2, 3, 4, 5);
 $sum = $seq->fold(fn($acc, $n) => $acc + $n, 0); // 15
 $product = $seq->fold(fn($acc, $n) => $acc * $n, 1); // 120
 
-$seq = Sequence::from('a', 'b', 'c');
+$seq = Sequence::of('a', 'b', 'c');
 $concat = $seq->fold(fn($acc, $s) => $acc . $s, ''); // "abc"
 ```
 
@@ -407,8 +407,8 @@ $concat = $seq->fold(fn($acc, $s) => $acc . $s, ''); // "abc"
 Appends another collection to the current one, returning a new Sequence containing elements from both collections.
 
 ```php
-$seq1 = Sequence::from(1, 2, 3);
-$seq2 = Sequence::from(4, 5, 6);
+$seq1 = Sequence::of(1, 2, 3);
+$seq2 = Sequence::of(4, 5, 6);
 $combined = $seq1->append($seq2); // Sequence [1, 2, 3, 4, 5, 6]
 ```
 
@@ -417,8 +417,8 @@ $combined = $seq1->append($seq2); // Sequence [1, 2, 3, 4, 5, 6]
 Combines two Sequences into a single Sequence of pairs. Each pair is represented as a Sequence with two elements.
 
 ```php
-$seq1 = Sequence::from(1, 2, 3);
-$seq2 = Sequence::from(4, 5, 6);
+$seq1 = Sequence::of(1, 2, 3);
+$seq2 = Sequence::of(4, 5, 6);
 $zipped = $seq1->zip($seq2); // Sequence [Sequence [1, 4], Sequence [2, 5], Sequence [3, 6]]
 ```
 
@@ -429,7 +429,7 @@ $zipped = $seq1->zip($seq2); // Sequence [Sequence [1, 4], Sequence [2, 5], Sequ
 Appends an element to the end of the collection, returning a new Sequence with the added element.
 
 ```php
-$seq = Sequence::from(1, 2, 3);
+$seq = Sequence::of(1, 2, 3);
 $withFour = $seq->push(4); // Sequence [1, 2, 3, 4]
 ```
 
@@ -438,7 +438,7 @@ $withFour = $seq->push(4); // Sequence [1, 2, 3, 4]
 Inserts an element at the given index, returning a new Sequence with the inserted element.
 
 ```php
-$seq = Sequence::from(1, 3, 4);
+$seq = Sequence::of(1, 3, 4);
 $withTwo = $seq->insertAt(1, 2); // Sequence [1, 2, 3, 4]
 ```
 
@@ -449,7 +449,7 @@ $withTwo = $seq->insertAt(1, 2); // Sequence [1, 2, 3, 4]
 Generates sliding windows of the given size from the collection. Creates overlapping views into the original collection, each with the specified size.
 
 ```php
-$seq = Sequence::from(1, 2, 3, 4, 5);
+$seq = Sequence::of(1, 2, 3, 4, 5);
 $windows = $seq->windows(3);
 // Sequence [Sequence [1, 2, 3], Sequence [2, 3, 4], Sequence [3, 4, 5]]
 ```
@@ -461,7 +461,7 @@ $windows = $seq->windows(3);
 Resizes the collection to a given size, filling with a specified value if necessary. If the new size is smaller, elements are truncated. If it's larger, the specified value is used to fill the additional slots.
 
 ```php
-$seq = Sequence::from(1, 2, 3);
+$seq = Sequence::of(1, 2, 3);
 $larger = $seq->resize(5, 0); // Sequence [1, 2, 3, 0, 0]
 $smaller = $seq->resize(2, 0); // Sequence [1, 2]
 ```
@@ -471,7 +471,7 @@ $smaller = $seq->resize(2, 0); // Sequence [1, 2]
 Truncates the Sequence to the specified size, keeping only the first N elements.
 
 ```php
-$seq = Sequence::from(1, 2, 3, 4, 5);
+$seq = Sequence::of(1, 2, 3, 4, 5);
 $truncated = $seq->truncate(3); // Sequence [1, 2, 3]
 ```
 
@@ -482,7 +482,7 @@ $truncated = $seq->truncate(3); // Sequence [1, 2, 3]
 Swaps two elements in the Sequence at the given indices and returns a Result containing the modified Sequence or an error if any index is out of bounds.
 
 ```php
-$seq = Sequence::from("a", "b", "c", "d");
+$seq = Sequence::of("a", "b", "c", "d");
 $swapped = $seq->swap(0, 3); // Result::ok(Sequence ["d", "b", "c", "a"])
 ```
 
@@ -491,7 +491,7 @@ $swapped = $seq->swap(0, 3); // Result::ok(Sequence ["d", "b", "c", "a"])
 Removes an element at the specified index, returning a new Sequence without that element.
 
 ```php
-$seq = Sequence::from(1, 2, 3, 4, 5);
+$seq = Sequence::of(1, 2, 3, 4, 5);
 $withoutThird = $seq->removeAt(2); // Sequence [1, 2, 4, 5]
 ```
 
@@ -502,7 +502,7 @@ $withoutThird = $seq->removeAt(2); // Sequence [1, 2, 4, 5]
 Clears the collection, removing all elements.
 
 ```php
-$seq = Sequence::from(1, 2, 3);
+$seq = Sequence::of(1, 2, 3);
 $empty = $seq->clear(); // Sequence []
 ```
 
@@ -512,11 +512,11 @@ Type safety in Sequence is enforced through static analysis tools like Psalm. Wh
 
 ```php
 // This will work at runtime but will fail static analysis
-$mixedSequence = Sequence::from(1, "two", 3.0);
+$mixedSequence = Sequence::of(1, "two", 3.0);
 
 // This is the recommended approach
-$intSequence = Sequence::from(1, 2, 3);
-$strSequence = Sequence::from("one", "two", "three");
+$intSequence = Sequence::of(1, 2, 3);
+$strSequence = Sequence::of("one", "two", "three");
 ```
 
 Remember that Sequence is immutable, so every operation returns a new Sequence instance rather than modifying the original. This ensures that your data remains consistent and predictable throughout your application.

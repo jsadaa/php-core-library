@@ -141,7 +141,7 @@ final class DoubleFunctionalTest extends TestCase
 
     public function testStatisticsCalculations(): void
     {
-        $values = Sequence::from(
+        $values = Sequence::of(
             Double::from(12.5),
             Double::from(5.2),
             Double::from(8.7),

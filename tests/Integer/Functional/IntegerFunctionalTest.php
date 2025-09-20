@@ -107,7 +107,7 @@ final class IntegerFunctionalTest extends TestCase
 
     public function testStatisticsCalculation(): void
     {
-        $values = Sequence::from(
+        $values = Sequence::of(
             Integer::from(12),
             Integer::from(5),
             Integer::from(8),

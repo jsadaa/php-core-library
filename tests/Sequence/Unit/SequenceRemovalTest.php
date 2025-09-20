@@ -11,7 +11,7 @@ final class SequenceRemovalTest extends TestCase
 {
     public function testClearSequence(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $clearedSequence = $seq->clear();
 
         $this->assertFalse($seq->isEmpty(), 'Original Sequence should remain unchanged');
@@ -29,7 +29,7 @@ final class SequenceRemovalTest extends TestCase
 
     public function testClearPreservesOriginalSequence(): void
     {
-        $seq = Sequence::from('a', 'b');
+        $seq = Sequence::of('a', 'b');
         $clearedSequence = $seq->clear();
 
         $this->assertSame(['a', 'b'], $seq->toArray());
@@ -38,7 +38,7 @@ final class SequenceRemovalTest extends TestCase
 
     public function testRemoveItemAtValidIndex(): void
     {
-        $seq = Sequence::from('a', 'b', 'c', 'd');
+        $seq = Sequence::of('a', 'b', 'c', 'd');
         $modifiedSequence = $seq->removeAt(1);
 
         $this->assertSame(['a', 'c', 'd'], $modifiedSequence->toArray());
@@ -47,7 +47,7 @@ final class SequenceRemovalTest extends TestCase
 
     public function testRemoveItemAtFirstIndex(): void
     {
-        $seq = Sequence::from('a', 'b', 'c');
+        $seq = Sequence::of('a', 'b', 'c');
         $modifiedSequence = $seq->removeAt(0);
 
         $this->assertSame(['b', 'c'], $modifiedSequence->toArray());
@@ -56,7 +56,7 @@ final class SequenceRemovalTest extends TestCase
 
     public function testRemoveItemAtLastIndex(): void
     {
-        $seq = Sequence::from('a', 'b', 'c');
+        $seq = Sequence::of('a', 'b', 'c');
         $modifiedSequence = $seq->removeAt(2);
 
         $this->assertSame(['a', 'b'], $modifiedSequence->toArray());
@@ -65,7 +65,7 @@ final class SequenceRemovalTest extends TestCase
 
     public function testRemoveItemFromSingleItemSequence(): void
     {
-        $seq = Sequence::from('singleton');
+        $seq = Sequence::of('singleton');
         $modifiedSequence = $seq->removeAt(0);
 
         $this->assertSame([], $modifiedSequence->toArray());
@@ -74,7 +74,7 @@ final class SequenceRemovalTest extends TestCase
 
     public function testRemoveWithNegativeIndexReturnsUnchangedSequence(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $otherSequence = $seq->removeAt(-1);
 
         $this->assertSame([1, 2, 3], $otherSequence->toArray());
@@ -83,7 +83,7 @@ final class SequenceRemovalTest extends TestCase
 
     public function testRemoveWithOutOfBoundsIndexReturnsUnchangedSequence(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $otherSequence = $seq->removeAt(3);
 
         $this->assertSame([1, 2, 3], $otherSequence->toArray());
@@ -105,7 +105,7 @@ final class SequenceRemovalTest extends TestCase
         $obj2 = new \stdClass();
         $obj3 = new \stdClass();
 
-        $seq = Sequence::from($obj1, $obj2, $obj3);
+        $seq = Sequence::of($obj1, $obj2, $obj3);
         $modifiedSequence = $seq->removeAt(1);
 
         $this->assertSame([$obj1, $obj3], $modifiedSequence->toArray());
@@ -114,7 +114,7 @@ final class SequenceRemovalTest extends TestCase
 
     public function testRemoveMultipleItemsSequentially(): void
     {
-        $seq = Sequence::from('a', 'b', 'c', 'd', 'e');
+        $seq = Sequence::of('a', 'b', 'c', 'd', 'e');
 
         $modifiedSequence = $seq->removeAt(1);
         $this->assertSame(['a', 'c', 'd', 'e'], $modifiedSequence->toArray());

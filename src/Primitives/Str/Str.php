@@ -295,7 +295,7 @@ final readonly class Str implements \Stringable
         }
 
         /** @var Sequence<Integer> */
-        return Sequence::fromArray(\array_values($unpacked))->map(static fn(int $byte) => Integer::from($byte));
+        return Sequence::ofArray(\array_values($unpacked))->map(static fn(int $byte) => Integer::from($byte));
     }
 
     /**
@@ -318,7 +318,7 @@ final readonly class Str implements \Stringable
         $chars = \mb_str_split($this->value, 1, self::UTF8);
 
         /** @var Sequence<Str> */
-        return Sequence::fromArray($chars)->map(static fn(string $char) => Str::from($char));
+        return Sequence::ofArray($chars)->map(static fn(string $char) => Str::from($char));
     }
 
     /**
@@ -356,7 +356,7 @@ final readonly class Str implements \Stringable
         }
 
         /** @var Sequence<Str> */
-        return Sequence::fromArray($parts)->map(
+        return Sequence::ofArray($parts)->map(
             static fn(string $part) => Str::from($part),
         );
     }
@@ -378,7 +378,7 @@ final readonly class Str implements \Stringable
         $before = \mb_substr($this->value, 0, $index, self::UTF8);
         $after = \mb_substr($this->value, $index, null, self::UTF8);
 
-        return Sequence::fromArray([
+        return Sequence::ofArray([
             new self($before),
             new self($after),
         ]);
@@ -400,7 +400,7 @@ final readonly class Str implements \Stringable
         $parts = \is_array($parts) ? $parts : [];
 
         /** @var Sequence<Str> */
-        return Sequence::fromArray($parts)->map(
+        return Sequence::ofArray($parts)->map(
             static fn(string $part) => Str::from($part),
         );
     }
@@ -986,7 +986,7 @@ final readonly class Str implements \Stringable
             return Sequence::new();
         }
 
-        return Sequence::fromArray($matches[0])->map(
+        return Sequence::ofArray($matches[0])->map(
             static fn(string $match) => Str::from($match),
         );
     }
@@ -1059,7 +1059,7 @@ final readonly class Str implements \Stringable
             $offsets[] = $offset;
         }
 
-        return Sequence::fromArray($offsets);
+        return Sequence::ofArray($offsets);
     }
 
     /**
@@ -1258,7 +1258,7 @@ final readonly class Str implements \Stringable
         }
 
         /** @var Sequence<Str> */
-        return Sequence::fromArray($lines)->map(
+        return Sequence::ofArray($lines)->map(
             static fn(string $line) => Str::from($line),
         );
     }

@@ -16,7 +16,7 @@ use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
  * @psalm-immutable
  * @template T
  */
-final class Sequence
+final readonly class Sequence
 {
     /**
      * @var array<int, T>
@@ -174,7 +174,7 @@ final class Sequence
         $length = $this->len()->min($other->len());
 
         for ($i = 0; $i < $length->toInt(); $i++) {
-            $zipped[] = self::from($this->collection[$i], $other->collection[$i]);
+            $zipped[] = self::of($this->collection[$i], $other->collection[$i]);
         }
 
         return new self($zipped);
@@ -188,7 +188,7 @@ final class Sequence
      * @return self<U> The new collection
      * @psalm-pure
      */
-    public static function from(mixed ...$elements): self
+    public static function of(mixed ...$elements): self
     {
         /** @var self<U> */
         return new self($elements);
@@ -197,14 +197,14 @@ final class Sequence
     /**
      * Create a new collection from the given array
      *
-     * This is a helper constructor to avoid performances issues with variadic arguments in the Sequence::from method when you work with large arrays.
+     * This is a helper constructor to avoid performances issues with variadic arguments in the Sequence::of method when you work with large arrays.
      *
      * @template U
      * @param array<U> $elements The array to create the collection from
      * @return self<U> The new collection
      * @psalm-pure
      */
-    public static function fromArray(array $elements): self
+    public static function ofArray(array $elements): self
     {
         /** @var self<U> */
         return new self($elements);
@@ -368,10 +368,10 @@ final class Sequence
 
         for ($i = 0; $i <= $count->sub($size)->toInt(); $i++) {
             $window = \array_slice($this->collection, $i, $size->toInt());
-            $windows[] = self::from(...$window);
+            $windows[] = self::of(...$window);
         }
 
-        return self::from(...$windows);
+        return self::of(...$windows);
     }
 
     /**
@@ -429,7 +429,7 @@ final class Sequence
             }
         }
 
-        return self::from(...$flattened);
+        return self::of(...$flattened);
     }
 
     /**

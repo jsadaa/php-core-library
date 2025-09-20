@@ -11,14 +11,14 @@ final class SequenceConversionTest extends TestCase
 {
     public function testToListWithIntegers(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
 
         $this->assertSame([1, 2, 3], $seq->toArray());
     }
 
     public function testToListWithStrings(): void
     {
-        $seq = Sequence::from('a', 'b', 'c');
+        $seq = Sequence::of('a', 'b', 'c');
 
         $this->assertSame(['a', 'b', 'c'], $seq->toArray());
     }
@@ -28,7 +28,7 @@ final class SequenceConversionTest extends TestCase
         $obj1 = new \stdClass();
         $obj2 = new \stdClass();
 
-        $seq = Sequence::from($obj1, $obj2);
+        $seq = Sequence::of($obj1, $obj2);
 
         $this->assertSame([$obj1, $obj2], $seq->toArray());
     }
@@ -42,7 +42,7 @@ final class SequenceConversionTest extends TestCase
 
     public function testToListAfterModification(): void
     {
-        $seq = Sequence::from(1, 2);
+        $seq = Sequence::of(1, 2);
         $newSequence = $seq->push(3);
 
         $this->assertSame([1, 2, 3], $newSequence->toArray());
@@ -50,14 +50,14 @@ final class SequenceConversionTest extends TestCase
 
     public function testToStringWithIntegers(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
 
         $this->assertSame('Sequence<int>', (string)$seq);
     }
 
     public function testToStringWithStrings(): void
     {
-        $seq = Sequence::from('a', 'b', 'c');
+        $seq = Sequence::of('a', 'b', 'c');
 
         $this->assertSame('Sequence<string>', (string)$seq);
     }
@@ -66,7 +66,7 @@ final class SequenceConversionTest extends TestCase
     {
         $obj1 = new \stdClass();
         $obj2 = new \stdClass();
-        $seq = Sequence::from($obj1, $obj2);
+        $seq = Sequence::of($obj1, $obj2);
 
         $this->assertSame('Sequence<stdClass>', (string)$seq);
     }
@@ -83,7 +83,7 @@ final class SequenceConversionTest extends TestCase
         $obj1 = new \stdClass();
         $obj2 = new \stdClass();
 
-        $seq = Sequence::from($obj1);
+        $seq = Sequence::of($obj1);
         $newSequence = $seq->push($obj2);
 
         $this->assertSame('Sequence<stdClass>', (string)$newSequence);
@@ -91,14 +91,14 @@ final class SequenceConversionTest extends TestCase
 
     public function testToStringWithLongCollections(): void
     {
-        $seq = Sequence::from(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        $seq = Sequence::of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
         $this->assertSame('Sequence<int>', (string)$seq);
     }
 
     public function testToStringWithBooleans(): void
     {
-        $seq = Sequence::from(true, false, true);
+        $seq = Sequence::of(true, false, true);
 
         $this->assertSame('Sequence<bool>', (string)$seq);
     }

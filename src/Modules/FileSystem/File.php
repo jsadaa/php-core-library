@@ -343,7 +343,7 @@ final readonly class File {
 
         /** @var Result<Sequence<Integer>, ReadFailed|PermissionDenied> */
         return Result::ok(
-            Sequence::fromArray($bytes)->map(static fn(int $byte) => Integer::from($byte)),
+            Sequence::ofArray($bytes)->map(static fn(int $byte) => Integer::from($byte)),
         );
     }
 

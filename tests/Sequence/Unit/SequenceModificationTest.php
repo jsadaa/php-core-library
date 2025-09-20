@@ -12,14 +12,14 @@ final class SequenceModificationTest extends TestCase
 {
     public function testAddItemToSequence(): void
     {
-        $seq = Sequence::from('hello')->push('world');
+        $seq = Sequence::of('hello')->push('world');
 
         $this->assertSame(['hello', 'world'], $seq->toArray());
     }
 
     public function testAddMultipleItems(): void
     {
-        $seq = Sequence::from(1)
+        $seq = Sequence::of(1)
             ->push(2)
             ->push(3)
             ->push(4);
@@ -46,7 +46,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testAddItemOfSameType(): void
     {
-        $seq = Sequence::from('hello');
+        $seq = Sequence::of('hello');
         $newSequence = $seq->push('world');
 
         $this->assertSame(
@@ -59,7 +59,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testInsertItemAtValidIndex(): void
     {
-        $seq = Sequence::from('a', 'c');
+        $seq = Sequence::of('a', 'c');
         $newSequence = $seq->insertAt(1, 'b');
 
         $this->assertSame(
@@ -72,7 +72,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testInsertItemAtEndIndex(): void
     {
-        $seq = Sequence::from('a', 'b');
+        $seq = Sequence::of('a', 'b');
         $newSequence = $seq->insertAt(2, 'c');
 
         $this->assertSame(['a', 'b', 'c'], $newSequence->toArray());
@@ -80,7 +80,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testInsertItemAtBeginning(): void
     {
-        $seq = Sequence::from('b', 'c');
+        $seq = Sequence::of('b', 'c');
         $newSequence = $seq->insertAt(0, 'a');
 
         $this->assertSame(['a', 'b', 'c'], $newSequence->toArray());
@@ -97,7 +97,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testInsertAtNegativeIndex(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $newSequence = $seq->insertAt(-1, 0);
 
         $this->assertSame([1, 2, 0, 3], $newSequence->toArray());
@@ -105,7 +105,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testInsertAtIndexBeyondEnd(): void
     {
-        $seq = Sequence::from(1, 2);
+        $seq = Sequence::of(1, 2);
         $newSequence = $seq->insertAt(10, 3);
 
         $this->assertSame([1, 2, 3], $newSequence->toArray());
@@ -113,7 +113,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testDedupWithIntegers(): void
     {
-        $seq = Sequence::from(1, 2, 2, 3, 1, 4, 5, 3);
+        $seq = Sequence::of(1, 2, 2, 3, 1, 4, 5, 3);
         $dedupedSequence = $seq->dedup();
 
         $this->assertSame([1, 2, 3, 4, 5], $dedupedSequence->toArray());
@@ -126,7 +126,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testDedupWithStrings(): void
     {
-        $seq = Sequence::from('a', 'b', 'a', 'c', 'd', 'b', 'e');
+        $seq = Sequence::of('a', 'b', 'a', 'c', 'd', 'b', 'e');
         $dedupedSequence = $seq->dedup();
 
         $this->assertSame(['a', 'b', 'c', 'd', 'e'], $dedupedSequence->toArray());
@@ -134,7 +134,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testDedupWithFloats(): void
     {
-        $seq = Sequence::from(1.1, 2.2, 1.1, 3.3, 2.2, 4.4);
+        $seq = Sequence::of(1.1, 2.2, 1.1, 3.3, 2.2, 4.4);
         $dedupedSequence = $seq->dedup();
 
         $this->assertSame([1.1, 2.2, 3.3, 4.4], $dedupedSequence->toArray());
@@ -142,7 +142,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testDedupWithBooleans(): void
     {
-        $seq = Sequence::from(true, false, true, false, true);
+        $seq = Sequence::of(true, false, true, false, true);
         $dedupedSequence = $seq->dedup();
 
         $this->assertSame([true, false], $dedupedSequence->toArray());
@@ -158,7 +158,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testDedupWithSingleItem(): void
     {
-        $seq = Sequence::from('unique');
+        $seq = Sequence::of('unique');
         $dedupedSequence = $seq->dedup();
 
         $this->assertSame(['unique'], $dedupedSequence->toArray());
@@ -170,7 +170,7 @@ final class SequenceModificationTest extends TestCase
         $obj2 = new \stdClass();
         $obj3 = new \stdClass();
 
-        $seq = Sequence::from($obj1, $obj2, $obj1, $obj3);
+        $seq = Sequence::of($obj1, $obj2, $obj1, $obj3);
         $dedupedSequence = $seq->dedup();
 
         $this->assertCount(3, $dedupedSequence->toArray());
@@ -182,7 +182,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testDedupWithNoDuplicates(): void
     {
-        $seq = Sequence::from(1, 2, 3, 4, 5);
+        $seq = Sequence::of(1, 2, 3, 4, 5);
         $dedupedSequence = $seq->dedup();
 
         $this->assertSame([1, 2, 3, 4, 5], $dedupedSequence->toArray());
@@ -195,7 +195,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testDedupWithMixedNumericStrings(): void
     {
-        $seq = Sequence::from('1', '2', '1', '3');
+        $seq = Sequence::of('1', '2', '1', '3');
         $dedupedSequence = $seq->dedup();
 
         $this->assertSame(['1', '2', '3'], $dedupedSequence->toArray());
@@ -203,7 +203,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testResizeToSmallerSize(): void
     {
-        $seq = Sequence::from(1, 2, 3, 4, 5);
+        $seq = Sequence::of(1, 2, 3, 4, 5);
         $resizedSequence = $seq->resize(3, 0);
 
         $this->assertSame([1, 2, 3], $resizedSequence->toArray());
@@ -216,7 +216,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testResizeToLargerSize(): void
     {
-        $seq = Sequence::from('a', 'b', 'c');
+        $seq = Sequence::of('a', 'b', 'c');
         $resizedSequence = $seq->resize(5, 'x');
 
         $this->assertSame(['a', 'b', 'c', 'x', 'x'], $resizedSequence->toArray());
@@ -229,7 +229,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testResizeToSameSize(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $resizedSequence = $seq->resize(3, 0);
 
         $this->assertSame([1, 2, 3], $resizedSequence->toArray());
@@ -251,7 +251,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testResizeToZeroSize(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $resizedSequence = $seq->resize(0, 0);
 
         $this->assertSame([], $resizedSequence->toArray());
@@ -261,7 +261,7 @@ final class SequenceModificationTest extends TestCase
     public function testResizeShouldMaintainCorrectType(): void
     {
         $obj = new \stdClass();
-        $seq = Sequence::from($obj);
+        $seq = Sequence::of($obj);
         $obj2 = new \stdClass();
         $resizedSequence = $seq->resize(3, $obj2);
 
@@ -273,7 +273,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testTruncateToSmallerSize(): void
     {
-        $seq = Sequence::from(1, 2, 3, 4, 5);
+        $seq = Sequence::of(1, 2, 3, 4, 5);
         $truncatedSequence = $seq->truncate(3);
 
         $this->assertSame(
@@ -287,7 +287,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testTruncateToLargerSize(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $truncatedSequence = $seq->truncate(5);
 
         $this->assertSame([1, 2, 3], $truncatedSequence->toArray());
@@ -296,7 +296,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testTruncateToSameSize(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $truncatedSequence = $seq->truncate(3);
 
         $this->assertSame([1, 2, 3], $truncatedSequence->toArray());
@@ -309,7 +309,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testTruncateToZeroSize(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $truncatedSequence = $seq->truncate(0);
 
         $this->assertSame([], $truncatedSequence->toArray());
@@ -329,7 +329,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testWindowsWithValidSize(): void
     {
-        $seq = Sequence::from(1, 2, 3, 4, 5);
+        $seq = Sequence::of(1, 2, 3, 4, 5);
         $windows = $seq->windows(2);
 
         $this->assertSame(4, $windows->len()->toInt());
@@ -346,7 +346,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testWindowsWithSizeEqualToCollectionLength(): void
     {
-        $seq = Sequence::from('a', 'b', 'c');
+        $seq = Sequence::of('a', 'b', 'c');
         $windows = $seq->windows(3);
 
         $this->assertSame(1, $windows->len()->toInt());
@@ -357,7 +357,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testWindowsWithSizeGreaterThanCollectionLength(): void
     {
-        $seq = Sequence::from(1, 2);
+        $seq = Sequence::of(1, 2);
         $windows = $seq->windows(3);
 
         $this->assertTrue($windows->isEmpty());
@@ -365,7 +365,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testWindowsWithSizeOne(): void
     {
-        $seq = Sequence::from('a', 'b', 'c');
+        $seq = Sequence::of('a', 'b', 'c');
         $windows = $seq->windows(1);
 
         $this->assertSame(3, $windows->len()->toInt());
@@ -386,7 +386,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testOriginalSequenceRemainsUnchangedAfterWindows(): void
     {
-        $seq = Sequence::from(1, 2, 3, 4);
+        $seq = Sequence::of(1, 2, 3, 4);
         $original = $seq->toArray();
 
         $seq->windows(2);
@@ -396,7 +396,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testTakeWithValidCount(): void
     {
-        $seq = Sequence::from(1, 2, 3, 4, 5);
+        $seq = Sequence::of(1, 2, 3, 4, 5);
         $takenSequence = $seq->take(3);
 
         $this->assertSame([1, 2, 3], $takenSequence->toArray());
@@ -409,7 +409,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testTakeWithCountEqualToLength(): void
     {
-        $seq = Sequence::from('a', 'b', 'c');
+        $seq = Sequence::of('a', 'b', 'c');
         $takenSequence = $seq->take(3);
 
         $this->assertSame(['a', 'b', 'c'], $takenSequence->toArray());
@@ -422,7 +422,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testTakeWithCountGreaterThanLength(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $takenSequence = $seq->take(5);
 
         $this->assertSame([1, 2, 3], $takenSequence->toArray());
@@ -430,7 +430,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testTakeWithZeroCount(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $takenSequence = $seq->take(0);
 
         $this->assertSame([], $takenSequence->toArray());
@@ -450,7 +450,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testSkipWithValidCount(): void
     {
-        $seq = Sequence::from(1, 2, 3, 4, 5);
+        $seq = Sequence::of(1, 2, 3, 4, 5);
         $skippedSequence = $seq->skip(2);
 
         $this->assertSame([3, 4, 5], $skippedSequence->toArray());
@@ -463,7 +463,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testSkipWithCountEqualToLength(): void
     {
-        $seq = Sequence::from('a', 'b', 'c');
+        $seq = Sequence::of('a', 'b', 'c');
         $skippedSequence = $seq->skip(3);
 
         $this->assertTrue(
@@ -474,7 +474,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testSkipWithCountGreaterThanLength(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $skippedSequence = $seq->skip(5);
 
         $this->assertTrue($skippedSequence->isEmpty());
@@ -482,7 +482,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testSkipWithZeroCount(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $skippedSequence = $seq->skip(0);
 
         $this->assertSame([1, 2, 3], $skippedSequence->toArray());
@@ -506,7 +506,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testChainedTakeAndSkip(): void
     {
-        $seq = Sequence::from(1, 2, 3, 4, 5, 6, 7, 8);
+        $seq = Sequence::of(1, 2, 3, 4, 5, 6, 7, 8);
         $result = $seq->take(5)->skip(2);
 
         $this->assertSame([3, 4, 5], $result->toArray());
@@ -514,7 +514,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testSwapValidIndices(): void
     {
-        $seq = Sequence::from('a', 'b', 'c', 'd');
+        $seq = Sequence::of('a', 'b', 'c', 'd');
         $swapped = $seq->swap(0, 2)->unwrap();
 
         $this->assertSame(
@@ -527,7 +527,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testSwapSameIndex(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
         $swapped = $seq->swap(1, 1)->unwrap();
 
         $this->assertSame(
@@ -544,7 +544,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testSwapAdjacentIndices(): void
     {
-        $seq = Sequence::from('x', 'y', 'z');
+        $seq = Sequence::of('x', 'y', 'z');
         $swapped = $seq->swap(0, 1)->unwrap();
 
         $this->assertSame(['y', 'x', 'z'], $swapped->toArray());
@@ -552,7 +552,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testSwapFirstAndLastIndices(): void
     {
-        $seq = Sequence::from(1, 2, 3, 4, 5);
+        $seq = Sequence::of(1, 2, 3, 4, 5);
         $swapped = $seq->swap(0, 4)->unwrap();
 
         $this->assertSame([5, 2, 3, 4, 1], $swapped->toArray());
@@ -566,7 +566,7 @@ final class SequenceModificationTest extends TestCase
         $obj2 = new \stdClass();
         $obj2->value = 'second';
 
-        $seq = Sequence::from($obj1, $obj2);
+        $seq = Sequence::of($obj1, $obj2);
         $swapped = $seq->swap(0, 1)->unwrap();
 
         $this->assertSame(
@@ -581,7 +581,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testSwapOutOfBoundsNegativeIndex(): void
     {
-        $seq = Sequence::from(1, 2, 3)->swap(-1, 1);
+        $seq = Sequence::of(1, 2, 3)->swap(-1, 1);
 
         $this->assertTrue($seq->isErr());
         $this->assertInstanceOf(IndexOutOfBounds::class, $seq->unwrapErr());
@@ -589,7 +589,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testSwapOutOfBoundsIndexTooLarge(): void
     {
-        $seq = Sequence::from(1, 2, 3)->swap(1, 3);
+        $seq = Sequence::of(1, 2, 3)->swap(1, 3);
 
         $this->assertTrue($seq->isErr());
         $this->assertInstanceOf(IndexOutOfBounds::class, $seq->unwrapErr());
@@ -597,7 +597,7 @@ final class SequenceModificationTest extends TestCase
 
     public function testSwapBothIndicesOutOfBounds(): void
     {
-        $seq = Sequence::from(1, 2, 3)->swap(10, 20);
+        $seq = Sequence::of(1, 2, 3)->swap(10, 20);
 
         $this->assertTrue($seq->isErr());
         $this->assertInstanceOf(IndexOutOfBounds::class, $seq->unwrapErr());

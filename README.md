@@ -51,7 +51,7 @@ A `Sequence` is an ordered, immutable collection of elements of the same type th
 
 ```php
 // Create a Sequence and apply operations
-$seq = Sequence::from(1, 2, 3, 4, 5);
+$seq = Sequence::of(1, 2, 3, 4, 5);
 
 // Map, filter, fold operations
 $result = $seq
@@ -399,7 +399,7 @@ Without static analysis, you lose most of the type safety benefits of this libra
 For example, with the Sequence collection, which is an ordered list of elements of the same type, nothing technically prevents you from adding mixed types to the collection, but most of the Sequence APIs will not work as expected and might throw exceptions at runtime.
 
 ```php
-$seq = Sequence::from(1, 2, 3)->push('string');
+$seq = Sequence::of(1, 2, 3)->push('string');
 $seq->map(fn($n) => $n * 2); // Uncaught TypeError: Unsupported operand types: string * int
 ```
 This enforces you to really think about your implementation and the types you are using.

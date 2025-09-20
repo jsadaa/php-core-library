@@ -359,7 +359,7 @@ $validUser = $usernameResult->match(
 Results work well with collection types:
 
 ```php
-$ids = Sequence::from(1, 2, 3, 4);
+$ids = Sequence::of(1, 2, 3, 4);
 
 // Find users by ID (some might not exist)
 $userResults = $ids->map(fn($id) => findUser($id)); // Sequence<Result<User, Error>>

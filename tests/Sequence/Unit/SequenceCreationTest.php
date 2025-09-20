@@ -19,7 +19,7 @@ final class SequenceCreationTest extends TestCase
 
     public function testCreateSequenceWithItems(): void
     {
-        $seq = Sequence::from(1, 2, 3);
+        $seq = Sequence::of(1, 2, 3);
 
         $this->assertFalse($seq->isEmpty());
         $this->assertSame([1, 2, 3], $seq->toArray());
@@ -27,7 +27,7 @@ final class SequenceCreationTest extends TestCase
 
     public function testCreateSequenceWithStrings(): void
     {
-        $seq = Sequence::from('a', 'b', 'c');
+        $seq = Sequence::of('a', 'b', 'c');
 
         $this->assertFalse($seq->isEmpty());
         $this->assertSame(['a', 'b', 'c'], $seq->toArray());
@@ -35,7 +35,7 @@ final class SequenceCreationTest extends TestCase
 
     public function testCreateSequenceWithFloats(): void
     {
-        $seq = Sequence::from(1.1, 2.2, 3.3);
+        $seq = Sequence::of(1.1, 2.2, 3.3);
 
         $this->assertFalse($seq->isEmpty());
         $this->assertSame([1.1, 2.2, 3.3], $seq->toArray());
@@ -43,7 +43,7 @@ final class SequenceCreationTest extends TestCase
 
     public function testCreateSequenceWithBooleans(): void
     {
-        $seq = Sequence::from(true, false, true);
+        $seq = Sequence::of(true, false, true);
 
         $this->assertFalse($seq->isEmpty());
         $this->assertSame([true, false, true], $seq->toArray());
@@ -54,14 +54,14 @@ final class SequenceCreationTest extends TestCase
         $obj1 = new \stdClass();
         $obj2 = new \stdClass();
 
-        $seq = Sequence::from($obj1, $obj2);
+        $seq = Sequence::of($obj1, $obj2);
 
         $this->assertSame([$obj1, $obj2], $seq->toArray());
     }
 
     public function testCreateSequenceWithSingleItem(): void
     {
-        $seq = Sequence::from(42);
+        $seq = Sequence::of(42);
 
         $this->assertSame([42], $seq->toArray());
         $this->assertSame(1, $seq->len()->toInt());
@@ -69,7 +69,7 @@ final class SequenceCreationTest extends TestCase
 
     public function testCreateEmptySequenceWithFromMethod(): void
     {
-        $seq = Sequence::from();
+        $seq = Sequence::of();
 
         $this->assertTrue($seq->isEmpty());
     }
