@@ -45,7 +45,7 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testCreateDir(): void
     {
-        $path = Path::from($this->root->url() . '/newDir');
+        $path = Path::of($this->root->url() . '/newDir');
         $result = FileSystem::createDir($path);
 
         $this->assertTrue($result->isOk());
@@ -54,7 +54,7 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testCreateDirWhenAlreadyExists(): void
     {
-        $path = Path::from($this->root->url() . '/emptyDir');
+        $path = Path::of($this->root->url() . '/emptyDir');
         $result = FileSystem::createDir($path);
 
         $this->assertTrue($result->isErr());
@@ -63,7 +63,7 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testCreateDirWithInvalidPermissions(): void
     {
-        $path = Path::from($this->root->url() . '/readOnlyDir/subDir');
+        $path = Path::of($this->root->url() . '/readOnlyDir/subDir');
         $result = FileSystem::createDir($path);
 
         $this->assertTrue($result->isErr());
@@ -72,7 +72,7 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testCreateDirAll(): void
     {
-        $path = Path::from($this->root->url() . '/level1/level2/level3');
+        $path = Path::of($this->root->url() . '/level1/level2/level3');
         $result = FileSystem::createDirAll($path);
 
         $this->assertTrue($result->isOk());
@@ -83,7 +83,7 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testCreateDirAllWithExistingPath(): void
     {
-        $path = Path::from($this->root->url() . '/emptyDir');
+        $path = Path::of($this->root->url() . '/emptyDir');
         $result = FileSystem::createDirAll($path);
 
         $this->assertTrue($result->isOk());
@@ -91,10 +91,10 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testCreateDirAllWithPartiallyExistingPath(): void
     {
-        $level1Path = Path::from($this->root->url() . '/parent');
+        $level1Path = Path::of($this->root->url() . '/parent');
         \mkdir($level1Path->toString());
 
-        $fullPath = Path::from($this->root->url() . '/parent/child1/child2');
+        $fullPath = Path::of($this->root->url() . '/parent/child1/child2');
         $result = FileSystem::createDirAll($fullPath);
 
         $this->assertTrue($result->isOk());
@@ -103,7 +103,7 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testRemoveDir(): void
     {
-        $path = Path::from($this->root->url() . '/emptyDir');
+        $path = Path::of($this->root->url() . '/emptyDir');
         $result = FileSystem::removeDir($path);
 
         $this->assertTrue($result->isOk());
@@ -112,7 +112,7 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testRemoveDirWithNonEmptyDir(): void
     {
-        $path = Path::from($this->root->url() . '/nonEmptyDir');
+        $path = Path::of($this->root->url() . '/nonEmptyDir');
         $result = FileSystem::removeDir($path);
 
         $this->assertTrue($result->isErr());
@@ -122,7 +122,7 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testRemoveDirWithNonExistentDir(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistentDir');
+        $path = Path::of($this->root->url() . '/nonExistentDir');
         $result = FileSystem::removeDir($path);
 
         $this->assertTrue($result->isErr());
@@ -131,7 +131,7 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testRemoveDirAll(): void
     {
-        $path = Path::from($this->root->url() . '/nonEmptyDir');
+        $path = Path::of($this->root->url() . '/nonEmptyDir');
         $result = FileSystem::removeDirAll($path);
 
         $this->assertTrue($result->isOk());
@@ -142,7 +142,7 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testRemoveDirAllWithNonExistentDir(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistentDir');
+        $path = Path::of($this->root->url() . '/nonExistentDir');
         $result = FileSystem::removeDirAll($path);
 
         $this->assertTrue($result->isErr());
@@ -161,7 +161,7 @@ final class FileSystemDirectoryTest extends TestCase
         $this->assertFalse($readOnlyFile->isWritable(vfsStream::OWNER_USER_1, vfsStream::GROUP_USER_1),
             'Le fichier devrait être en lecture seule');
 
-        $path = Path::from($this->root->url() . '/testDirWithReadOnly');
+        $path = Path::of($this->root->url() . '/testDirWithReadOnly');
 
         $result = FileSystem::removeDirAll($path);
 
@@ -175,8 +175,8 @@ final class FileSystemDirectoryTest extends TestCase
         vfsStream::newFile('file1.txt', 0644)->at($sourceDir)->setContent('content1');
         vfsStream::newDirectory('subDir', 0777)->at($sourceDir);
 
-        $sourcePath = Path::from($this->root->url() . '/sourceDir');
-        $destPath = Path::from($this->root->url() . '/renamedDir');
+        $sourcePath = Path::of($this->root->url() . '/sourceDir');
+        $destPath = Path::of($this->root->url() . '/renamedDir');
 
         $fileSystem = new FileSystem();
         $result = $fileSystem->renameDir($sourcePath, $destPath);
@@ -190,8 +190,8 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testRenameDirWithNonExistentSource(): void
     {
-        $sourcePath = Path::from($this->root->url() . '/nonExistentDir');
-        $destPath = Path::from($this->root->url() . '/renamedDir');
+        $sourcePath = Path::of($this->root->url() . '/nonExistentDir');
+        $destPath = Path::of($this->root->url() . '/renamedDir');
 
         $fileSystem = new FileSystem();
         $result = $fileSystem->renameDir($sourcePath, $destPath);
@@ -202,8 +202,8 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testRenameDirWithExistingDestination(): void
     {
-        $sourcePath = Path::from($this->root->url() . '/emptyDir');
-        $destPath = Path::from($this->root->url() . '/nonEmptyDir');
+        $sourcePath = Path::of($this->root->url() . '/emptyDir');
+        $destPath = Path::of($this->root->url() . '/nonEmptyDir');
 
         $fileSystem = new FileSystem();
         $result = $fileSystem->renameDir($sourcePath, $destPath);
@@ -216,7 +216,7 @@ final class FileSystemDirectoryTest extends TestCase
     {
         // Create a test file
         $_ = vfsStream::newFile('fileToRemove.txt', 0644)->at($this->root)->setContent('content');
-        $filePath = Path::from($this->root->url() . '/fileToRemove.txt');
+        $filePath = Path::of($this->root->url() . '/fileToRemove.txt');
 
         $this->assertTrue(\file_exists($filePath->toString()));
 
@@ -228,7 +228,7 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testRemoveFileWithNonExistentFile(): void
     {
-        $filePath = Path::from($this->root->url() . '/nonExistentFile.txt');
+        $filePath = Path::of($this->root->url() . '/nonExistentFile.txt');
 
         $result = FileSystem::removeFile($filePath);
 
@@ -238,7 +238,7 @@ final class FileSystemDirectoryTest extends TestCase
 
     public function testRemoveFileWithDirectory(): void
     {
-        $dirPath = Path::from($this->root->url() . '/emptyDir');
+        $dirPath = Path::of($this->root->url() . '/emptyDir');
 
         $result = FileSystem::removeFile($dirPath);
 
@@ -250,7 +250,7 @@ final class FileSystemDirectoryTest extends TestCase
     {
         // Create a read-only file
         $_ = vfsStream::newFile('readOnlyFileToRemove.txt', 0444)->at($this->root)->setContent('content');
-        $filePath = Path::from($this->root->url() . '/readOnlyFileToRemove.txt');
+        $filePath = Path::of($this->root->url() . '/readOnlyFileToRemove.txt');
 
         $result = FileSystem::removeFile($filePath);
 

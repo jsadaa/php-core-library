@@ -33,9 +33,9 @@ final readonly class DirectoryEntry
      * @return self A new DirectoryEntry instance
      * @psalm-pure
      */
-    public static function from(string | Path $path): self
+    public static function of(string | Path $path): self
     {
-        return new self($path instanceof Path ? $path : Path::from($path));
+        return new self($path instanceof Path ? $path : Path::of($path));
     }
 
     /**
@@ -72,7 +72,7 @@ final readonly class DirectoryEntry
      */
     public function fileType(): FileType
     {
-        return FileType::from($this->path);
+        return FileType::of($this->path);
     }
 
     /**
@@ -85,6 +85,6 @@ final readonly class DirectoryEntry
      */
     public function metadata(): Result
     {
-        return Metadata::from($this->path);
+        return Metadata::of($this->path);
     }
 }

@@ -72,7 +72,7 @@ final readonly class File {
     public static function from(string | Path $path): Result
     {
         if (\is_string($path)) {
-            $path = Path::from($path);
+            $path = Path::of($path);
         }
 
         if (!$path->exists()) {
@@ -107,7 +107,7 @@ final readonly class File {
     public static function new(string | Path $path): Result
     {
         if (\is_string($path)) {
-            $path = Path::from($path);
+            $path = Path::of($path);
         }
 
         if ($path->exists()) {
@@ -142,7 +142,7 @@ final readonly class File {
      */
     public function read(): Result
     {
-        if (!Permissions::from($this->path)->isReadable()) {
+        if (!Permissions::of($this->path)->isReadable()) {
             /** @var Result<Str, ReadFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf(
                 'Failed to read file: %s (Permission denied)',
@@ -161,7 +161,7 @@ final readonly class File {
         }
 
         /** @var Result<Str, ReadFailed|PermissionDenied> */
-        return Result::ok(Str::from($content));
+        return Result::ok(Str::of($content));
     }
 
     /**
@@ -181,7 +181,7 @@ final readonly class File {
         $offset = $offset instanceof Integer ? $offset->toInt() : $offset;
         $length = $length instanceof Integer ? $length->toInt() : $length;
 
-        if (!Permissions::from($this->path)->isReadable()) {
+        if (!Permissions::of($this->path)->isReadable()) {
             /** @var Result<Str,ReadFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf(
                 'Failed to read file: %s (Permission denied)',
@@ -222,7 +222,7 @@ final readonly class File {
         }
 
         /** @var Result<Str,ReadFailed|PermissionDenied> */
-        return Result::ok(Str::from($content));
+        return Result::ok(Str::of($content));
     }
 
     /**
@@ -240,7 +240,7 @@ final readonly class File {
     {
         $offset = $offset instanceof Integer ? $offset->toInt() : $offset;
 
-        if (!Permissions::from($this->path)->isReadable()) {
+        if (!Permissions::of($this->path)->isReadable()) {
             /** @var Result<Str, ReadFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf(
                 'Failed to read file: %s (Permission denied)',
@@ -260,7 +260,7 @@ final readonly class File {
         }
 
         /** @var Result<Str, ReadFailed|PermissionDenied> */
-        return Result::ok(Str::from($content));
+        return Result::ok(Str::of($content));
     }
 
     /**
@@ -313,7 +313,7 @@ final readonly class File {
      */
     public function bytes(): Result
     {
-        if (!Permissions::from($this->path)->isReadable()) {
+        if (!Permissions::of($this->path)->isReadable()) {
             /** @var Result<Sequence<Integer>, ReadFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf(
                 'Failed to read file: %s (Permission denied)',
@@ -343,7 +343,7 @@ final readonly class File {
 
         /** @var Result<Sequence<Integer>, ReadFailed|PermissionDenied> */
         return Result::ok(
-            Sequence::ofArray($bytes)->map(static fn(int $byte) => Integer::from($byte)),
+            Sequence::ofArray($bytes)->map(static fn(int $byte) => Integer::of($byte)),
         );
     }
 
@@ -359,7 +359,7 @@ final readonly class File {
      */
     public function write(string | Str $data): Result
     {
-        if (!Permissions::from($this->path)->isWritable()) {
+        if (!Permissions::of($this->path)->isWritable()) {
             /** @var Result<File, WriteFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf(
                 'Failed to write to file: %s (Permission denied)',
@@ -396,7 +396,7 @@ final readonly class File {
      */
     public function append(string | Str $data): Result
     {
-        if (!Permissions::from($this->path)->isWritable()) {
+        if (!Permissions::of($this->path)->isWritable()) {
             /** @var Result<File, WriteFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf(
                 'Failed to append to file: %s (Permission denied)',
@@ -435,7 +435,7 @@ final readonly class File {
      */
     public function setLen(int | Integer $length): Result
     {
-        if (!Permissions::from($this->path)->isWritable()) {
+        if (!Permissions::of($this->path)->isWritable()) {
             /** @var Result<File, WriteFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf(
                 'Failed to set length of file: %s (Permission denied)',
@@ -493,7 +493,7 @@ final readonly class File {
         $pathString = $this->path->toString();
         $tempPath = $pathString . '.tmp.' . \uniqid();
 
-        if (!Permissions::from($this->path)->isWritable()) {
+        if (!Permissions::of($this->path)->isWritable()) {
             /** @var Result<File, WriteFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf(
                 'Failed to write to file: %s (Permission denied)',
@@ -578,7 +578,7 @@ final readonly class File {
         }
 
         /** @var Result<Integer, ReadFailed> */
-        return Result::ok(Integer::from($size));
+        return Result::ok(Integer::of($size));
     }
 
     /**
@@ -592,7 +592,7 @@ final readonly class File {
     public function metadata(): Result
     {
         /** @var Result<Metadata, InvalidMetadata> */
-        return Metadata::from($this->path);
+        return Metadata::of($this->path);
     }
 
     /**

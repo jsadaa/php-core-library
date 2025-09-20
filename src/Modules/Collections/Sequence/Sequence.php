@@ -157,7 +157,7 @@ final readonly class Sequence
      */
     public function len(): Integer
     {
-        return Integer::from(\count($this->collection));
+        return Integer::of(\count($this->collection));
     }
 
     /**
@@ -295,7 +295,7 @@ final readonly class Sequence
     {
         $index = \array_search($element, $this->collection, true);
 
-        return $index !== false ? Option::some(Integer::from($index)) : Option::none();
+        return $index !== false ? Option::some(Integer::of($index)) : Option::none();
     }
 
     /**
@@ -351,7 +351,7 @@ final readonly class Sequence
      */
     public function windows(int | Integer $size): self
     {
-        $size = $size instanceof Integer ? $size : Integer::from($size);
+        $size = $size instanceof Integer ? $size : Integer::of($size);
         $size = $size->max(0);
 
         if ($size->eq(0)) {
@@ -509,7 +509,7 @@ final readonly class Sequence
      */
     public function removeAt(int | Integer $index): self
     {
-        $index = $index instanceof Integer ? $index : Integer::from($index);
+        $index = $index instanceof Integer ? $index : Integer::of($index);
 
         if ($index->lt(0) || $index->ge($this->len()) || $this->isEmpty()) {
             return new self($this->collection);
@@ -612,7 +612,7 @@ final readonly class Sequence
      */
     public function resize(int | Integer $size, mixed $value): self
     {
-        $size = $size instanceof Integer ? $size : Integer::from($size);
+        $size = $size instanceof Integer ? $size : Integer::of($size);
         $size = $size->max(0);
 
         if ($this->isEmpty()) {
@@ -639,7 +639,7 @@ final readonly class Sequence
      */
     public function truncate(int | Integer $size): self
     {
-        $size = $size instanceof Integer ? $size : Integer::from($size);
+        $size = $size instanceof Integer ? $size : Integer::of($size);
 
         if ($size->le(0)) {
             return new self([]);
@@ -712,7 +712,7 @@ final readonly class Sequence
      */
     public function take(int | Integer $count): self
     {
-        $count = $count instanceof Integer ? $count : Integer::from($count);
+        $count = $count instanceof Integer ? $count : Integer::of($count);
         $count = $count->max(0);
 
         return new self(\array_slice($this->collection, 0, $count->toInt()));
@@ -728,7 +728,7 @@ final readonly class Sequence
      */
     public function skip(int | Integer $count): self
     {
-        $count = $count instanceof Integer ? $count : Integer::from($count);
+        $count = $count instanceof Integer ? $count : Integer::of($count);
         $count = $count->max(0);
 
         return new self(\array_slice($this->collection, $count->toInt()));
@@ -743,8 +743,8 @@ final readonly class Sequence
      */
     public function swap(int | Integer $index1, int | Integer $index2): Result
     {
-        $index1 = $index1 instanceof Integer ? $index1 : Integer::from($index1);
-        $index2 = $index2 instanceof Integer ? $index2 : Integer::from($index2);
+        $index1 = $index1 instanceof Integer ? $index1 : Integer::of($index1);
+        $index2 = $index2 instanceof Integer ? $index2 : Integer::of($index2);
 
         if ($index1->lt(0) || $index1->ge($this->len())) {
             /** @var Result<self<T>, IndexOutOfBounds> */

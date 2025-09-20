@@ -19,7 +19,7 @@ final class StrCreationTest extends TestCase
 
     public function testCreateStrFromAscii(): void
     {
-        $str = Str::from('Hello world');
+        $str = Str::of('Hello world');
 
         $this->assertFalse($str->isEmpty());
         $this->assertSame('Hello world', $str->toString());
@@ -28,7 +28,7 @@ final class StrCreationTest extends TestCase
 
     public function testCreateStrFromUtf8WithAccents(): void
     {
-        $str = Str::from('Héllö wörld');
+        $str = Str::of('Héllö wörld');
 
         $this->assertFalse($str->isEmpty());
         $this->assertSame('Héllö wörld', $str->toString());
@@ -37,7 +37,7 @@ final class StrCreationTest extends TestCase
 
     public function testCreateStrFromUtf8WithEmojis(): void
     {
-        $str = Str::from('Hello 🌍 world 😊');
+        $str = Str::of('Hello 🌍 world 😊');
 
         $this->assertFalse($str->isEmpty());
         $this->assertSame('Hello 🌍 world 😊', $str->toString());
@@ -46,7 +46,7 @@ final class StrCreationTest extends TestCase
 
     public function testCreateStrFromUtf8WithChinese(): void
     {
-        $str = Str::from('你好世界');
+        $str = Str::of('你好世界');
 
         $this->assertFalse($str->isEmpty());
         $this->assertSame('你好世界', $str->toString());
@@ -55,7 +55,7 @@ final class StrCreationTest extends TestCase
 
     public function testCreateStrFromUtf8WithArabic(): void
     {
-        $str = Str::from('مرحبا بالعالم');
+        $str = Str::of('مرحبا بالعالم');
 
         $this->assertFalse($str->isEmpty());
         $this->assertSame('مرحبا بالعالم', $str->toString());
@@ -66,7 +66,7 @@ final class StrCreationTest extends TestCase
     {
         $iso8859String = \mb_convert_encoding('Héllö wörld', 'ISO-8859-1', 'UTF-8');
 
-        $str = Str::from($iso8859String)->forceUtf8('ISO-8859-1')->unwrap();
+        $str = Str::of($iso8859String)->forceUtf8('ISO-8859-1')->unwrap();
 
         $this->assertSame('Héllö wörld', $str->toString());
     }
@@ -75,21 +75,21 @@ final class StrCreationTest extends TestCase
     {
         $bomString = "\xEF\xBB\xBFHello world";
 
-        $str = Str::from($bomString);
+        $str = Str::of($bomString);
 
         $this->assertStringEndsWith('Hello world', $str->toString());
     }
 
     public function testStringConversion(): void
     {
-        $str = Str::from('Hello world');
+        $str = Str::of('Hello world');
 
         $this->assertSame('Hello world', (string)$str);
     }
 
     public function testCreateStrFromEmptyString(): void
     {
-        $str = Str::from('');
+        $str = Str::of('');
 
         $this->assertTrue($str->isEmpty());
         $this->assertSame('', $str->toString());

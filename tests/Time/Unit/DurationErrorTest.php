@@ -71,7 +71,7 @@ final class DurationErrorTest extends TestCase
     public function testMulOverflowWithInteger(): void
     {
         $largeDuration = Duration::new((int)(\PHP_INT_MAX / 2), 0);
-        $multiplier = Integer::from(3);
+        $multiplier = Integer::of(3);
 
         $result = $largeDuration->mul($multiplier);
 
@@ -116,7 +116,7 @@ final class DurationErrorTest extends TestCase
     {
         $duration = Duration::fromSeconds(10);
 
-        $result = $duration->div(Integer::from(0));
+        $result = $duration->div(Integer::of(0));
 
         $this->assertTrue($result->isErr());
         $this->assertInstanceOf(ZeroDuration::class, $result->unwrapErr());

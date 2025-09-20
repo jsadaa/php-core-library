@@ -59,7 +59,7 @@ final readonly class Json {
         }
 
         /** @var Result<Str, EncodingError> */
-        return Result::ok(Str::from($encoded));
+        return Result::ok(Str::of($encoded));
     }
 
     /**

@@ -75,7 +75,7 @@ final class FileTest extends TestCase
 
     public function testOpen(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $result = File::from($path->toString());
 
         $this->assertTrue($result->isOk());
@@ -87,7 +87,7 @@ final class FileTest extends TestCase
 
     public function testOpenNonExistentFile(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistent.txt');
+        $path = Path::of($this->root->url() . '/nonExistent.txt');
         $result = File::from($path->toString());
 
         $this->assertTrue($result->isErr());
@@ -96,7 +96,7 @@ final class FileTest extends TestCase
 
     public function testOpenDirectory(): void
     {
-        $path = Path::from($this->root->url() . '/emptyDir');
+        $path = Path::of($this->root->url() . '/emptyDir');
         $result = File::from($path->toString());
 
         $this->assertTrue($result->isErr());
@@ -105,7 +105,7 @@ final class FileTest extends TestCase
 
     public function testCreate(): void
     {
-        $path = Path::from($this->root->url() . '/newFile.txt');
+        $path = Path::of($this->root->url() . '/newFile.txt');
         $result = File::new($path->toString());
 
         $this->assertTrue($result->isOk());
@@ -118,7 +118,7 @@ final class FileTest extends TestCase
 
     public function testCreateFileInNonExistentDirectory(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistentDir/file.txt');
+        $path = Path::of($this->root->url() . '/nonExistentDir/file.txt');
         $result = File::new($path->toString());
 
         $this->assertTrue($result->isErr());
@@ -127,7 +127,7 @@ final class FileTest extends TestCase
 
     public function testCreateAlreadyExistingFile(): void
     {
-        $path = Path::from($this->root->url() . '/readOnlyFile.txt');
+        $path = Path::of($this->root->url() . '/readOnlyFile.txt');
         $result = File::new($path->toString());
 
         $this->assertTrue($result->isErr());
@@ -137,7 +137,7 @@ final class FileTest extends TestCase
     public function testCreateNew(): void
     {
         // Use a real file for this test since vfsStream may not fully support r+ mode
-        $path = Path::from($this->tempDir . '/newFileRW.txt');
+        $path = Path::of($this->tempDir . '/newFileRW.txt');
         $result = File::new($path->toString());
 
         $this->assertTrue($result->isOk());
@@ -158,7 +158,7 @@ final class FileTest extends TestCase
 
     public function testCreateNewInNonExistentDirectory(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistentDir/file.txt');
+        $path = Path::of($this->root->url() . '/nonExistentDir/file.txt');
         $result = File::new($path->toString());
 
         $this->assertTrue($result->isErr());
@@ -167,7 +167,7 @@ final class FileTest extends TestCase
 
     public function testRead(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $file = File::from($path->toString())->unwrap();
         $result = $file->read();
 
@@ -178,7 +178,7 @@ final class FileTest extends TestCase
 
     public function testReadToStr(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $file = File::from($path->toString())->unwrap();
         $result = $file->read();
 
@@ -191,7 +191,7 @@ final class FileTest extends TestCase
 
     public function testTake(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $file = File::from($path->toString())->unwrap();
 
         // Take first 4 bytes
@@ -210,7 +210,7 @@ final class FileTest extends TestCase
 
     public function testBytes(): void
     {
-        $path = Path::from($this->root->url() . '/binaryFile.bin');
+        $path = Path::of($this->root->url() . '/binaryFile.bin');
         $file = File::from($path->toString())->unwrap();
         $result = $file->bytes();
 
@@ -226,7 +226,7 @@ final class FileTest extends TestCase
     public function testSetLen(): void
     {
         // Use real file since vfsStream may not support ftruncate properly
-        $path = Path::from($this->tempDir . '/setLenTest.txt');
+        $path = Path::of($this->tempDir . '/setLenTest.txt');
         $this->assertNotFalse(\file_put_contents($path->toString(), $this->testContent));
         $file = File::from($path->toString())->unwrap(); // open in read write mode
 
@@ -243,7 +243,7 @@ final class FileTest extends TestCase
 
     public function testReadExact(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $file = File::from($path->toString())->unwrap();
 
         // Read exactly 4 bytes
@@ -261,7 +261,7 @@ final class FileTest extends TestCase
 
     public function testReadToEnd(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $file = File::from($path->toString())->unwrap();
 
         $result = $file->readFrom(5);
@@ -272,7 +272,7 @@ final class FileTest extends TestCase
 
     public function testWrite(): void
     {
-        $path = Path::from($this->tempDir . '/writeTest.txt');
+        $path = Path::of($this->tempDir . '/writeTest.txt');
         $file = File::new($path->toString())->unwrap();
 
         $writeContent = 'Hello, world!';
@@ -300,7 +300,7 @@ final class FileTest extends TestCase
 
     public function testMetadata(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $file = File::from($path->toString())->unwrap();
 
         $result = $file->metadata();
@@ -314,7 +314,7 @@ final class FileTest extends TestCase
 
     public function testSetPermissions(): void
     {
-        $path = Path::from($this->tempFile);
+        $path = Path::of($this->tempFile);
         $file = File::from($path->toString())->unwrap();
 
         $permissions = Permissions::create(0644);
@@ -329,7 +329,7 @@ final class FileTest extends TestCase
     public function testSetModified(): void
     {
         // Use real file for timestamp testing
-        $path = Path::from($this->tempFile);
+        $path = Path::of($this->tempFile);
         $file = File::from($path->toString())->unwrap();
 
         // Set modified time to a specific time (2000-01-01)
@@ -348,7 +348,7 @@ final class FileTest extends TestCase
     public function testSetTimes(): void
     {
         // Use real file for timestamp testing
-        $path = Path::from($this->tempFile);
+        $path = Path::of($this->tempFile);
         $file = File::from($path->toString())->unwrap();
 
         $modTimestamp = \mktime(0, 0, 0, 1, 1, 2000);
@@ -378,7 +378,7 @@ final class FileTest extends TestCase
 
     public function testAppend(): void
     {
-        $path = Path::from($this->tempDir . '/appendTest.txt');
+        $path = Path::of($this->tempDir . '/appendTest.txt');
         $file = File::new($path->toString())->unwrap();
 
         $initialContent = 'Initial content';
@@ -409,7 +409,7 @@ final class FileTest extends TestCase
 
     public function testWriteAtomic(): void
     {
-        $path = Path::from($this->tempDir . '/atomicTest.txt');
+        $path = Path::of($this->tempDir . '/atomicTest.txt');
         $file = File::new($path->toString())->unwrap();
 
         $content = 'Atomic write content';
@@ -424,7 +424,7 @@ final class FileTest extends TestCase
 
     public function testWriteAtomicWithSync(): void
     {
-        $path = Path::from($this->tempDir . '/atomicSyncTest.txt');
+        $path = Path::of($this->tempDir . '/atomicSyncTest.txt');
         $file = File::new($path->toString())->unwrap();
 
         $content = 'Atomic write with sync content';
@@ -452,7 +452,7 @@ final class FileTest extends TestCase
 
     public function testSize(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $file = File::from($path->toString())->unwrap();
 
         $result = $file->size();
@@ -464,7 +464,7 @@ final class FileTest extends TestCase
 
     public function testSizeEmptyFile(): void
     {
-        $path = Path::from($this->root->url() . '/emptyFile.txt');
+        $path = Path::of($this->root->url() . '/emptyFile.txt');
         $file = File::from($path->toString())->unwrap();
 
         $result = $file->size();
@@ -476,7 +476,7 @@ final class FileTest extends TestCase
 
     public function testSizeBinaryFile(): void
     {
-        $path = Path::from($this->root->url() . '/binaryFile.bin');
+        $path = Path::of($this->root->url() . '/binaryFile.bin');
         $file = File::from($path->toString())->unwrap();
 
         $result = $file->size();

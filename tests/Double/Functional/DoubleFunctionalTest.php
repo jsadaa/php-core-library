@@ -14,9 +14,9 @@ final class DoubleFunctionalTest extends TestCase
 {
     public function testComplexCalculation(): void
     {
-        $a = Double::from(5.5);
-        $b = Double::from(12.3);
-        $c = Double::from(4.2);
+        $a = Double::of(5.5);
+        $b = Double::of(12.3);
+        $c = Double::of(4.2);
 
         $aSquared = $a->pow(2);
         $this->assertEqualsWithDelta(30.25, $aSquared->toFloat(), 0.0001);
@@ -39,8 +39,8 @@ final class DoubleFunctionalTest extends TestCase
     {
         // Implement factorial: n! = n * (n-1) * ... * 1
         $factorial = static function(float $n): Double {
-            $result = Double::from(1.0);
-            $current = Double::from($n);
+            $result = Double::of(1.0);
+            $current = Double::of($n);
 
             while ($current->gt(0)) {
                 $result = $result->mul($current);
@@ -66,9 +66,9 @@ final class DoubleFunctionalTest extends TestCase
         // y(t) = v0 * sin(θ) * t - 0.5 * g * t^2
         // where v0 is initial velocity, θ is launch angle, g is gravity, t is time
 
-        $initialVelocity = Double::from(30.0); // 30 m/s
-        $launchAngleDegrees = Double::from(45.0); // 45 degrees
-        $gravity = Double::from(9.81); // 9.81 m/s^2
+        $initialVelocity = Double::of(30.0); // 30 m/s
+        $launchAngleDegrees = Double::of(45.0); // 45 degrees
+        $gravity = Double::of(9.81); // 9.81 m/s^2
 
         // Convert angle to radians
         $launchAngle = $launchAngleDegrees->toRadians();
@@ -82,7 +82,7 @@ final class DoubleFunctionalTest extends TestCase
         // Total flight time: t_total = 2 * t_max = 2 * v0y / g
         $timeToMaxHeight = $v0y->div($gravity)->match(
             static fn($result) => $result,
-            static fn() => Double::from(0.0),
+            static fn() => Double::of(0.0),
         );
         $totalFlightTime = $timeToMaxHeight->mul(2);
 
@@ -90,14 +90,14 @@ final class DoubleFunctionalTest extends TestCase
         // h_max = v0y^2 / (2*g)
         $maxHeight = $v0y->pow(2)->div($gravity->mul(2))->match(
             static fn($result) => $result,
-            static fn() => Double::from(0.0),
+            static fn() => Double::of(0.0),
         );
 
         // Calculate range
         // R = v0^2 * sin(2θ) / g
         $range = $initialVelocity->pow(2)->mul($launchAngle->mul(2)->sin())->div($gravity)->match(
             static fn($result) => $result,
-            static fn() => Double::from(0.0),
+            static fn() => Double::of(0.0),
         );
 
         $this->assertEqualsWithDelta(4.32, $totalFlightTime->toFloat(), 0.01);
@@ -106,14 +106,14 @@ final class DoubleFunctionalTest extends TestCase
 
         // Calculate position at different times
         $positions = [];
-        $timeStep = Double::from(0.5);
-        $time = Double::from(0.0);
+        $timeStep = Double::of(0.5);
+        $time = Double::of(0.0);
 
         while ($time->le($totalFlightTime)) {
             $x = $v0x->mul($time);
             $y = $v0y->mul($time)->sub($gravity->mul($time->pow(2))->div(2.0)->match(
                 static fn($result) => $result,
-                static fn() => Double::from(0.0),
+                static fn() => Double::of(0.0),
             ));
             $positions[] = [
                 'time' => $time->toFloat(),
@@ -142,21 +142,21 @@ final class DoubleFunctionalTest extends TestCase
     public function testStatisticsCalculations(): void
     {
         $values = Sequence::of(
-            Double::from(12.5),
-            Double::from(5.2),
-            Double::from(8.7),
-            Double::from(15.3),
-            Double::from(10.1),
+            Double::of(12.5),
+            Double::of(5.2),
+            Double::of(8.7),
+            Double::of(15.3),
+            Double::of(10.1),
         );
 
         // Calculate mean
         $sum = $values->fold(
             static fn(Double $acc, Double $val) => $acc->add($val),
-            Double::from(0.0),
+            Double::of(0.0),
         );
 
         $count = $values->len()->toInt();
-        $mean = $sum->div(Double::from($count))->unwrap();
+        $mean = $sum->div(Double::of($count))->unwrap();
         $this->assertEqualsWithDelta(10.36, $mean->toFloat(), 0.01);
 
         // Calculate variance and standard deviation
@@ -166,10 +166,10 @@ final class DoubleFunctionalTest extends TestCase
 
                 return $acc->add($diff->pow(2));
             },
-            Double::from(0.0),
+            Double::of(0.0),
         );
 
-        $variance = $sumOfSquaredDifferences->div(Double::from($count))->unwrap();
+        $variance = $sumOfSquaredDifferences->div(Double::of($count))->unwrap();
         $standardDeviation = $variance->sqrt();
 
         $this->assertEqualsWithDelta(11.69, $variance->toFloat(), 0.01);
@@ -180,14 +180,14 @@ final class DoubleFunctionalTest extends TestCase
             static function(Double $acc, Double $val) {
                 return $acc->lt($val) ? $acc : $val;
             },
-            Double::from(\PHP_FLOAT_MAX),
+            Double::of(\PHP_FLOAT_MAX),
         );
 
         $max = $values->fold(
             static function(Double $acc, Double $val) {
                 return $acc->gt($val) ? $acc : $val;
             },
-            Double::from(-\PHP_FLOAT_MAX),
+            Double::of(-\PHP_FLOAT_MAX),
         );
 
         $this->assertSame(5.2, $min->toFloat());
@@ -214,20 +214,20 @@ final class DoubleFunctionalTest extends TestCase
         // - t is the time in years
 
         // Parameters
-        $principal = Double::from(1000.00);
-        $rate = Double::from(0.05); // 5%
-        $compoundingsPerYear = Double::from(12); // monthly
-        $timeInYears = Double::from(5); // 5 years
+        $principal = Double::of(1000.00);
+        $rate = Double::of(0.05); // 5%
+        $compoundingsPerYear = Double::of(12); // monthly
+        $timeInYears = Double::of(5); // 5 years
 
         // Calculate (1 + r/n)
         $ratePerPeriod = $rate->div($compoundingsPerYear)
             ->match(
                 static function($result) {
-                    return Double::from(1.0)->add($result);
+                    return Double::of(1.0)->add($result);
                 },
                 static function() {
                     // Should not happen in this example
-                    return Double::from(1.0);
+                    return Double::of(1.0);
                 },
             );
 
@@ -247,8 +247,8 @@ final class DoubleFunctionalTest extends TestCase
 
     public function testErrorHandlingInCalculations(): void
     {
-        $a = Double::from(10.0);
-        $b = Double::from(0.0);
+        $a = Double::of(10.0);
+        $b = Double::of(0.0);
 
         $result = $a->div($b);
 
@@ -271,7 +271,7 @@ final class DoubleFunctionalTest extends TestCase
                 return $value->mul(5);
             },
             static function($error) {
-                return Double::from(42.5);
+                return Double::of(42.5);
             },
         );
 
@@ -283,20 +283,20 @@ final class DoubleFunctionalTest extends TestCase
         // Integrate a function using the trapezoidal rule
         $integrate = static function(callable $f, Double $a, Double $b, Integer $n): Double {
             if ($n->le(0)) {
-                return Double::from(0.0);
+                return Double::of(0.0);
             }
 
             $h = $b->sub($a)->div($n->toFloat())->match(
                 static fn($result) => $result,
-                static fn() => Double::from(0.0),
+                static fn() => Double::of(0.0),
             );
-            $sum = Double::from(0.0);
+            $sum = Double::of(0.0);
             $x = $a;
 
             // First point
             $sum = $sum->add($f($x)->div(2.0)->match(
                 static fn($result) => $result,
-                static fn() => Double::from(0.0),
+                static fn() => Double::of(0.0),
             ));
 
             // Middle points
@@ -308,7 +308,7 @@ final class DoubleFunctionalTest extends TestCase
             // Last point
             $sum = $sum->add($f($b)->div(2.0)->match(
                 static fn($result) => $result,
-                static fn() => Double::from(0.0),
+                static fn() => Double::of(0.0),
             ));
 
             return $sum->mul($h);
@@ -320,7 +320,7 @@ final class DoubleFunctionalTest extends TestCase
             return $x->pow(2);
         };
 
-        $result1 = $integrate($f1, Double::from(0.0), Double::from(1.0), Integer::from(100));
+        $result1 = $integrate($f1, Double::of(0.0), Double::of(1.0), Integer::of(100));
         $this->assertEqualsWithDelta(1/3, $result1->toFloat(), 0.001);
 
         // Test integration of f(x) = sin(x) from 0 to π
@@ -329,34 +329,34 @@ final class DoubleFunctionalTest extends TestCase
             return $x->sin();
         };
 
-        $result2 = $integrate($f2, Double::from(0.0), Double::pi(), Integer::from(100));
+        $result2 = $integrate($f2, Double::of(0.0), Double::pi(), Integer::of(100));
         $this->assertEqualsWithDelta(2.0, $result2->toFloat(), 0.001);
     }
 
     public function testLogarithmicScientificComputations(): void
     {
         // Calculate pH value (pH = -log10([H+])) where [H+] is the hydrogen ion concentration
-        $hydrogenConcentration = Double::from(0.0000001); // 10^-7 mol/L (neutral solution)
+        $hydrogenConcentration = Double::of(0.0000001); // 10^-7 mol/L (neutral solution)
         $pH = $hydrogenConcentration->log(10.0)->mul(-1.0);
         $this->assertEqualsWithDelta(7.0, $pH->toFloat(), 0.01);
 
         // Test logarithmic scale conversions (e.g., decibels)
         // Decibel calculation: dB = 10 * log10(P2/P1)
-        $powerRatio = Double::from(100.0); // P2/P1 = 100 (power increased 100×)
+        $powerRatio = Double::of(100.0); // P2/P1 = 100 (power increased 100×)
         $decibels = $powerRatio->log(10.0)->mul(10.0);
         $this->assertEqualsWithDelta(20.0, $decibels->toFloat(), 0.01);
 
         // Test logarithm base change formula: log_b(x) = log_a(x) / log_a(b)
         // Calculate log base 5 of 125 using log10
-        $value = Double::from(125.0);
-        $base = Double::from(5.0);
+        $value = Double::of(125.0);
+        $base = Double::of(5.0);
 
         // Using log base formula: log_5(125) = log_10(125) / log_10(5)
         $log10Value = $value->log10();
         $log10Base = $base->log10();
         $log5 = $log10Value->div($log10Base)->match(
             static fn($result) => $result,
-            static fn() => Double::from(0.0),
+            static fn() => Double::of(0.0),
         );
 
         // Should be 3 because 5^3 = 125
@@ -368,8 +368,8 @@ final class DoubleFunctionalTest extends TestCase
 
         // Complex calculation: Shannon entropy for a binary system
         // H = -p*log2(p) - (1-p)*log2(1-p) where p is probability
-        $probability = Double::from(0.25);
-        $oneMinusP = Double::from(1.0)->sub($probability);
+        $probability = Double::of(0.25);
+        $oneMinusP = Double::of(1.0)->sub($probability);
 
         $term1 = $probability->mul($probability->log2()->mul(-1.0));
         $term2 = $oneMinusP->mul($oneMinusP->log2()->mul(-1.0));

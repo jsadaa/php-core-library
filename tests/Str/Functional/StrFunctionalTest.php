@@ -12,12 +12,12 @@ final class StrFunctionalTest extends TestCase
 {
     public function testTextProcessingWorkflow(): void
     {
-        $text = Str::from("  The Quick Brown Fox  \n  Jumps Over\t\tThe Lazy Dog  ");
+        $text = Str::of("  The Quick Brown Fox  \n  Jumps Over\t\tThe Lazy Dog  ");
 
         $processed = $text
             ->trim()
             ->toLowercase()
-            ->replace(Str::from(' '), Str::from('-'));
+            ->replace(Str::of(' '), Str::of('-'));
 
         $this->assertStringContainsString('the-quick-brown-fox', $processed->toString());
         $this->assertStringContainsString('jumps-over', $processed->toString());
@@ -35,7 +35,7 @@ final class StrFunctionalTest extends TestCase
 
     public function testCsvParsing(): void
     {
-        $csvData = Str::from("name,age,city\njohn,25,new york\nsarah,32,los angeles\nmike,41,chicago");
+        $csvData = Str::of("name,age,city\njohn,25,new york\nsarah,32,los angeles\nmike,41,chicago");
 
         $lines = $csvData->split("\n");
         $this->assertSame(4, $lines->len()->toInt());
@@ -72,7 +72,7 @@ final class StrFunctionalTest extends TestCase
 
     public function testMultilingualTextProcessing(): void
     {
-        $text = Str::from(
+        $text = Str::of(
             "English: Hello World\n" .
             "French: Bonjour le monde\n" .
             "German: Hallo Welt\n" .
@@ -87,14 +87,14 @@ final class StrFunctionalTest extends TestCase
 
         $this->assertSame(8, $matches->len()->toInt());
 
-        $replaced = $text->replace(Str::from('English: '), Str::from('Greeting: '))
-            ->replace(Str::from('French: '), Str::from('Greeting: '))
-            ->replace(Str::from('German: '), Str::from('Greeting: '))
-            ->replace(Str::from('Spanish: '), Str::from('Greeting: '))
-            ->replace(Str::from('Chinese: '), Str::from('Greeting: '))
-            ->replace(Str::from('Arabic: '), Str::from('Greeting: '))
-            ->replace(Str::from('Russian: '), Str::from('Greeting: '))
-            ->replace(Str::from('Japanese: '), Str::from('Greeting: '));
+        $replaced = $text->replace(Str::of('English: '), Str::of('Greeting: '))
+            ->replace(Str::of('French: '), Str::of('Greeting: '))
+            ->replace(Str::of('German: '), Str::of('Greeting: '))
+            ->replace(Str::of('Spanish: '), Str::of('Greeting: '))
+            ->replace(Str::of('Chinese: '), Str::of('Greeting: '))
+            ->replace(Str::of('Arabic: '), Str::of('Greeting: '))
+            ->replace(Str::of('Russian: '), Str::of('Greeting: '))
+            ->replace(Str::of('Japanese: '), Str::of('Greeting: '));
 
         $greetingMatches = $replaced->matches('/Greeting:/u');
         $this->assertSame(8, $greetingMatches->len()->toInt());
@@ -102,9 +102,9 @@ final class StrFunctionalTest extends TestCase
 
     public function testUrlBuilding(): void
     {
-        $scheme = Str::from('https');
-        $domain = Str::from('example.com');
-        $path = Str::from('/api/v1/users');
+        $scheme = Str::of('https');
+        $domain = Str::of('example.com');
+        $path = Str::of('/api/v1/users');
 
         $queryParams = [
             'id' => '12345',
@@ -117,15 +117,15 @@ final class StrFunctionalTest extends TestCase
 
         foreach ($queryParams as $key => $value) {
             $prefix = $first ? '?' : '&';
-            $queryString = $queryString->append(Str::from($prefix . $key . '=' . $value));
+            $queryString = $queryString->append(Str::of($prefix . $key . '=' . $value));
             $first = false;
         }
 
         $url = Str::new()
-            ->append(Str::from($scheme->toString() . '://'))
-            ->append(Str::from($domain->toString()))
-            ->append(Str::from($path->toString()))
-            ->append(Str::from($queryString->toString()));
+            ->append(Str::of($scheme->toString() . '://'))
+            ->append(Str::of($domain->toString()))
+            ->append(Str::of($path->toString()))
+            ->append(Str::of($queryString->toString()));
 
         $expectedUrl = 'https://example.com/api/v1/users?id=12345&format=json&fields=name,email,address';
         $this->assertSame($expectedUrl, $url->toString());
@@ -145,7 +145,7 @@ final class StrFunctionalTest extends TestCase
 
     public function testTextExtractionAndAnalysis(): void
     {
-        $jsonText = Str::from('{"users":[{"name":"John","email":"john@example.com"},'
+        $jsonText = Str::of('{"users":[{"name":"John","email":"john@example.com"},'
             . '{"name":"Alice","email":"alice@example.com"},'
             . '{"name":"Bob","email":"bob@example.com"}]}');
 
@@ -177,15 +177,15 @@ final class StrFunctionalTest extends TestCase
 
     public function testTemplateProcessing(): void
     {
-        $template = Str::from("Dear {{name}},\n\nThank you for your purchase of {{product}} on {{date}}."
+        $template = Str::of("Dear {{name}},\n\nThank you for your purchase of {{product}} on {{date}}."
             . "\n\nYour order number is {{order_id}}.\n\nRegards,\nThe {{company}} Team");
 
         $processed = $template
-            ->replace(Str::from('{{name}}'), Str::from('John Smith'))
-            ->replace(Str::from('{{product}}'), Str::from('Premium Widget'))
-            ->replace(Str::from('{{date}}'), Str::from('2023-04-15'))
-            ->replace(Str::from('{{order_id}}'), Str::from('ORD-12345'))
-            ->replace(Str::from('{{company}}'), Str::from('Acme Corp'));
+            ->replace(Str::of('{{name}}'), Str::of('John Smith'))
+            ->replace(Str::of('{{product}}'), Str::of('Premium Widget'))
+            ->replace(Str::of('{{date}}'), Str::of('2023-04-15'))
+            ->replace(Str::of('{{order_id}}'), Str::of('ORD-12345'))
+            ->replace(Str::of('{{company}}'), Str::of('Acme Corp'));
 
         $this->assertFalse($processed->contains('{{'));
         $this->assertFalse($processed->contains('}}'));

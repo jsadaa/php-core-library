@@ -11,9 +11,9 @@ final class DoubleComparisonTest extends TestCase
 {
     public function testEq(): void
     {
-        $a = Double::from(42.5);
-        $b = Double::from(42.5);
-        $c = Double::from(10.5);
+        $a = Double::of(42.5);
+        $b = Double::of(42.5);
+        $c = Double::of(10.5);
 
         $this->assertTrue($a->eq($b));
         $this->assertTrue($a->eq(42.5));
@@ -23,8 +23,8 @@ final class DoubleComparisonTest extends TestCase
 
     public function testApproxEq(): void
     {
-        $a = Double::from(0.1 + 0.2);  // This will be 0.30000000000000004 due to floating point precision
-        $b = Double::from(0.3);
+        $a = Double::of(0.1 + 0.2);  // This will be 0.30000000000000004 due to floating point precision
+        $b = Double::of(0.3);
 
         $this->assertFalse($a->eq($b), 'Direct equality should fail due to precision');
         $this->assertTrue($a->approxEq($b), 'Approximate equality should succeed with default epsilon');
@@ -36,9 +36,9 @@ final class DoubleComparisonTest extends TestCase
 
     public function testCmp(): void
     {
-        $a = Double::from(10.5);
-        $b = Double::from(20.5);
-        $c = Double::from(10.5);
+        $a = Double::of(10.5);
+        $b = Double::of(20.5);
+        $c = Double::of(10.5);
 
         $this->assertSame(-1, $a->cmp($b)->toInt(), 'a < b should return -1');
         $this->assertSame(1, $b->cmp($a)->toInt(), 'b > a should return 1');
@@ -51,8 +51,8 @@ final class DoubleComparisonTest extends TestCase
 
     public function testMin(): void
     {
-        $a = Double::from(10.5);
-        $b = Double::from(20.5);
+        $a = Double::of(10.5);
+        $b = Double::of(20.5);
 
         $this->assertSame(10.5, $a->min($b)->toFloat());
         $this->assertSame(10.5, $b->min($a)->toFloat());
@@ -62,8 +62,8 @@ final class DoubleComparisonTest extends TestCase
 
     public function testMax(): void
     {
-        $a = Double::from(10.5);
-        $b = Double::from(20.5);
+        $a = Double::of(10.5);
+        $b = Double::of(20.5);
 
         $this->assertSame(20.5, $a->max($b)->toFloat());
         $this->assertSame(20.5, $b->max($a)->toFloat());
@@ -73,22 +73,22 @@ final class DoubleComparisonTest extends TestCase
 
     public function testClamp(): void
     {
-        $a = Double::from(15.5);
+        $a = Double::of(15.5);
 
         $this->assertSame(15.5, $a->clamp(10.5, 20.5)->toFloat(), 'Value within range should remain unchanged');
         $this->assertSame(12.5, $a->clamp(10.5, 12.5)->toFloat(), 'Value above max should be clamped to max');
         $this->assertSame(20.5, $a->clamp(20.5, 30.5)->toFloat(), 'Value below min should be clamped to min');
 
-        $this->assertSame(15.5, $a->clamp(Double::from(10.5), Double::from(20.5))->toFloat());
-        $this->assertSame(12.5, $a->clamp(Double::from(10.5), Double::from(12.5))->toFloat());
-        $this->assertSame(20.5, $a->clamp(Double::from(20.5), Double::from(30.5))->toFloat());
+        $this->assertSame(15.5, $a->clamp(Double::of(10.5), Double::of(20.5))->toFloat());
+        $this->assertSame(12.5, $a->clamp(Double::of(10.5), Double::of(12.5))->toFloat());
+        $this->assertSame(20.5, $a->clamp(Double::of(20.5), Double::of(30.5))->toFloat());
     }
 
     public function testIsPositive(): void
     {
-        $positive = Double::from(10.5);
-        $zero = Double::from(0.0);
-        $negative = Double::from(-10.5);
+        $positive = Double::of(10.5);
+        $zero = Double::of(0.0);
+        $negative = Double::of(-10.5);
 
         $this->assertTrue($positive->isPositive());
         $this->assertFalse($zero->isPositive());
@@ -97,9 +97,9 @@ final class DoubleComparisonTest extends TestCase
 
     public function testIsNegative(): void
     {
-        $positive = Double::from(10.5);
-        $zero = Double::from(0.0);
-        $negative = Double::from(-10.5);
+        $positive = Double::of(10.5);
+        $zero = Double::of(0.0);
+        $negative = Double::of(-10.5);
 
         $this->assertFalse($positive->isNegative());
         $this->assertFalse($zero->isNegative());
@@ -108,7 +108,7 @@ final class DoubleComparisonTest extends TestCase
 
     public function testIsFinite(): void
     {
-        $normal = Double::from(42.5);
+        $normal = Double::of(42.5);
         $infinite = Double::infinity();
         $nan = Double::nan();
 
@@ -119,7 +119,7 @@ final class DoubleComparisonTest extends TestCase
 
     public function testIsInfinite(): void
     {
-        $normal = Double::from(42.5);
+        $normal = Double::of(42.5);
         $posInfinite = Double::infinity();
         $negInfinite = Double::negInfinity();
         $nan = Double::nan();
@@ -132,7 +132,7 @@ final class DoubleComparisonTest extends TestCase
 
     public function testIsNan(): void
     {
-        $normal = Double::from(42.5);
+        $normal = Double::of(42.5);
         $infinite = Double::infinity();
         $nan = Double::nan();
 
@@ -143,8 +143,8 @@ final class DoubleComparisonTest extends TestCase
 
     public function testIsInteger(): void
     {
-        $integer = Double::from(42.0);
-        $fraction = Double::from(42.5);
+        $integer = Double::of(42.0);
+        $fraction = Double::of(42.5);
 
         $this->assertTrue($integer->isInteger());
         $this->assertFalse($fraction->isInteger());
@@ -152,9 +152,9 @@ final class DoubleComparisonTest extends TestCase
 
     public function testSignum(): void
     {
-        $positive = Double::from(42.5);
-        $zero = Double::from(0.0);
-        $negative = Double::from(-42.5);
+        $positive = Double::of(42.5);
+        $zero = Double::of(0.0);
+        $negative = Double::of(-42.5);
 
         $this->assertSame(1, $positive->signum()->toInt());
         $this->assertSame(0, $zero->signum()->toInt());
@@ -163,9 +163,9 @@ final class DoubleComparisonTest extends TestCase
 
     public function testGreaterThan(): void
     {
-        $a = Double::from(10.5);
-        $b = Double::from(20.5);
-        $c = Double::from(10.5);
+        $a = Double::of(10.5);
+        $b = Double::of(20.5);
+        $c = Double::of(10.5);
 
         $this->assertTrue($b->gt($a));
         $this->assertFalse($a->gt($b));
@@ -174,9 +174,9 @@ final class DoubleComparisonTest extends TestCase
 
     public function testLessThan(): void
     {
-        $a = Double::from(10.5);
-        $b = Double::from(20.5);
-        $c = Double::from(10.5);
+        $a = Double::of(10.5);
+        $b = Double::of(20.5);
+        $c = Double::of(10.5);
 
         $this->assertTrue($a->lt($b));
         $this->assertFalse($b->lt($a));
@@ -185,9 +185,9 @@ final class DoubleComparisonTest extends TestCase
 
     public function testGreaterThanOrEqual(): void
     {
-        $a = Double::from(10.5);
-        $b = Double::from(20.5);
-        $c = Double::from(10.5);
+        $a = Double::of(10.5);
+        $b = Double::of(20.5);
+        $c = Double::of(10.5);
 
         $this->assertTrue($b->ge($a));
         $this->assertFalse($a->ge($b));
@@ -196,9 +196,9 @@ final class DoubleComparisonTest extends TestCase
 
     public function testLessThanOrEqual(): void
     {
-        $a = Double::from(10.5);
-        $b = Double::from(20.5);
-        $c = Double::from(10.5);
+        $a = Double::of(10.5);
+        $b = Double::of(20.5);
+        $c = Double::of(10.5);
 
         $this->assertTrue($a->le($b));
         $this->assertFalse($b->le($a));

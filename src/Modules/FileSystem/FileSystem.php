@@ -47,7 +47,7 @@ final readonly class FileSystem {
      */
     public static function canonicalize(string | Path $path): Result
     {
-        return $path instanceof Path ? $path->canonicalize() : Path::from($path)->canonicalize();
+        return $path instanceof Path ? $path->canonicalize() : Path::of($path)->canonicalize();
     }
 
     /**
@@ -61,7 +61,7 @@ final readonly class FileSystem {
      */
     public static function metadata(string | Path $path): Result
     {
-        $pathObj = \is_string($path) ? Path::from($path) : $path;
+        $pathObj = \is_string($path) ? Path::of($path) : $path;
 
         if (!$pathObj->exists()) {
             /** @var Result<Metadata, FileNotFound|InvalidMetadata> */
@@ -69,7 +69,7 @@ final readonly class FileSystem {
         }
 
         /** @var Result<Metadata, FileNotFound|InvalidMetadata> */
-        return Metadata::from($pathObj);
+        return Metadata::of($pathObj);
     }
 
     /**
@@ -83,7 +83,7 @@ final readonly class FileSystem {
      */
     public static function symlinkMetadata(string | Path $path): Result
     {
-        $pathObj = \is_string($path) ? Path::from($path) : $path;
+        $pathObj = \is_string($path) ? Path::of($path) : $path;
 
         if (!$pathObj->isSymLink()) {
             /** @var Result<Metadata, InvalidFileType|InvalidMetadata> */
@@ -91,7 +91,7 @@ final readonly class FileSystem {
         }
 
         /** @var Result<Metadata, InvalidFileType|InvalidMetadata> */
-        return Metadata::from($pathObj);
+        return Metadata::of($pathObj);
     }
 
     /**
@@ -105,7 +105,7 @@ final readonly class FileSystem {
      */
     public static function readBytes(string | Path $path): Result
     {
-        $pathObj = \is_string($path) ? Path::from($path) : $path;
+        $pathObj = \is_string($path) ? Path::of($path) : $path;
         $pathStr = $pathObj->toString();
 
         $fileResult = File::from($pathStr);
@@ -134,7 +134,7 @@ final readonly class FileSystem {
      */
     public static function readDir(string | Path $path): Result
     {
-        $path = \is_string($path) ? Path::from($path) : $path;
+        $path = \is_string($path) ? Path::of($path) : $path;
 
         if (!$path->exists()) {
             /** @var Result<Sequence<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
@@ -157,7 +157,7 @@ final readonly class FileSystem {
         return Result::ok(
             Sequence::ofArray($contents)
                 ->filter(static fn(string $item) => $item !== '.' && $item !== '..')
-                ->map(static fn(string $item) => DirectoryEntry::from($path->join(Path::from($item)))),
+                ->map(static fn(string $item) => DirectoryEntry::of($path->join(Path::of($item)))),
         );
     }
 
@@ -172,7 +172,7 @@ final readonly class FileSystem {
      */
     public static function readSymlink(string | Path $path): Result
     {
-        $path = \is_string($path) ? Path::from($path) : $path;
+        $path = \is_string($path) ? Path::of($path) : $path;
 
         if (!$path->isSymlink()) {
             /** @var Result<Path, InvalidFileType|ReadFailed> */
@@ -187,7 +187,7 @@ final readonly class FileSystem {
         }
 
         /** @var Result<Path, InvalidFileType|ReadFailed> */
-        return Result::ok(Path::from($concretePath));
+        return Result::ok(Path::of($concretePath));
     }
 
     /**
@@ -225,7 +225,7 @@ final readonly class FileSystem {
      */
     public static function write(string | Path $path, string | Str $contents): Result
     {
-        $path = $path instanceof Path ? $path : Path::from($path);
+        $path = $path instanceof Path ? $path : Path::of($path);
 
         $fileResult = $path->exists() === false ? File::new($path) : File::from($path);
 
@@ -259,8 +259,8 @@ final readonly class FileSystem {
      */
     public static function copyFile(string | Path $source, string | Path $destination): Result
     {
-        $sourcePath = \is_string($source) ? Path::from($source) : $source;
-        $destPath = \is_string($destination) ? Path::from($destination) : $destination;
+        $sourcePath = \is_string($source) ? Path::of($source) : $source;
+        $destPath = \is_string($destination) ? Path::of($destination) : $destination;
 
         if (!$sourcePath->exists()) {
             /** @var Result<null, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
@@ -297,7 +297,7 @@ final readonly class FileSystem {
             return $writeResult;
         }
 
-        $sourcePerm = Permissions::from($sourcePath);
+        $sourcePerm = Permissions::of($sourcePath);
         $result = $sourcePerm->apply($destPath);
 
         if ($result->isErr()) {
@@ -324,8 +324,8 @@ final readonly class FileSystem {
      */
     public static function renameFile(string | Path $source, string | Path $dest): Result
     {
-        $sourcePath = \is_string($source) ? Path::from($source) : $source;
-        $destPath = \is_string($dest) ? Path::from($dest) : $dest;
+        $sourcePath = \is_string($source) ? Path::of($source) : $source;
+        $destPath = \is_string($dest) ? Path::of($dest) : $dest;
 
         if (!$sourcePath->exists()) {
             /** @var Result<null, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> */
@@ -337,7 +337,7 @@ final readonly class FileSystem {
             return Result::err(new InvalidFileType(\sprintf('Source file is not a file: %s', $sourcePath->toString())));
         }
 
-        if(!Permissions::from($sourcePath)->isReadable()) {
+        if(!Permissions::of($sourcePath)->isReadable()) {
             /** @var Result<null, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf('Source file is not readable: %s', $sourcePath->toString())));
         }
@@ -384,7 +384,7 @@ final readonly class FileSystem {
             return Result::err(new RenameFailed(\sprintf('Destination directory already exists: %s', $destPath->toString())));
         }
 
-        if (!Permissions::from($sourcePath)->isReadable()) {
+        if (!Permissions::of($sourcePath)->isReadable()) {
             /** @var Result<null, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf('Source directory is not readable: %s', $sourcePath->toString())));
         }
@@ -443,7 +443,7 @@ final readonly class FileSystem {
      */
     public static function createDir(string | Path $path): Result
     {
-        $pathObj = \is_string($path) ? Path::from($path) : $path;
+        $pathObj = \is_string($path) ? Path::of($path) : $path;
 
         if ($pathObj->isDir()) {
             /** @var Result<null, CreateFailed|AlreadyExists> */
@@ -475,7 +475,7 @@ final readonly class FileSystem {
      */
     public static function createDirAll(string | Path $path): Result
     {
-        $path = \is_string($path) ? Path::from($path) : $path;
+        $path = \is_string($path) ? Path::of($path) : $path;
 
         $results = $path
             ->ancestors()
@@ -506,7 +506,7 @@ final readonly class FileSystem {
      */
     public static function removeDir(string | Path $path): Result
     {
-        $pathObj = \is_string($path) ? Path::from($path) : $path;
+        $pathObj = \is_string($path) ? Path::of($path) : $path;
 
         if (!$pathObj->exists()) {
             /** @var Result<null, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
@@ -559,7 +559,7 @@ final readonly class FileSystem {
      */
     public static function removeDirAll(string | Path $path): Result
     {
-        $path = \is_string($path) ? Path::from($path) : $path;
+        $path = \is_string($path) ? Path::of($path) : $path;
 
         if (!$path->exists()) {
             /** @var Result<null, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
@@ -584,7 +584,7 @@ final readonly class FileSystem {
 
                 if (\is_dir($full)) {
                     // Recursively remove subdirectories
-                    $subDirResult = self::removeDirAll(Path::from($full));
+                    $subDirResult = self::removeDirAll(Path::of($full));
 
                     if ($subDirResult->isErr()) {
                         \closedir($dir);
@@ -628,7 +628,7 @@ final readonly class FileSystem {
      */
     public static function removeFile(string | Path $path): Result
     {
-        $path = $path instanceof Path ? $path : Path::from($path);
+        $path = $path instanceof Path ? $path : Path::of($path);
 
         if (!$path->exists()) {
             /** @var Result<null, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound> */
@@ -666,7 +666,7 @@ final readonly class FileSystem {
      */
     public static function exists(string | Path $path): bool
     {
-        $path = \is_string($path) ? Path::from($path) : $path;
+        $path = \is_string($path) ? Path::of($path) : $path;
 
         return $path->exists();
     }
@@ -685,8 +685,8 @@ final readonly class FileSystem {
      */
     public static function hardLink(string | Path $source, string | Path $dest): Result
     {
-        $sourcePath = $source instanceof Path ? $source : Path::from($source);
-        $destPath = $dest instanceof Path ? $dest : Path::from($dest);
+        $sourcePath = $source instanceof Path ? $source : Path::of($source);
+        $destPath = $dest instanceof Path ? $dest : Path::of($dest);
 
         if (!$sourcePath->exists()) {
             /** @var Result<null, FileNotFound|AlreadyExists|LinkFailed> */
@@ -724,8 +724,8 @@ final readonly class FileSystem {
      */
     public static function symLink(string | Path $source, string | Path $dest): Result
     {
-        $sourcePath = \is_string($source) ? Path::from($source) : $source;
-        $destPath = \is_string($dest) ? Path::from($dest) : $dest;
+        $sourcePath = \is_string($source) ? Path::of($source) : $source;
+        $destPath = \is_string($dest) ? Path::of($dest) : $dest;
 
         if (!$sourcePath->exists()) {
             /** @var Result<null, SymlinkFailed|FileNotFound|AlreadyExists> */
@@ -760,7 +760,7 @@ final readonly class FileSystem {
      */
     public static function setPermissions(string | Path $path, Permissions $permissions): Result
     {
-        $pathObj = \is_string($path) ? Path::from($path) : $path;
+        $pathObj = \is_string($path) ? Path::of($path) : $path;
 
         $result = $permissions->apply($pathObj);
 

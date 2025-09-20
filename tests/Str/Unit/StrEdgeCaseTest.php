@@ -11,45 +11,45 @@ final class StrEdgeCaseTest extends TestCase
 {
     public function testInsertEdgeCases(): void
     {
-        $str = Str::from('Hello');
-        $result = $str->insertAt(5, Str::from('World'));
+        $str = Str::of('Hello');
+        $result = $str->insertAt(5, Str::of('World'));
         $this->assertSame('HelloWorld', $result->toString());
 
-        $result = $str->insertAt(2, Str::from(''));
+        $result = $str->insertAt(2, Str::of(''));
         $this->assertSame('Hello', $result->toString(), 'Inserting empty string should not change original');
 
-        $result = $str->insertAt(1000, Str::from('!'));
+        $result = $str->insertAt(1000, Str::of('!'));
         $this->assertSame('Hello!', $result->toString(), 'Very large offset should append to end');
 
-        $str = Str::from('こんにちは');
-        $result = $str->insertAt(2, Str::from('☆'));
+        $str = Str::of('こんにちは');
+        $result = $str->insertAt(2, Str::of('☆'));
         $this->assertSame('こん☆にちは', $result->toString(), 'Should correctly insert into multibyte string');
     }
 
     public function testPushEdgeCases(): void
     {
-        $str = Str::from('Hello')->append(Str::from(''));
+        $str = Str::of('Hello')->append(Str::of(''));
         $this->assertSame('Hello', $str->toString(), 'Pushing empty string should not change original');
 
         $largeString = \str_repeat('a', 10000);
-        $str = Str::from('Hello')->append(Str::from($largeString));
+        $str = Str::of('Hello')->append(Str::of($largeString));
         $this->assertSame('Hello' . $largeString, $str->toString(), 'Should handle large string push');
 
-        $str = Str::from('Hello')->append(Str::from('🌍🌎🌏'));
+        $str = Str::of('Hello')->append(Str::of('🌍🌎🌏'));
         $this->assertSame('Hello🌍🌎🌏', $str->toString(), 'Should handle emoji sequences');
     }
 
     public function testRemoveEdgeCases(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $modifiedStr = $str->removeAt(4);
         $this->assertSame('Hell', $modifiedStr->toString());
 
-        $str = Str::from('Hello🌍');
+        $str = Str::of('Hello🌍');
         $modifiedStr = $str->removeAt(5);
         $this->assertSame('Hello', $modifiedStr->toString());
 
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $modifiedStr = $str->removeAt(1000);
         $this->assertSame('Hello', $modifiedStr->toString(), 'Should handle out-of-bounds index and return original string');
 
@@ -57,24 +57,24 @@ final class StrEdgeCaseTest extends TestCase
 
     public function testTruncateEdgeCases(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $result = $str->truncate(1000000);
         $this->assertSame('Hello', $result->toString(), 'Large truncate length should return original string');
 
-        $str = Str::from('こんにちは世界');
+        $str = Str::of('こんにちは世界');
         $result = $str->truncate(3);
         $this->assertSame('こんに', $result->toString(), 'Should correctly truncate multibyte string');
     }
 
     public function testSplitAtEdgeCases(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $parts = $str->splitAt(1000);
         $this->assertSame(2, $parts->len()->toInt());
         $this->assertSame('Hello', $parts->get(0)->unwrap()->toString());
         $this->assertSame('', $parts->get(1)->unwrap()->toString());
 
-        $str = Str::from('こんにちは世界');
+        $str = Str::of('こんにちは世界');
         $parts = $str->splitAt(4);
         $this->assertSame('こんにち', $parts->get(0)->unwrap()->toString());
         $this->assertSame('は世界', $parts->get(1)->unwrap()->toString());
@@ -82,16 +82,16 @@ final class StrEdgeCaseTest extends TestCase
 
     public function testPadStartEdgeCases(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $result = $str->padStart(10, '');
         $this->assertSame('Hello', $result->toString(), 'Empty pad string should return original');
 
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $result = $str->padStart(1000, '-');
         $this->assertSame(1000, $result->chars()->len()->toInt(), 'Should pad to exactly the specified length');
         $this->assertStringEndsWith('Hello', $result->toString());
 
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $result = $str->padStart(7, '世');
         $this->assertSame(7, $result->chars()->len()->toInt());
         $this->assertSame('世世Hello', $result->toString());
@@ -99,16 +99,16 @@ final class StrEdgeCaseTest extends TestCase
 
     public function testPadEndEdgeCases(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $result = $str->padEnd(10, '');
         $this->assertSame('Hello', $result->toString(), 'Empty pad string should return original');
 
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $result = $str->padEnd(1000, '-');
         $this->assertSame(1000, $result->len()->toInt(), 'Should pad to exactly the specified length');
         $this->assertStringStartsWith('Hello', $result->toString());
 
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $result = $str->padEnd(7, '世');
         $this->assertSame(7, $result->chars()->len()->toInt());
         $this->assertSame('Hello世世', $result->toString());
@@ -116,42 +116,42 @@ final class StrEdgeCaseTest extends TestCase
 
     public function testRepeatEdgeCases(): void
     {
-        $str = Str::from('a');
+        $str = Str::of('a');
         $result = $str->repeat(10000);
         $this->assertSame(10000, $result->len()->toInt(), 'Should repeat exactly the specified number of times');
 
-        $str = Str::from('世');
+        $str = Str::of('世');
         $result = $str->repeat(5);
         $this->assertSame(5, $result->chars()->len()->toInt());
         $this->assertSame('世世世世世', $result->toString());
 
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $result = $str->repeat(0);
         $this->assertTrue($result->isEmpty(), 'Zero repeat count should return empty string');
     }
 
     public function testReplaceRangeEdgeCases(): void
     {
-        $str = Str::from('Hello');
-        $result = $str->replaceRange(10, 5, Str::from('World'));
+        $str = Str::of('Hello');
+        $result = $str->replaceRange(10, 5, Str::of('World'));
         $this->assertEquals('HelloWorld', $result->toString());
 
-        $str = Str::from('Hello World');
-        $result = $str->replaceRange(6, 10000, Str::from('Person'));
+        $str = Str::of('Hello World');
+        $result = $str->replaceRange(6, 10000, Str::of('Person'));
         $this->assertSame('Hello Person', $result->toString());
 
-        $str = Str::from('Hello World');
-        $result = $str->replaceRange(6, 5, Str::from('Beautiful Person'));
+        $str = Str::of('Hello World');
+        $result = $str->replaceRange(6, 5, Str::of('Beautiful Person'));
         $this->assertSame('Hello Beautiful Person', $result->toString());
 
-        $str = Str::from('こんにちは世界');
-        $result = $str->replaceRange(3, 2, Str::from('ABC'));
+        $str = Str::of('こんにちは世界');
+        $result = $str->replaceRange(3, 2, Str::of('ABC'));
         $this->assertSame('こんにABC世界', $result->toString());
     }
 
     public function testWrapEdgeCases(): void
     {
-        $str = Str::from('HelloWorld');
+        $str = Str::of('HelloWorld');
         $result = $str->wrap(1);
         $this->assertSame(
             "H\ne\nl\nl\no\nW\no\nr\nl\nd",
@@ -159,16 +159,16 @@ final class StrEdgeCaseTest extends TestCase
             'Should wrap each character for width 1',
         );
 
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $result = $str->wrap(100);
         $this->assertSame('Hello', $result->toString(), 'Width larger than string should return original');
 
-        $str = Str::from('The quick brown fox jumps over the lazy dog');
+        $str = Str::of('The quick brown fox jumps over the lazy dog');
         $result = $str->wrap(10, "\r\n");
         $this->assertStringContainsString("\r\n", $result->toString(), 'Should use custom line break');
         $this->assertSame("The quick\r\nbrown fox\r\njumps over\r\nthe lazy\r\ndog", $result->toString());
 
-        $str = Str::from('こんにちは世界こんにちは世界');
+        $str = Str::of('こんにちは世界こんにちは世界');
         $result = $str->wrap(5);
         $parts = \explode("\n", $result->toString());
         $this->assertSame(
@@ -183,7 +183,7 @@ final class StrEdgeCaseTest extends TestCase
 
     public function testNormalizeEdgeCases(): void
     {
-        $composed = Str::from("a\u{030A}");
+        $composed = Str::of("a\u{030A}");
         $result = $composed->normalize('NFC');
         $this->assertTrue($result->isOk());
         $this->assertSame('å', $result->unwrap()->toString());
@@ -193,7 +193,7 @@ final class StrEdgeCaseTest extends TestCase
         $this->assertTrue($result->isOk());
         $this->assertCount(2, $result->unwrap()->chars()->toArray());
 
-        $str = Str::from('Café');
+        $str = Str::of('Café');
         $nfc = $str->normalize('NFC')->unwrap();
         $nfd = $str->normalize('NFD')->unwrap();
         $nfkc = $str->normalize('NFKC')->unwrap();
@@ -225,7 +225,7 @@ final class StrEdgeCaseTest extends TestCase
 
         // Test with compatibility characters
         // For example, ℕ (U+2115 DOUBLE-STRUCK CAPITAL N) vs. N
-        $str = Str::from('ℕ'); // Mathematical double-struck N
+        $str = Str::of('ℕ'); // Mathematical double-struck N
         $nfkc = $str->normalize('NFKC');
         // NFKC/NFKD may convert compatibility characters to their regular equivalents
         $this->assertTrue($nfkc->isOk());

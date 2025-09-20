@@ -12,8 +12,8 @@ final class IntegerEdgeCaseTest extends TestCase
 {
     public function testEdgeCaseAddZero(): void
     {
-        $a = Integer::from(42);
-        $zero = Integer::from(0);
+        $a = Integer::of(42);
+        $zero = Integer::of(0);
 
         $result = $a->add($zero);
 
@@ -23,7 +23,7 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseSubtractSelf(): void
     {
-        $a = Integer::from(42);
+        $a = Integer::of(42);
 
         $result = $a->sub($a);
 
@@ -32,8 +32,8 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseMultiplyByZero(): void
     {
-        $a = Integer::from(42);
-        $zero = Integer::from(0);
+        $a = Integer::of(42);
+        $zero = Integer::of(0);
 
         $result = $a->mul($zero);
 
@@ -42,8 +42,8 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseMultiplyByOne(): void
     {
-        $a = Integer::from(42);
-        $one = Integer::from(1);
+        $a = Integer::of(42);
+        $one = Integer::of(1);
 
         $result = $a->mul($one);
 
@@ -53,7 +53,7 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseDivideBySelf(): void
     {
-        $a = Integer::from(42);
+        $a = Integer::of(42);
 
         $result = $a->div($a);
 
@@ -63,8 +63,8 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseDivideZeroByNumber(): void
     {
-        $zero = Integer::from(0);
-        $a = Integer::from(42);
+        $zero = Integer::of(0);
+        $a = Integer::of(42);
 
         $result = $zero->div($a);
 
@@ -74,8 +74,8 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseDivideAtIntegerBoundary(): void
     {
-        $min = Integer::from(\PHP_INT_MIN);
-        $negOne = Integer::from(-1);
+        $min = Integer::of(\PHP_INT_MIN);
+        $negOne = Integer::of(-1);
 
         $result = $min->div($negOne);
 
@@ -84,7 +84,7 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseAbsOfMinInt(): void
     {
-        $min = Integer::from(\PHP_INT_MIN);
+        $min = Integer::of(\PHP_INT_MIN);
 
         // In many languages, abs(INT_MIN) would overflow because |INT_MIN| > INT_MAX
         // But PHP handles this differently, casting to float temporarily, so we return INT_MAX
@@ -95,7 +95,7 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCasePowWithNegativeBase(): void
     {
-        $negative = Integer::from(-2);
+        $negative = Integer::of(-2);
 
         $pow2 = $negative->pow(2);
         $pow3 = $negative->pow(3);
@@ -106,7 +106,7 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCasePowWithZeroBase(): void
     {
-        $zero = Integer::from(0);
+        $zero = Integer::of(0);
 
         $pow0 = $zero->pow(0);
         $pow1 = $zero->pow(1);
@@ -119,7 +119,7 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseSqrtOfPerfectSquare(): void
     {
-        $a = Integer::from(144);
+        $a = Integer::of(144);
 
         $result = $a->sqrt();
 
@@ -128,7 +128,7 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseSqrtOfOne(): void
     {
-        $one = Integer::from(1);
+        $one = Integer::of(1);
 
         $result = $one->sqrt();
 
@@ -137,7 +137,7 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseSqrtOfZero(): void
     {
-        $zero = Integer::from(0);
+        $zero = Integer::of(0);
 
         $result = $zero->sqrt();
 
@@ -146,15 +146,15 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseOverflowingAddNearBoundary(): void
     {
-        $nearMax = Integer::from(\PHP_INT_MAX - 10);
-        $small = Integer::from(5);
+        $nearMax = Integer::of(\PHP_INT_MAX - 10);
+        $small = Integer::of(5);
 
         $result = $nearMax->overflowingAdd($small);
 
         $this->assertTrue($result->isOk());
         $this->assertSame(\PHP_INT_MAX - 5, $result->unwrap()->toInt());
 
-        $large = Integer::from(15);
+        $large = Integer::of(15);
         $overflow = $nearMax->overflowingAdd($large);
 
         $this->assertTrue($overflow->isErr());
@@ -163,9 +163,9 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseSaturatingAddNearBoundary(): void
     {
-        $nearMax = Integer::from(\PHP_INT_MAX - 10);
-        $small = Integer::from(5);
-        $large = Integer::from(15);
+        $nearMax = Integer::of(\PHP_INT_MAX - 10);
+        $small = Integer::of(5);
+        $large = Integer::of(15);
 
         $result1 = $nearMax->saturatingAdd($small);
         $this->assertSame(\PHP_INT_MAX - 5, $result1->toInt());
@@ -176,15 +176,15 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseOverflowingSubNearBoundary(): void
     {
-        $nearMin = Integer::from(\PHP_INT_MIN + 10);
-        $small = Integer::from(5);
+        $nearMin = Integer::of(\PHP_INT_MIN + 10);
+        $small = Integer::of(5);
 
         $result = $nearMin->overflowingSub($small);
 
         $this->assertTrue($result->isOk());
         $this->assertSame(\PHP_INT_MIN + 5, $result->unwrap()->toInt());
 
-        $large = Integer::from(15);
+        $large = Integer::of(15);
         $overflow = $nearMin->overflowingSub($large);
 
         $this->assertTrue($overflow->isErr());
@@ -193,9 +193,9 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseSaturatingSubNearBoundary(): void
     {
-        $nearMin = Integer::from(\PHP_INT_MIN + 10);
-        $small = Integer::from(5);
-        $large = Integer::from(15);
+        $nearMin = Integer::of(\PHP_INT_MIN + 10);
+        $small = Integer::of(5);
+        $large = Integer::of(15);
 
         $result1 = $nearMin->saturatingSub($small);
         $this->assertSame(\PHP_INT_MIN + 5, $result1->toInt());
@@ -206,7 +206,7 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseClampWithInvertedBoundaries(): void
     {
-        $a = Integer::from(15);
+        $a = Integer::of(15);
 
         $result = $a->clamp(20, 10);
 
@@ -215,7 +215,7 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseMapReturnsMaxInt(): void
     {
-        $a = Integer::from(5);
+        $a = Integer::of(5);
 
         $result = $a->map(static fn() => \PHP_INT_MAX);
 
@@ -224,7 +224,7 @@ final class IntegerEdgeCaseTest extends TestCase
 
     public function testEdgeCaseMapReturnsMinInt(): void
     {
-        $a = Integer::from(5);
+        $a = Integer::of(5);
 
         $result = $a->map(static fn() => \PHP_INT_MIN);
 

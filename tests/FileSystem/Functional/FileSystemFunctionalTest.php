@@ -35,7 +35,7 @@ final class FileSystemFunctionalTest extends TestCase
     public function testProjectStructureCreationAndManagement(): void
     {
         // Simulate creating a typical web project structure
-        $projectRoot = Path::from($this->tempDir . '/my-project');
+        $projectRoot = Path::of($this->tempDir . '/my-project');
 
         $directories = [
             'src',
@@ -47,7 +47,7 @@ final class FileSystemFunctionalTest extends TestCase
         ];
 
         foreach ($directories as $dir) {
-            $dirPath = $projectRoot->join(Path::from($dir));
+            $dirPath = $projectRoot->join(Path::of($dir));
             $result = FileSystem::createDirAll($dirPath);
             $this->assertTrue($result->isOk(), "Failed to create directory: $dir");
         }
@@ -58,18 +58,18 @@ final class FileSystemFunctionalTest extends TestCase
         ];
 
         foreach ($configs as $filePath => $content) {
-            $fullPath = $projectRoot->join(Path::from($filePath));
+            $fullPath = $projectRoot->join(Path::of($filePath));
             $result = FileSystem::write($fullPath, $content);
             $this->assertTrue($result->isOk(), "Failed to create config file: $filePath");
         }
 
-        $this->assertTrue(FileSystem::exists($projectRoot->join(Path::from('src/Controllers'))));
-        $this->assertTrue(FileSystem::exists($projectRoot->join(Path::from('config/app.php'))));
+        $this->assertTrue(FileSystem::exists($projectRoot->join(Path::of('src/Controllers'))));
+        $this->assertTrue(FileSystem::exists($projectRoot->join(Path::of('config/app.php'))));
 
-        $appConfig = FileSystem::read($projectRoot->join(Path::from('config/app.php')))->unwrap();
+        $appConfig = FileSystem::read($projectRoot->join(Path::of('config/app.php')))->unwrap();
         $this->assertStringContainsString('My App', $appConfig->toString());
 
-        $configDir = $projectRoot->join(Path::from('config'));
+        $configDir = $projectRoot->join(Path::of('config'));
         $entries = FileSystem::readDir($configDir)->unwrap();
         $this->assertEquals(1, $entries->len()->toInt());
     }
@@ -77,10 +77,10 @@ final class FileSystemFunctionalTest extends TestCase
     public function testLogRotationWorkflow(): void
     {
         // Simulate a log rotation system
-        $logDir = Path::from($this->tempDir . '/logs');
+        $logDir = Path::of($this->tempDir . '/logs');
         FileSystem::createDir($logDir)->unwrap();
 
-        $currentLogFile = $logDir->join(Path::from('app.log'));
+        $currentLogFile = $logDir->join(Path::of('app.log'));
 
         $logEntries = [
             '[2024-01-01 10:00:00] INFO: Application started',
@@ -105,7 +105,7 @@ final class FileSystemFunctionalTest extends TestCase
 
         if ($size->toInt() > $maxSize) {
             $timestamp = \date('Y-m-d_H-i-s');
-            $rotatedLogFile = $logDir->join(Path::from("app-$timestamp.log"));
+            $rotatedLogFile = $logDir->join(Path::of("app-$timestamp.log"));
 
             // Move current log to rotated file
             FileSystem::renameFile($currentLogFile, $rotatedLogFile)->unwrap();
@@ -121,10 +121,10 @@ final class FileSystemFunctionalTest extends TestCase
     public function testConfigurationManagement(): void
     {
         // Simulate managing application configuration with atomic updates
-        $configDir = Path::from($this->tempDir . '/config');
+        $configDir = Path::of($this->tempDir . '/config');
         FileSystem::createDir($configDir)->unwrap();
 
-        $configFile = $configDir->join(Path::from('settings.json'));
+        $configFile = $configDir->join(Path::of('settings.json'));
 
         $initialConfig = [
             'app_name' => 'MyApp',
@@ -159,16 +159,16 @@ final class FileSystemFunctionalTest extends TestCase
     public function testDataProcessingPipeline(): void
     {
         // Simulate processing CSV data files
-        $dataDir = Path::from($this->tempDir . '/data');
-        FileSystem::createDirAll($dataDir->join(Path::from('input')))->unwrap();
-        FileSystem::createDirAll($dataDir->join(Path::from('output')))->unwrap();
+        $dataDir = Path::of($this->tempDir . '/data');
+        FileSystem::createDirAll($dataDir->join(Path::of('input')))->unwrap();
+        FileSystem::createDirAll($dataDir->join(Path::of('output')))->unwrap();
 
         $csvData = "id,name,email,age\n" .
                    "1,John Doe,john@example.com,25\n" .
                    "2,Jane Smith,jane@example.com,30\n" .
                    "3,Bob Johnson,bob@example.com,35\n";
 
-        $inputFile = $dataDir->join(Path::from('input/users.csv'));
+        $inputFile = $dataDir->join(Path::of('input/users.csv'));
         FileSystem::write($inputFile, $csvData)->unwrap();
 
         $content = FileSystem::read($inputFile)->unwrap();
@@ -195,7 +195,7 @@ final class FileSystemFunctionalTest extends TestCase
             }
         }
 
-        $outputFile = $dataDir->join(Path::from('output/adults.txt'));
+        $outputFile = $dataDir->join(Path::of('output/adults.txt'));
         $outputContent = "Adults (30+):\n" . \implode("\n", $adults);
         FileSystem::write($outputFile, $outputContent)->unwrap();
 
@@ -210,14 +210,14 @@ final class FileSystemFunctionalTest extends TestCase
     public function testPermissionManagementWorkflow(): void
     {
         // Simulate setting up proper permissions for a web application
-        $webRoot = Path::from($this->tempDir . '/webapp');
+        $webRoot = Path::of($this->tempDir . '/webapp');
 
         FileSystem::createDir($webRoot)->unwrap();
 
         $directories = ['public', 'storage', 'config'];
 
         foreach ($directories as $dir) {
-            FileSystem::createDir($webRoot->join(Path::from($dir)))->unwrap();
+            FileSystem::createDir($webRoot->join(Path::of($dir)))->unwrap();
         }
 
         $files = [
@@ -227,7 +227,7 @@ final class FileSystemFunctionalTest extends TestCase
         ];
 
         foreach ($files as $filePath => $content) {
-            $fullPath = $webRoot->join(Path::from($filePath));
+            $fullPath = $webRoot->join(Path::of($filePath));
             FileSystem::write($fullPath, $content)->unwrap();
         }
 
@@ -238,14 +238,14 @@ final class FileSystemFunctionalTest extends TestCase
         ];
 
         foreach ($permissionMap as $path => $mode) {
-            $fullPath = $webRoot->join(Path::from($path));
+            $fullPath = $webRoot->join(Path::of($path));
             $permissions = Permissions::create($mode);
             $result = $permissions->apply($fullPath);
             $this->assertTrue($result->isOk(), "Failed to set permissions for: $path");
         }
 
-        $configFile = $webRoot->join(Path::from('config/database.conf'));
-        $configPerms = Permissions::from($configFile);
+        $configFile = $webRoot->join(Path::of('config/database.conf'));
+        $configPerms = Permissions::of($configFile);
         $this->assertTrue($configPerms->isReadable());
         $this->assertTrue($configPerms->isWritable());
 
@@ -258,8 +258,8 @@ final class FileSystemFunctionalTest extends TestCase
     public function testBackupAndRestoreWorkflow(): void
     {
         // Simulate a backup and restore system
-        $sourceDir = Path::from($this->tempDir . '/source');
-        $backupDir = Path::from($this->tempDir . '/backup');
+        $sourceDir = Path::of($this->tempDir . '/source');
+        $backupDir = Path::of($this->tempDir . '/backup');
 
         FileSystem::createDirAll($sourceDir)->unwrap();
         FileSystem::createDirAll($backupDir)->unwrap();
@@ -270,7 +270,7 @@ final class FileSystemFunctionalTest extends TestCase
         ];
 
         foreach ($sourceFiles as $fileName => $content) {
-            $filePath = $sourceDir->join(Path::from($fileName));
+            $filePath = $sourceDir->join(Path::of($fileName));
             FileSystem::write($filePath, $content)->unwrap();
         }
 
@@ -281,7 +281,7 @@ final class FileSystemFunctionalTest extends TestCase
             if ($entry->fileType()->isFile()) {
                 $fileName = $entry->fileName()->unwrap();
                 $sourcePath = $entry->path();
-                $backupPath = $backupDir->join(Path::from($fileName));
+                $backupPath = $backupDir->join(Path::of($fileName));
 
                 FileSystem::copyFile($sourcePath, $backupPath)->unwrap();
             }
@@ -290,14 +290,14 @@ final class FileSystemFunctionalTest extends TestCase
         $backupEntries = FileSystem::readDir($backupDir)->unwrap();
         $this->assertEquals(2, $backupEntries->len()->toInt());
 
-        $documentPath = $sourceDir->join(Path::from('document.txt'));
+        $documentPath = $sourceDir->join(Path::of('document.txt'));
         FileSystem::write($documentPath, 'CORRUPTED DATA')->unwrap();
 
         $corruptedContent = FileSystem::read($documentPath)->unwrap();
         $this->assertEquals('CORRUPTED DATA', $corruptedContent->toString());
 
         FileSystem::removeFile($documentPath)->unwrap();
-        $backupDocument = $backupDir->join(Path::from('document.txt'));
+        $backupDocument = $backupDir->join(Path::of('document.txt'));
         $copyResult = FileSystem::copyFile($backupDocument, $documentPath);
         $this->assertTrue($copyResult->isOk());
 
@@ -308,14 +308,14 @@ final class FileSystemFunctionalTest extends TestCase
     public function testTemporaryFileManagement(): void
     {
         // Simulate working with temporary files for data processing
-        $tempWorkDir = Path::from($this->tempDir . '/temp-work');
+        $tempWorkDir = Path::of($this->tempDir . '/temp-work');
         FileSystem::createDir($tempWorkDir)->unwrap();
 
         $tempFiles = [];
 
         for ($i = 1; $i <= 3; $i++) {
             $tempFileName = "temp-data-$i.txt";
-            $tempPath = $tempWorkDir->join(Path::from($tempFileName));
+            $tempPath = $tempWorkDir->join(Path::of($tempFileName));
             $content = "Temporary data set $i\nData line $i";
 
             FileSystem::write($tempPath, $content)->unwrap();
@@ -326,10 +326,10 @@ final class FileSystemFunctionalTest extends TestCase
 
         foreach ($tempFiles as $tempFile) {
             $content = FileSystem::read($tempFile)->unwrap();
-            $combinedContent = $combinedContent->append($content)->append(Str::from("\n---\n"));
+            $combinedContent = $combinedContent->append($content)->append(Str::of("\n---\n"));
         }
 
-        $resultFile = $tempWorkDir->join(Path::from('combined-result.txt'));
+        $resultFile = $tempWorkDir->join(Path::of('combined-result.txt'));
         FileSystem::write($resultFile, $combinedContent->toString())->unwrap();
 
         foreach ($tempFiles as $tempFile) {
@@ -350,16 +350,16 @@ final class FileSystemFunctionalTest extends TestCase
 
     public function testSymlinkManagement(): void
     {
-        $projectDir = Path::from($this->tempDir . '/project');
-        $sharedDir = Path::from($this->tempDir . '/shared');
+        $projectDir = Path::of($this->tempDir . '/project');
+        $sharedDir = Path::of($this->tempDir . '/shared');
 
-        FileSystem::createDirAll($projectDir->join(Path::from('current')))->unwrap();
+        FileSystem::createDirAll($projectDir->join(Path::of('current')))->unwrap();
         FileSystem::createDirAll($sharedDir)->unwrap();
 
-        $sharedConfig = $sharedDir->join(Path::from('app.conf'));
+        $sharedConfig = $sharedDir->join(Path::of('app.conf'));
         FileSystem::write($sharedConfig, 'shared_setting=true')->unwrap();
 
-        $projectConfig = $projectDir->join(Path::from('current/app.conf'));
+        $projectConfig = $projectDir->join(Path::of('current/app.conf'));
         $symlinkResult = FileSystem::symLink($sharedConfig, $projectConfig);
 
         // If symlink creation fails, skip the test (may not be supported)
@@ -414,7 +414,7 @@ final class FileSystemFunctionalTest extends TestCase
     public function testConcurrentFileAccess(): void
     {
         // Simulate multiple processes accessing the same file
-        $sharedFile = Path::from($this->tempDir . '/shared.log');
+        $sharedFile = Path::of($this->tempDir . '/shared.log');
 
         FileSystem::write($sharedFile, "Initial log entry\n")->unwrap();
 
@@ -444,7 +444,7 @@ final class FileSystemFunctionalTest extends TestCase
             'logging' => ['level' => 'info', 'file' => '/var/log/app.log'],
         ];
 
-        $configFile = Path::from($this->tempDir . '/config.json');
+        $configFile = Path::of($this->tempDir . '/config.json');
         $file = File::new($configFile)->unwrap();
 
         $jsonContent = \json_encode($configData, \JSON_PRETTY_PRINT);
@@ -459,14 +459,14 @@ final class FileSystemFunctionalTest extends TestCase
     public function testBatchFileOperations(): void
     {
         // Test efficient batch operations on multiple files
-        $batchDir = Path::from($this->tempDir . '/batch');
+        $batchDir = Path::of($this->tempDir . '/batch');
         FileSystem::createDir($batchDir)->unwrap();
 
         $files = [];
 
         for ($i = 1; $i <= 10; $i++) {
             $fileName = \sprintf('file_%03d.txt', $i);
-            $filePath = $batchDir->join(Path::from($fileName));
+            $filePath = $batchDir->join(Path::of($fileName));
             $content = \str_repeat("Line $i data\n", $i * 10);
 
             FileSystem::write($filePath, $content)->unwrap();
@@ -489,7 +489,7 @@ final class FileSystemFunctionalTest extends TestCase
         }
 
         foreach ($files as $filePath) {
-            $perms = Permissions::from($filePath);
+            $perms = Permissions::of($filePath);
             $this->assertTrue($perms->isReadable());
             $this->assertFalse($perms->isWritable());
         }
@@ -500,12 +500,12 @@ final class FileSystemFunctionalTest extends TestCase
             $writablePerms->apply($filePath)->unwrap();
         }
 
-        $backupDir = $batchDir->join(Path::from('backup'));
+        $backupDir = $batchDir->join(Path::of('backup'));
         FileSystem::createDir($backupDir)->unwrap();
 
         foreach ($files as $filePath) {
             $fileName = $filePath->fileName()->unwrap();
-            $backupPath = $backupDir->join(Path::from($fileName));
+            $backupPath = $backupDir->join(Path::of($fileName));
             FileSystem::copyFile($filePath, $backupPath)->unwrap();
         }
 
@@ -525,24 +525,24 @@ final class FileSystemFunctionalTest extends TestCase
         // Test various error conditions and recovery
 
         // Test reading non-existent file
-        $nonExistentFile = Path::from($this->tempDir . '/does-not-exist.txt');
+        $nonExistentFile = Path::of($this->tempDir . '/does-not-exist.txt');
         $readResult = FileSystem::read($nonExistentFile);
         $this->assertTrue($readResult->isErr());
 
         // Test writing to invalid path
-        $invalidPath = Path::from('/root/restricted/file.txt');
+        $invalidPath = Path::of('/root/restricted/file.txt');
         $writeResult = FileSystem::write($invalidPath, 'test');
         $this->assertTrue($writeResult->isErr());
 
         // Test creating directory with invalid permissions
-        $restrictedDir = Path::from($this->tempDir . '/restricted');
+        $restrictedDir = Path::of($this->tempDir . '/restricted');
         FileSystem::createDir($restrictedDir)->unwrap();
 
         // Try to create subdirectory in read-only parent
         $readOnlyPerms = Permissions::create(0444);
         $readOnlyPerms->apply($restrictedDir)->unwrap();
 
-        $subDir = $restrictedDir->join(Path::from('subdir'));
+        $subDir = $restrictedDir->join(Path::of('subdir'));
         $createResult = FileSystem::createDir($subDir);
         $this->assertTrue($createResult->isErr());
 
@@ -550,12 +550,12 @@ final class FileSystemFunctionalTest extends TestCase
         $writablePerms->apply($restrictedDir)->unwrap();
 
         // Test recovery: create file, corrupt it, then restore
-        $testFile = Path::from($this->tempDir . '/recovery-test.txt');
+        $testFile = Path::of($this->tempDir . '/recovery-test.txt');
         $originalContent = 'Original content that should be preserved';
         FileSystem::write($testFile, $originalContent)->unwrap();
 
         // Create backup
-        $backupFile = Path::from($this->tempDir . '/recovery-test.backup');
+        $backupFile = Path::of($this->tempDir . '/recovery-test.backup');
         FileSystem::copyFile($testFile, $backupFile)->unwrap();
 
         // Corrupt original

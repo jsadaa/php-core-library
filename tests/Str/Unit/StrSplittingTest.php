@@ -12,7 +12,7 @@ final class StrSplittingTest extends TestCase
 {
     public function testSplitWithSimpleDelimiter(): void
     {
-        $str = Str::from('apple,banana,cherry');
+        $str = Str::of('apple,banana,cherry');
         $parts = $str->split(',');
 
         $this->assertInstanceOf(Sequence::class, $parts);
@@ -26,7 +26,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitWithUtf8Delimiter(): void
     {
-        $str = Str::from('apple😀banana😀cherry');
+        $str = Str::of('apple😀banana😀cherry');
         $parts = $str->split('😀');
 
         $this->assertSame(3, $parts->len()->toInt());
@@ -37,7 +37,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitWithNonExistentDelimiter(): void
     {
-        $str = Str::from('Hello world');
+        $str = Str::of('Hello world');
         $parts = $str->split(',');
 
         $this->assertSame(1, $parts->len()->toInt());
@@ -54,7 +54,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitWithEmptyDelimiter(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
 
         $parts = $str->split('');
 
@@ -68,7 +68,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitAtWithValidIndex(): void
     {
-        $str = Str::from('Hello world');
+        $str = Str::of('Hello world');
         $parts = $str->splitAt(5);
 
         $this->assertInstanceOf(Sequence::class, $parts);
@@ -81,7 +81,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitAtWithUtf8(): void
     {
-        $str = Str::from('Hello 😀 world');
+        $str = Str::of('Hello 😀 world');
         $parts = $str->splitAt(6);
 
         $this->assertSame(2, $parts->len()->toInt());
@@ -95,7 +95,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitAtWithOutOfBoundsIndex(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $parts = $str->splitAt(10);
 
         $this->assertEquals('Hello', $parts->get(0)->unwrap());
@@ -104,7 +104,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitAtWithNegativeIndex(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $parts = $str->splitAt(-1);
 
         $this->assertEquals('Hell', $parts->get(0)->unwrap());
@@ -121,7 +121,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitAtBeginning(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $parts = $str->splitAt(0);
 
         $this->assertSame(2, $parts->len()->toInt());
@@ -131,7 +131,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitAtEnd(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $parts = $str->splitAt(5);
 
         $this->assertSame(2, $parts->len()->toInt());
@@ -141,7 +141,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitWhitespace(): void
     {
-        $str = Str::from('Hello world	test string');
+        $str = Str::of('Hello world	test string');
         $parts = $str->splitWhitespace();
 
         $this->assertSame(4, $parts->len()->toInt());
@@ -153,7 +153,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitWhitespaceWithConsecutiveSpaces(): void
     {
-        $str = Str::from('Hello  world  test');
+        $str = Str::of('Hello  world  test');
         $parts = $str->splitWhitespace();
 
         $this->assertSame(3, $parts->len()->toInt());
@@ -164,7 +164,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitWhitespaceWithUtf8Whitespace(): void
     {
-        $str = Str::from('Hello  😀  Test');
+        $str = Str::of('Hello  😀  Test');
         $parts = $str->splitWhitespace();
 
         $this->assertSame(3, $parts->len()->toInt());
@@ -183,7 +183,7 @@ final class StrSplittingTest extends TestCase
 
     public function testSplitWhitespaceWithOnlyWhitespace(): void
     {
-        $str = Str::from("  \t\n  ");
+        $str = Str::of("  \t\n  ");
         $parts = $str->splitWhitespace();
 
         $this->assertTrue($parts->all(static fn($s) => $s->isEmpty()));

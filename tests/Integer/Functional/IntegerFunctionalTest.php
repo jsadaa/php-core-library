@@ -13,9 +13,9 @@ final class IntegerFunctionalTest extends TestCase
 {
     public function testComplexCalculation(): void
     {
-        $a = Integer::from(5);
-        $b = Integer::from(12);
-        $c = Integer::from(4);
+        $a = Integer::of(5);
+        $b = Integer::of(12);
+        $c = Integer::of(4);
 
         $aSquared = $a->pow(2);
         $this->assertSame(25, $aSquared->toInt());
@@ -38,7 +38,7 @@ final class IntegerFunctionalTest extends TestCase
     {
         // Implement factorial: n! = n * (n-1) * ... * 1
         $factorial = static function(int $n): Integer {
-            $result = Integer::from(1);
+            $result = Integer::of(1);
 
             for ($i = 2; $i <= $n; $i++) {
                 $result = $result->mul($i);
@@ -61,15 +61,15 @@ final class IntegerFunctionalTest extends TestCase
         // Implement Fibonacci sequence: F(n) = F(n-1) + F(n-2) with F(0)=0, F(1)=1
         $fibonacci = static function(int $n): Integer {
             if ($n <= 0) {
-                return Integer::from(0);
+                return Integer::of(0);
             }
 
             if ($n === 1) {
-                return Integer::from(1);
+                return Integer::of(1);
             }
 
-            $prev = Integer::from(0);
-            $current = Integer::from(1);
+            $prev = Integer::of(0);
+            $current = Integer::of(1);
 
             for ($i = 2; $i <= $n; $i++) {
                 $next = $prev->add($current);
@@ -92,15 +92,15 @@ final class IntegerFunctionalTest extends TestCase
     }
 
     public function testGcdCalculation(): void {
-        $result1 = $this->gcd(Integer::from(48), Integer::from(18));
+        $result1 = $this->gcd(Integer::of(48), Integer::of(18));
         $this->assertTrue($result1->isOk());
         $this->assertSame(6, $result1->unwrap()->toInt());
 
-        $result2 = $this->gcd(Integer::from(17), Integer::from(5));
+        $result2 = $this->gcd(Integer::of(17), Integer::of(5));
         $this->assertTrue($result2->isOk());
         $this->assertSame(1, $result2->unwrap()->toInt());
 
-        $result3 = $this->gcd(Integer::from(0), Integer::from(5));
+        $result3 = $this->gcd(Integer::of(0), Integer::of(5));
         $this->assertTrue($result3->isOk());
         $this->assertSame(5, $result3->unwrap()->toInt());
     }
@@ -108,17 +108,17 @@ final class IntegerFunctionalTest extends TestCase
     public function testStatisticsCalculation(): void
     {
         $values = Sequence::of(
-            Integer::from(12),
-            Integer::from(5),
-            Integer::from(8),
-            Integer::from(15),
-            Integer::from(10),
+            Integer::of(12),
+            Integer::of(5),
+            Integer::of(8),
+            Integer::of(15),
+            Integer::of(10),
         );
 
         // Calculate sum
         $sum = $values->fold(
             static fn(Integer $acc, Integer $val) => $acc->add($val),
-            Integer::from(0),
+            Integer::of(0),
         );
         $this->assertSame(50, $sum->toInt());
 
@@ -133,7 +133,7 @@ final class IntegerFunctionalTest extends TestCase
             static function(Integer $acc, Integer $val) {
                 return $acc->cmp($val)->le(0) ? $acc : $val;
             },
-            Integer::from(\PHP_INT_MAX),
+            Integer::of(\PHP_INT_MAX),
         );
         $this->assertSame(5, $min->toInt());
 
@@ -141,16 +141,16 @@ final class IntegerFunctionalTest extends TestCase
             static function(Integer $acc, Integer $val) {
                 return $acc->cmp($val)->ge(0) ? $acc : $val;
             },
-            Integer::from(\PHP_INT_MIN),
+            Integer::of(\PHP_INT_MIN),
         );
         $this->assertSame(15, $max->toInt());
     }
 
     public function testWorkingWithLargeValues(): void
     {
-        $largeValue = Integer::from((int) (\PHP_INT_MAX / 2));
-        $largeValue2 = Integer::from((int) (\PHP_INT_MAX / 2) + 1);
-        $mediumValue = Integer::from(1000);
+        $largeValue = Integer::of((int) (\PHP_INT_MAX / 2));
+        $largeValue2 = Integer::of((int) (\PHP_INT_MAX / 2) + 1);
+        $mediumValue = Integer::of(1000);
 
         $sum = $largeValue->saturatingAdd($largeValue2);
 
@@ -177,10 +177,10 @@ final class IntegerFunctionalTest extends TestCase
         // e.g., $1000 = 100000 cents, 5% = 500 basis points
 
         // Parameters (in integer representation)
-        $principal = Integer::from(100_000); // $1000.00
-        $rate = Integer::from(500); // 5%
-        $compoundingsPerYear = Integer::from(12); // monthly
-        $timeInYears = Integer::from(5); // 5 years
+        $principal = Integer::of(100_000); // $1000.00
+        $rate = Integer::of(500); // 5%
+        $compoundingsPerYear = Integer::of(12); // monthly
+        $timeInYears = Integer::of(5); // 5 years
 
         // Calculate (1 + r/n) - here we use basis points
         $ratePerPeriod = $rate->div($compoundingsPerYear)
@@ -188,11 +188,11 @@ final class IntegerFunctionalTest extends TestCase
                 static function($result) {
                     // Convert rate to decimal (need to divide by 10000 for basis points)
                     // For integer math, we'll scale by 10000
-                    return Integer::from(10000)->add($result);
+                    return Integer::of(10000)->add($result);
                 },
                 static function() {
                     // Should not happen
-                    return Integer::from(10000);
+                    return Integer::of(10000);
                 },
             );
 
@@ -201,17 +201,17 @@ final class IntegerFunctionalTest extends TestCase
 
         // Calculate (1 + r/n)^(nt) using repeated multiplication
         // Initialize with scaled 1.0 (10000)
-        $compoundFactor = Integer::from(10000);
+        $compoundFactor = Integer::of(10000);
 
         for ($i = 0; $i < $periods->toInt(); $i++) {
             // Multiply, then divide by 10000 to maintain scale
             $compoundFactor = $compoundFactor->mul($ratePerPeriod);
-            $compoundFactor = $compoundFactor->div(Integer::from(10000))->unwrapOr(Integer::from(0));
+            $compoundFactor = $compoundFactor->div(Integer::of(10000))->unwrapOr(Integer::of(0));
         }
 
         // Calculate final amount = principal * compound factor / scaling
         $amount = $principal->mul($compoundFactor);
-        $amount = $amount->div(Integer::from(10000))->unwrapOr(Integer::from(0));
+        $amount = $amount->div(Integer::of(10000))->unwrapOr(Integer::of(0));
 
         // Verify result is reasonable for 5 years of 5% interest compounded monthly
         // Expected result should be around $1,280.08 = 128,008 cents
@@ -229,8 +229,8 @@ final class IntegerFunctionalTest extends TestCase
 
     public function testErrorHandlingInCalculations(): void
     {
-        $a = Integer::from(10);
-        $b = Integer::from(0);
+        $a = Integer::of(10);
+        $b = Integer::of(0);
 
         $result = $a->div($b);
 
@@ -252,7 +252,7 @@ final class IntegerFunctionalTest extends TestCase
                 return $value->mul(5);
             },
             static function($error) {
-                return Integer::from(42);
+                return Integer::of(42);
             },
         );
 
@@ -277,7 +277,7 @@ final class IntegerFunctionalTest extends TestCase
                 return $a->sub($product);
             },
             static function() {
-                return Integer::from(0);
+                return Integer::of(0);
             },
         );
 

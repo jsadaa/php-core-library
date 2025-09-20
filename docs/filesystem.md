@@ -37,11 +37,11 @@ Creates a new DirectoryEntry instance from a Path.
 
 ```php
 // Create a DirectoryEntry from a path string
-$entry = DirectoryEntry::from('/var/www/config.php');
+$entry = DirectoryEntry::of('/var/www/config.php');
 
 // Create a DirectoryEntry from a Path object
-$path = Path::from('/var/www/config.php');
-$entry = DirectoryEntry::from($path);
+$path = Path::of('/var/www/config.php');
+$entry = DirectoryEntry::of($path);
 
 // Check properties of the entry
 $fileType = $entry->fileType(); // FileType instance
@@ -56,7 +56,7 @@ $fileType = $entry->fileType(); // FileType instance
 Returns the path of the DirectoryEntry.
 
 ```php
-$entry = DirectoryEntry::from(Path::from('/var/www/config.php'));
+$entry = DirectoryEntry::of(Path::of('/var/www/config.php'));
 $path = $entry->path();
 echo $path->toString(); // Outputs: "/var/www/config.php"
 
@@ -74,15 +74,15 @@ if ($path->exists()) {
 Returns the file name of the DirectoryEntry.
 
 ```php
-$entry = DirectoryEntry::from('/var/www/config.php');
-$fileName = $entry->fileName(); // Option::some(Str::from("config.php"))
+$entry = DirectoryEntry::of('/var/www/config.php');
+$fileName = $entry->fileName(); // Option::some(Str::of("config.php"))
 
 if ($fileName->isSome()) {
     echo "File name: " . $fileName->unwrap()->toString(); // Outputs: "File name: config.php"
 }
 
 // For a directory with a trailing slash
-$dirEntry = DirectoryEntry::from('/var/www/');
+$dirEntry = DirectoryEntry::of('/var/www/');
 $dirName = $dirEntry->fileName(); // Option::none()
 ```
 
@@ -94,7 +94,7 @@ $dirName = $dirEntry->fileName(); // Option::none()
 Returns the file type of the DirectoryEntry.
 
 ```php
-$entry = DirectoryEntry::from('/var/www/config.php');
+$entry = DirectoryEntry::of('/var/www/config.php');
 $fileType = $entry->fileType();
 
 if ($fileType->isFile()) {
@@ -123,7 +123,7 @@ $isDir = $entry->fileType()->isDir(); // false for a file
 Gets metadata for this directory entry.
 
 ```php
-$entry = DirectoryEntry::from('/var/log/app.log');
+$entry = DirectoryEntry::of('/var/log/app.log');
 $result = $entry->metadata();
 
 if ($result->isOk()) {
@@ -322,8 +322,8 @@ if ($result->isOk()) {
     echo "File size: " . $bytes->len()->toInt() . " bytes";
 
     // Check file signature/magic numbers
-    $firstByte = $bytes->get(0)->unwrapOr(Integer::from(0));
-    $secondByte = $bytes->get(1)->unwrapOr(Integer::from(0));
+    $firstByte = $bytes->get(0)->unwrapOr(Integer::of(0));
+    $secondByte = $bytes->get(1)->unwrapOr(Integer::of(0));
 
     if ($firstByte->eq(0xFF) && $secondByte->eq(0xD8)) {
         echo "This is a JPEG image";
@@ -337,7 +337,7 @@ if ($result->isOk()) {
 // Process binary data - calculate simple checksum
 $dataFile = File::from('/path/to/data.bin')->unwrap();
 $bytes = $dataFile->bytes()->unwrap();
-$checksum = $bytes->fold(Integer::from(0), fn(Integer $sum, Integer $byte) => $sum->add($byte));
+$checksum = $bytes->fold(Integer::of(0), fn(Integer $sum, Integer $byte) => $sum->add($byte));
 ```
 
 ### Writing Operations
@@ -478,7 +478,7 @@ if ($sizeResult->isOk()) {
     $size = $sizeResult->unwrap();
     echo "File size: " . $size->toInt() . " bytes";
 
-    if ($size->gt(Integer::from(1024 * 1024))) {
+    if ($size->gt(Integer::of(1024 * 1024))) {
         echo "File is larger than 1 MB";
     }
 }
@@ -673,7 +673,7 @@ The `FileSystem` class provides static methods for file and directory operations
 Returns the canonicalized form of a path.
 
 ```php
-$path = Path::from("../config/../config.ini");
+$path = Path::of("../config/../config.ini");
 $result = FileSystem::canonicalize($path);
 if ($result->isOk()) {
     $canonicalPath = $result->unwrap();
@@ -698,7 +698,7 @@ if (FileSystem::exists('/etc/hosts')) {
 }
 
 // Check if a directory exists
-$dirPath = Path::from('/var/www');
+$dirPath = Path::of('/var/www');
 if (FileSystem::exists($dirPath)) {
     echo "The web directory exists";
 } else {
@@ -761,8 +761,8 @@ if ($result->isOk()) {
     echo "File size: " . $bytes->len()->toInt() . " bytes";
 
     // Process binary data - for example, check file signature/magic numbers
-    $firstByte = $bytes->get(0)->unwrapOr(Integer::from(0));
-    $secondByte = $bytes->get(1)->unwrapOr(Integer::from(0));
+    $firstByte = $bytes->get(0)->unwrapOr(Integer::of(0));
+    $secondByte = $bytes->get(1)->unwrapOr(Integer::of(0));
 
     // Check if it's a PNG file (signature: 89 50 4E 47 ...)
     if ($firstByte->eq(0x89) && $secondByte->eq(0x50)) {
@@ -791,7 +791,7 @@ if ($result->isOk()) {
     // Iterate through directory entries
     $entries->forEach(static function(DirectoryEntry $entry) {
         $path = $entry->path();
-        $name = $entry->fileName()->unwrapOr(Str::from('[No Name]'));
+        $name = $entry->fileName()->unwrapOr(Str::of('[No Name]'));
 
         if ($entry->fileType()->isFile()) {
             echo "File: $name\n";
@@ -893,8 +893,8 @@ if ($result->isOk()) {
 }
 
 // Copy using Path objects
-$sourcePath = Path::from('/etc/php.ini');
-$backupPath = Path::from('/etc/php.ini.backup');
+$sourcePath = Path::of('/etc/php.ini');
+$backupPath = Path::of('/etc/php.ini.backup');
 $copyResult = FileSystem::copyFile($sourcePath, $backupPath);
 ```
 
@@ -963,7 +963,7 @@ if ($result->isOk()) {
 }
 
 // Use with Path object
-$dirPath = Path::from('/var/www/uploads');
+$dirPath = Path::of('/var/www/uploads');
 $result = FileSystem::createDir($dirPath);
 ```
 
@@ -1103,7 +1103,7 @@ Gets metadata for a path.
 
 ```php
 // Using a Path object
-$result = FileSystem::metadata(Path::from('/etc/hosts'));
+$result = FileSystem::metadata(Path::of('/etc/hosts'));
 
 // Using a string path
 $result = FileSystem::metadata('/etc/hosts');
@@ -1361,18 +1361,18 @@ Creates a new FileType instance from a path.
 
 ```php
 // Using a string path
-$type = FileType::from('/etc/hosts');
+$type = FileType::of('/etc/hosts');
 if ($type->isFile()) {
     echo "This is a regular file";
 }
 
 // Using a Path object
-$path = Path::from('/etc');
-$dirType = FileType::from($path);
+$path = Path::of('/etc');
+$dirType = FileType::of($path);
 $isDir = $dirType->isDir(); // true
 
 // Check a symbolic link
-$linkType = FileType::from('/usr/bin/python3');
+$linkType = FileType::of('/usr/bin/python3');
 if ($linkType->isSymLink()) {
     echo "This is a symbolic link";
 }
@@ -1388,20 +1388,20 @@ if ($linkType->isSymLink()) {
 Checks if the file type is a regular file.
 
 ```php
-$type = FileType::from('/etc/hosts');
+$type = FileType::of('/etc/hosts');
 if ($type->isFile()) {
     echo "This is a regular file";
     // Safe to read file contents
 }
 
 // Use directly in a condition
-if (FileType::from('/var/log/syslog')->isFile()) {
+if (FileType::of('/var/log/syslog')->isFile()) {
     echo "This is a regular file";
 }
 
 // Check before processing
 $path = '/path/to/unknown';
-if (FileType::from($path)->isFile()) {
+if (FileType::of($path)->isFile()) {
     $content = File::from($path)->read()->match(
         fn($content) => $content,
         fn($error) => $error->getMessage(),
@@ -1417,18 +1417,18 @@ if (FileType::from($path)->isFile()) {
 Checks if the file type is a directory.
 
 ```php
-$type = FileType::from('/var/log');
+$type = FileType::of('/var/log');
 if ($type->isDir()) {
     echo "This is a directory";
     // Safe to list directory contents
 }
 
 // Check if a path is a directory directly
-$isDir = FileType::from('/tmp')->isDir(); // true
+$isDir = FileType::of('/tmp')->isDir(); // true
 
 // Use before attempting to read directory
 $path = '/some/path';
-if (FileType::from($path)->isDir()) {
+if (FileType::of($path)->isDir()) {
     $entries = FileSystem::readDir($path)->unwrap();
     $entries->forEach(fn($entry) => echo $entry->path()->fileName()->toString());
 }
@@ -1443,20 +1443,20 @@ Checks if the file type is a symbolic link.
 
 ```php
 // Assuming '/var/www/html' is a symlink to '/srv/www/html'
-$type = FileType::from('/var/www/html');
+$type = FileType::of('/var/www/html');
 if ($type->isSymLink()) {
     echo "This is a symbolic link";
     // You might want to resolve the target path
 }
 
 // Direct usage in a condition
-if (FileType::from('/usr/bin/python3')->isSymLink()) {
+if (FileType::of('/usr/bin/python3')->isSymLink()) {
     echo "This is a symbolic link";
 }
 
 // Check symlink vs regular file
 $path = '/some/path';
-$type = FileType::from($path);
+$type = FileType::of($path);
 if ($type->isSymLink()) {
     echo "Symbolic link - target might not exist";
 } elseif ($type->isFile()) {
@@ -1476,11 +1476,11 @@ Creates a new Metadata instance from a path.
 
 ```php
 // Using a string path
-$result = Metadata::from('/etc/hosts');
+$result = Metadata::of('/etc/hosts');
 
 // Using a Path object
-$path = Path::from('/etc/hosts');
-$result = Metadata::from($path);
+$path = Path::of('/etc/hosts');
+$result = Metadata::of($path);
 
 if ($result->isOk()) {
     $metadata = $result->unwrap();
@@ -1498,7 +1498,7 @@ if ($result->isOk()) {
 Gets the path of this Metadata instance.
 
 ```php
-$metadata = Metadata::from('/etc/hosts')->unwrap();
+$metadata = Metadata::of('/etc/hosts')->unwrap();
 
 $originalPath = $metadata->path();
 echo $originalPath->toString(); // Outputs: "/etc/hosts"
@@ -1512,7 +1512,7 @@ $parentDir = $metadata->path()->parent();
 Gets the file type of this Metadata instance.
 
 ```php
-$metadata = Metadata::from('/etc/hosts')->unwrap();
+$metadata = Metadata::of('/etc/hosts')->unwrap();
 
 $fileType = $metadata->fileType();
 if ($fileType->isFile()) {
@@ -1534,7 +1534,7 @@ if ($metadata->isFile()) {
 Gets the size of the file.
 
 ```php
-$metadata = Metadata::from('/path/to/large-file.zip')->unwrap();
+$metadata = Metadata::of('/path/to/large-file.zip')->unwrap();
 
 $size = $metadata->len();
 echo "File size: " . $size->toInt() . " bytes";
@@ -1553,7 +1553,7 @@ echo "Size: " . $formattedSize;
 Checks if this is a directory.
 
 ```php
-$metadata = Metadata::from('/var/log')->unwrap();
+$metadata = Metadata::of('/var/log')->unwrap();
 
 if ($metadata->isDir()) {
     echo "This is a directory";
@@ -1569,7 +1569,7 @@ if ($metadata->isDir()) {
 Checks if this is a regular file.
 
 ```php
-$metadata = Metadata::from('/etc/hosts')->unwrap();
+$metadata = Metadata::of('/etc/hosts')->unwrap();
 
 if ($metadata->isFile()) {
     echo "This is a regular file";
@@ -1586,7 +1586,7 @@ Checks if this is a symbolic link.
 
 ```php
 // Assuming '/var/www/html' is a symlink to '/srv/www/html'
-$metadata = Metadata::from('/var/www/html')->unwrap();
+$metadata = Metadata::of('/var/www/html')->unwrap();
 
 if ($metadata->isSymLink()) {
     echo "This is a symbolic link";
@@ -1611,7 +1611,7 @@ if ($metadata->isSymLink()) {
 Gets the permissions of the file.
 
 ```php
-$metadata = Metadata::from('/etc/hosts')->unwrap();
+$metadata = Metadata::of('/etc/hosts')->unwrap();
 
 $permissions = $metadata->permissions();
 
@@ -1640,7 +1640,7 @@ printf("Permissions: %04o\n", $permissions->mode()->toInt());
 Checks if the file is readable.
 
 ```php
-$metadata = Metadata::from('/home/user/document.txt')->unwrap();
+$metadata = Metadata::of('/home/user/document.txt')->unwrap();
 
 if ($metadata->isReadable()) {
     echo "File is readable";
@@ -1656,7 +1656,7 @@ if ($metadata->isReadable()) {
 Checks if the file is writable.
 
 ```php
-$metadata = Metadata::from('/home/user/document.txt')->unwrap();
+$metadata = Metadata::of('/home/user/document.txt')->unwrap();
 
 if ($metadata->isWritable()) {
     echo "File is writable";
@@ -1677,7 +1677,7 @@ if ($metadata->isWritable()) {
 Checks if the file is executable.
 
 ```php
-$metadata = Metadata::from('/home/user/script.sh')->unwrap();
+$metadata = Metadata::of('/home/user/script.sh')->unwrap();
 
 if ($metadata->isExecutable()) {
     echo "File is executable";
@@ -1691,7 +1691,7 @@ if ($metadata->isExecutable()) {
 Gets the last modified time.
 
 ```php
-$metadata = Metadata::from('/etc/hosts')->unwrap();
+$metadata = Metadata::of('/etc/hosts')->unwrap();
 
 $modTime = $metadata->modified();
 
@@ -1699,7 +1699,7 @@ $modTime = $metadata->modified();
 echo "Last modified: " . date('Y-m-d H:i:s', $modTime->timestamp()->toInt());
 
 // Check if file was modified in the last 24 hours
-$oneDayAgo = Integer::from(time())->sub(24 * 60 * 60);
+$oneDayAgo = Integer::of(time())->sub(24 * 60 * 60);
 if ($modTime->timestamp()->gt($oneDayAgo)) {
     echo "File was modified in the last 24 hours";
 }
@@ -1710,7 +1710,7 @@ if ($modTime->timestamp()->gt($oneDayAgo)) {
 Gets the last accessed time.
 
 ```php
-$metadata = Metadata::from('/var/log/syslog')->unwrap();
+$metadata = Metadata::of('/var/log/syslog')->unwrap();
 
 $accessTime = $metadata->accessed();
 
@@ -1718,7 +1718,7 @@ $accessTime = $metadata->accessed();
 echo "Last accessed: " . date('Y-m-d H:i:s', $accessTime->timestamp()->toInt());
 
 // Check if file was accessed in the last hour
-$oneHourAgo = Integer::from(time())->sub(60 * 60);
+$oneHourAgo = Integer::of(time())->sub(60 * 60);
 if ($accessTime->timestamp()->gt($oneHourAgo)) {
     echo "File was accessed in the last hour";
 }
@@ -1729,7 +1729,7 @@ if ($accessTime->timestamp()->gt($oneHourAgo)) {
 Gets the created time.
 
 ```php
-$metadata = Metadata::from('/home/user/document.txt')->unwrap();
+$metadata = Metadata::of('/home/user/document.txt')->unwrap();
 
 $createTime = $metadata->created();
 
@@ -1737,7 +1737,7 @@ $createTime = $metadata->created();
 echo "Created: " . date('Y-m-d H:i:s', $createTime->timestamp()->toInt());
 
 // Check if file was created in the last week
-$oneWeekAgo = Integer::from(time())->sub(7 * 24 * 60 * 60);
+$oneWeekAgo = Integer::of(time())->sub(7 * 24 * 60 * 60);
 if ($createTime->gt($oneWeekAgo)) {
     echo "File was created in the last week";
 }
@@ -1770,11 +1770,11 @@ Creates a new Permissions instance from a path.
 
 ```php
 // Using a string path
-$perms = Permissions::from('/etc/hosts');
+$perms = Permissions::of('/etc/hosts');
 
 // Using a Path object
-$path = Path::from('/etc/hosts');
-$perms = Permissions::from($path);
+$path = Path::of('/etc/hosts');
+$perms = Permissions::of($path);
 
 // Check if the file is writable
 if ($perms->isWritable()) {
@@ -1822,7 +1822,7 @@ $noAccess = Permissions::create(0000);
 $isReadable = $noAccess->isReadable(); // false
 
 // Check if a file is readable
-$filePerms = Permissions::from('/etc/hosts');
+$filePerms = Permissions::of('/etc/hosts');
 if ($filePerms->isReadable()) {
     echo "File is readable";
 }
@@ -1840,7 +1840,7 @@ $readonly = Permissions::create(0444); // r--r--r--
 $isWritable = $readonly->isWritable(); // false
 
 // Check if a file is writable
-$filePerms = Permissions::from('/var/log/app.log');
+$filePerms = Permissions::of('/var/log/app.log');
 if ($filePerms->isWritable()) {
     echo "Log file is writable";
 } else {
@@ -1860,7 +1860,7 @@ $nonExecutable = Permissions::create(0644);
 $isExecutable = $nonExecutable->isExecutable(); // false
 
 // Check if a file is executable
-$filePerms = Permissions::from('/usr/bin/php');
+$filePerms = Permissions::of('/usr/bin/php');
 if ($filePerms->isExecutable()) {
     echo "File is executable";
 } else {

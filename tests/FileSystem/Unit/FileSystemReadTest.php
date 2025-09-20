@@ -50,7 +50,7 @@ final class FileSystemReadTest extends TestCase
 
     public function testReadBytesFromFile(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $result = FileSystem::readBytes($path);
 
         $this->assertTrue($result->isOk());
@@ -62,7 +62,7 @@ final class FileSystemReadTest extends TestCase
 
     public function testReadBytesFromBinaryFile(): void
     {
-        $path = Path::from($this->root->url() . '/binaryFile.bin');
+        $path = Path::of($this->root->url() . '/binaryFile.bin');
         $result = FileSystem::readBytes($path);
 
         $this->assertTrue($result->isOk());
@@ -75,7 +75,7 @@ final class FileSystemReadTest extends TestCase
 
     public function testReadBytesFromNonExistentFile(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistent.txt');
+        $path = Path::of($this->root->url() . '/nonExistent.txt');
         $result = FileSystem::readBytes($path);
 
         $this->assertTrue($result->isErr());
@@ -84,7 +84,7 @@ final class FileSystemReadTest extends TestCase
 
     public function testReadDir(): void
     {
-        $path = Path::from($this->root->url());
+        $path = Path::of($this->root->url());
         $result = FileSystem::readDir($path);
 
         $this->assertTrue($result->isOk());
@@ -107,7 +107,7 @@ final class FileSystemReadTest extends TestCase
 
     public function testReadDirForNonExistentDirectory(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistentDir');
+        $path = Path::of($this->root->url() . '/nonExistentDir');
         $result = FileSystem::readDir($path);
 
         $this->assertTrue($result->isErr());
@@ -115,7 +115,7 @@ final class FileSystemReadTest extends TestCase
 
     public function testReadLink(): void
     {
-        $path = Path::from(\sys_get_temp_dir() . '/concreteLink');
+        $path = Path::of(\sys_get_temp_dir() . '/concreteLink');
         $result = FileSystem::readSymlink($path);
 
         $this->assertTrue($result->isOk());
@@ -124,7 +124,7 @@ final class FileSystemReadTest extends TestCase
 
     public function testReadLinkForNonSymlink(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $result = FileSystem::readSymlink($path);
 
         $this->assertTrue($result->isErr());
@@ -133,7 +133,7 @@ final class FileSystemReadTest extends TestCase
 
     public function testReadToString(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $result = FileSystem::read($path);
 
         $this->assertTrue($result->isOk());
@@ -144,7 +144,7 @@ final class FileSystemReadTest extends TestCase
 
     public function testReadToStringFromNonExistentFile(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistent.txt');
+        $path = Path::of($this->root->url() . '/nonExistent.txt');
         $result = FileSystem::read($path);
 
         $this->assertTrue($result->isErr());
@@ -153,7 +153,7 @@ final class FileSystemReadTest extends TestCase
 
     public function testReadToStr(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $result = FileSystem::read($path);
 
         $this->assertTrue($result->isOk());
@@ -165,7 +165,7 @@ final class FileSystemReadTest extends TestCase
 
     public function testReadToStrFromNonExistentFile(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistent.txt');
+        $path = Path::of($this->root->url() . '/nonExistent.txt');
         $result = FileSystem::read($path);
 
         $this->assertTrue($result->isErr());

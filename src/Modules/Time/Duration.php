@@ -66,8 +66,8 @@ final readonly class Duration
      */
     private function __construct(int | Integer $seconds, int | Integer $nanos)
     {
-        $this->seconds = $seconds instanceof Integer ? $seconds : Integer::from($seconds);
-        $this->nanos = $nanos instanceof Integer ? $nanos : Integer::from($nanos);
+        $this->seconds = $seconds instanceof Integer ? $seconds : Integer::of($seconds);
+        $this->nanos = $nanos instanceof Integer ? $nanos : Integer::of($nanos);
     }
 
     /**
@@ -80,8 +80,8 @@ final readonly class Duration
      */
     public static function new(int | Integer $seconds, int | Integer $nanos): self
     {
-        $seconds = $seconds instanceof Integer ? $seconds : Integer::from($seconds);
-        $nanos = $nanos instanceof Integer ? $nanos : Integer::from($nanos);
+        $seconds = $seconds instanceof Integer ? $seconds : Integer::of($seconds);
+        $nanos = $nanos instanceof Integer ? $nanos : Integer::of($nanos);
 
         return new self($seconds, $nanos);
     }
@@ -187,13 +187,13 @@ final readonly class Duration
         // Protect against potential floating point issues with extreme values
         if ($this->isZero()) {
             /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
-            return Result::ok(Double::from(0.0));
+            return Result::ok(Double::of(0.0));
         }
 
         // Handle cases where overflow could occur with large numbers
-        if ($this->seconds->eq(Integer::maximum()) && $other->seconds->eq(Integer::from(1)) && $other->nanos->eq(Integer::from(0))) {
+        if ($this->seconds->eq(Integer::maximum()) && $other->seconds->eq(Integer::of(1)) && $other->nanos->eq(Integer::of(0))) {
             /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
-            return Result::ok(Double::from((float)$this->seconds->toInt()));
+            return Result::ok(Double::of((float)$this->seconds->toInt()));
         }
 
         // Convert to total nanoseconds as float for calculation
@@ -210,7 +210,7 @@ final readonly class Duration
             // Adjust for nanoseconds as a small correction
             $nanoAdjustment = 0.0;
 
-            if ($other->seconds->gt(Integer::from(0))) {
+            if ($other->seconds->gt(Integer::of(0))) {
                 $nanoAdjustment = ($this->nanos->toFloat() - ($secRatio * $other->nanos->toFloat()))
                                 / ($other->seconds->toFloat() * (float)self::NANOS_PER_SECOND);
             }
@@ -228,7 +228,7 @@ final readonly class Duration
         }
 
         /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
-        return Result::ok(Double::from($quotient));
+        return Result::ok(Double::of($quotient));
     }
 
     /**
@@ -376,7 +376,7 @@ final readonly class Duration
      */
     public function mul(int | Integer $other): Result
     {
-        $other = $other instanceof Integer ? $other : Integer::from($other);
+        $other = $other instanceof Integer ? $other : Integer::of($other);
 
         // Convert nanoseconds to a larger number to avoid overflow
         $totalNanos = $this->nanos->mul($other);
@@ -626,7 +626,7 @@ final readonly class Duration
      */
     public static function fromMillis(int | Integer $millis): self
     {
-        $millis = $millis instanceof Integer ? $millis : Integer::from($millis);
+        $millis = $millis instanceof Integer ? $millis : Integer::of($millis);
         $secs = $millis->div(self::MILLIS_PER_SECOND)->unwrap();
         $nanos = $millis
             ->sub($secs->mul(self::MILLIS_PER_SECOND))
@@ -644,7 +644,7 @@ final readonly class Duration
      */
     public static function fromMicros(int | Integer $micros): self
     {
-        $micros = $micros instanceof Integer ? $micros : Integer::from($micros);
+        $micros = $micros instanceof Integer ? $micros : Integer::of($micros);
         $secs = $micros->div(self::MICROS_PER_SECOND)->unwrap();
         $nanos = $micros
             ->sub($secs->mul(self::MICROS_PER_SECOND))
@@ -662,7 +662,7 @@ final readonly class Duration
      */
     public static function fromNanos(int | Integer $nanos): self
     {
-        $nanos = $nanos instanceof Integer ? $nanos : Integer::from($nanos);
+        $nanos = $nanos instanceof Integer ? $nanos : Integer::of($nanos);
         $secs = $nanos->div(self::NANOS_PER_SECOND)->unwrap();
         $nanosPart = $nanos->sub($secs->mul(self::NANOS_PER_SECOND));
 
@@ -678,7 +678,7 @@ final readonly class Duration
      */
     public static function fromDays(int | Integer $days): self
     {
-        $days = $days instanceof Integer ? $days : Integer::from($days);
+        $days = $days instanceof Integer ? $days : Integer::of($days);
         $secs = $days->mul(self::SECONDS_PER_DAY);
 
         return self::new($secs, 0);
@@ -693,7 +693,7 @@ final readonly class Duration
      */
     public static function fromHours(int | Integer $hours): self
     {
-        $hours = $hours instanceof Integer ? $hours : Integer::from($hours);
+        $hours = $hours instanceof Integer ? $hours : Integer::of($hours);
         $secs = $hours->mul(self::SECONDS_PER_HOUR);
 
         return self::new($secs, 0);
@@ -708,7 +708,7 @@ final readonly class Duration
      */
     public static function fromMins(int | Integer $minutes): self
     {
-        $minutes = $minutes instanceof Integer ? $minutes : Integer::from($minutes);
+        $minutes = $minutes instanceof Integer ? $minutes : Integer::of($minutes);
         $secs = $minutes->mul(self::SECONDS_PER_MINUTE);
 
         return self::new($secs, 0);
@@ -723,7 +723,7 @@ final readonly class Duration
      */
     public static function fromSeconds(int | Integer $seconds): self
     {
-        $seconds = $seconds instanceof Integer ? $seconds : Integer::from($seconds);
+        $seconds = $seconds instanceof Integer ? $seconds : Integer::of($seconds);
 
         return self::new($seconds, 0);
     }
@@ -737,7 +737,7 @@ final readonly class Duration
      */
     public static function fromWeeks(int | Integer $weeks): self
     {
-        $weeks = $weeks instanceof Integer ? $weeks : Integer::from($weeks);
+        $weeks = $weeks instanceof Integer ? $weeks : Integer::of($weeks);
         $secs = $weeks->mul(self::SECONDS_PER_WEEK);
 
         return self::new($secs, 0);

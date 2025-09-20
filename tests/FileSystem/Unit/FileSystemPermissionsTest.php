@@ -47,7 +47,7 @@ final class FileSystemPermissionsTest extends TestCase
 
     public function testSetPermissionsOnFile(): void
     {
-        $path = Path::from($this->tempDir . '/testFile.txt');
+        $path = Path::of($this->tempDir . '/testFile.txt');
 
         // Set read-only permissions (0444)
         $permissions = Permissions::create(0444);
@@ -64,7 +64,7 @@ final class FileSystemPermissionsTest extends TestCase
 
     public function testSetPermissionsOnDirectory(): void
     {
-        $path = Path::from($this->tempDir . '/testDir');
+        $path = Path::of($this->tempDir . '/testDir');
 
         // Set read-only permissions on directory (0555)
         $permissions = Permissions::create(0555);
@@ -82,7 +82,7 @@ final class FileSystemPermissionsTest extends TestCase
 
     public function testSetPermissionsOnNonExistentFile(): void
     {
-        $path = Path::from($this->tempDir . '/nonExistentFile.txt');
+        $path = Path::of($this->tempDir . '/nonExistentFile.txt');
         $permissions = Permissions::create(0644);
         $result = FileSystem::setPermissions($path, $permissions);
 
@@ -100,7 +100,7 @@ final class FileSystemPermissionsTest extends TestCase
 
     public function testPermissionsFromFileMetadata(): void
     {
-        $path = Path::from($this->tempDir . '/testFile.txt');
+        $path = Path::of($this->tempDir . '/testFile.txt');
 
         // Set specific permissions
         \chmod($path->toString(), 0644);

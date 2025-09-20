@@ -41,7 +41,7 @@ final readonly class Permissions {
      * @psalm-pure
      */
     public static function create(int | Integer $mode = 0644): self {
-        return new self($mode instanceof Integer ? $mode : Integer::from($mode));
+        return new self($mode instanceof Integer ? $mode : Integer::of($mode));
     }
 
     /**
@@ -55,15 +55,15 @@ final readonly class Permissions {
      * @return self A new Permissions instance with the permissions of the path
      * @psalm-pure
      */
-    public static function from(string | Path $path): self {
+    public static function of(string | Path $path): self {
         $path = $path instanceof Path ? $path->toString() : $path;
         $mode = @\fileperms($path);
 
         if ($mode === false) {
-            return new self(Integer::from(0));
+            return new self(Integer::of(0));
         }
 
-        return new self(Integer::from($mode));
+        return new self(Integer::of($mode));
     }
 
     /**
@@ -128,7 +128,7 @@ final readonly class Permissions {
      */
     public function setMode(int | Integer $mode): self
     {
-        return new self($mode instanceof Integer ? $mode : Integer::from($mode));
+        return new self($mode instanceof Integer ? $mode : Integer::of($mode));
     }
 
     /**
@@ -158,6 +158,6 @@ final readonly class Permissions {
         }
 
         /** @var Result<Path, PermissionDenied> */
-        return Result::ok(Path::from($path));
+        return Result::ok(Path::of($path));
     }
 }

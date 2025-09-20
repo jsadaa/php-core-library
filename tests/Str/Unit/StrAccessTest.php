@@ -12,7 +12,7 @@ final class StrAccessTest extends TestCase
 {
     public function testGetValidIndices(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $substr = $str->getRange(0, 2);
 
         $this->assertTrue($substr->isSome());
@@ -23,7 +23,7 @@ final class StrAccessTest extends TestCase
 
     public function testGetUtf8String(): void
     {
-        $str = Str::from('Héllö');
+        $str = Str::of('Héllö');
         $substr = $str->getRange(0, 3);
 
         $this->assertTrue($substr->isSome());
@@ -33,7 +33,7 @@ final class StrAccessTest extends TestCase
 
     public function testGetComplexUtf8(): void
     {
-        $str = Str::from('Hello 🌍 你好 مرحبا');
+        $str = Str::of('Hello 🌍 你好 مرحبا');
         $substr = $str->getRange(6, 1);
 
         $this->assertTrue($substr->isSome());
@@ -48,7 +48,7 @@ final class StrAccessTest extends TestCase
 
     public function testGetOutOfBoundsIndices(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
 
         $substr1 = $str->getRange(10, 2);
         $this->assertTrue(
@@ -58,7 +58,7 @@ final class StrAccessTest extends TestCase
 
         $substr2 = $str->getRange(3, 10);
         $this->assertTrue($substr2->isSome());
-        $this->assertEquals(Str::from('lo'), $substr2->unwrapOr(Str::from('')));
+        $this->assertEquals(Str::of('lo'), $substr2->unwrapOr(Str::of('')));
 
         $substr3 = $str->getRange(-1, 2);
         $this->assertTrue(
@@ -69,7 +69,7 @@ final class StrAccessTest extends TestCase
 
     public function testGetEdgeCase(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $substr = $str->getRange(2, 3);
 
         $this->assertTrue($substr->isSome());
@@ -87,7 +87,7 @@ final class StrAccessTest extends TestCase
 
     public function testFindAsciiSubstring(): void
     {
-        $str = Str::from('Hello world');
+        $str = Str::of('Hello world');
         $position = $str->find('world');
 
         $this->assertTrue($position->isSome());
@@ -96,7 +96,7 @@ final class StrAccessTest extends TestCase
 
     public function testFindUtf8Substring(): void
     {
-        $str = Str::from('Héllö wörld');
+        $str = Str::of('Héllö wörld');
 
         $position = $str->find('ö');
 
@@ -106,7 +106,7 @@ final class StrAccessTest extends TestCase
 
     public function testFindNonExistentSubstring(): void
     {
-        $str = Str::from('Hello world');
+        $str = Str::of('Hello world');
         $position = $str->find('goodbye');
 
         $this->assertTrue($position->isNone());
@@ -114,7 +114,7 @@ final class StrAccessTest extends TestCase
 
     public function testFindEmptySubstring(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $position = $str->find('');
 
         $this->assertTrue($position->isSome());
@@ -131,7 +131,7 @@ final class StrAccessTest extends TestCase
 
     public function testChars(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $chars = $str->chars();
 
         $this->assertSame(5, $chars->len()->toInt());
@@ -140,7 +140,7 @@ final class StrAccessTest extends TestCase
 
     public function testCharsWithUtf8(): void
     {
-        $str = Str::from('Héllö');
+        $str = Str::of('Héllö');
         $chars = $str->chars();
 
         $this->assertSame(5, $chars->len()->toInt());
@@ -149,7 +149,7 @@ final class StrAccessTest extends TestCase
 
     public function testCharsWithEmoji(): void
     {
-        $str = Str::from('Hello😀');
+        $str = Str::of('Hello😀');
         $chars = $str->chars();
 
         $this->assertSame(6, $chars->len()->toInt());
@@ -166,7 +166,7 @@ final class StrAccessTest extends TestCase
 
     public function testBytes(): void
     {
-        $str = Str::from('AB');
+        $str = Str::of('AB');
         $bytes = $str->bytes();
 
         $this->assertSame(2, $bytes->len()->toInt());
@@ -175,7 +175,7 @@ final class StrAccessTest extends TestCase
 
     public function testBytesWithUtf8(): void
     {
-        $str = Str::from('é');
+        $str = Str::of('é');
         $bytes = $str->bytes();
 
         // UTF-8 representation of é is 2 bytes (195, 169)
@@ -193,7 +193,7 @@ final class StrAccessTest extends TestCase
 
     public function testLines(): void
     {
-        $str = Str::from("Line 1\nLine 2\nLine 3");
+        $str = Str::of("Line 1\nLine 2\nLine 3");
         $lines = $str->lines();
 
         $this->assertSame(3, $lines->len()->toInt());
@@ -213,7 +213,7 @@ final class StrAccessTest extends TestCase
 
     public function testMatches(): void
     {
-        $str = Str::from('apple banana cherry apple');
+        $str = Str::of('apple banana cherry apple');
         $matches = $str->matches("/a\w+/u");
 
         $this->assertEquals(3, $matches->len()->toInt());
@@ -222,7 +222,7 @@ final class StrAccessTest extends TestCase
 
     public function testMatchesNoMatches(): void
     {
-        $str = Str::from('apple banana cherry');
+        $str = Str::of('apple banana cherry');
         $matches = $str->matches("/z\w+/u");
 
         $this->assertTrue($matches->isEmpty());
@@ -230,13 +230,13 @@ final class StrAccessTest extends TestCase
 
     public function testMatchesWithRealUtf8(): void
     {
-        $str = Str::from('été automne hiver été');
+        $str = Str::of('été automne hiver été');
         $matches = $str->matches("/é\w+/u");
 
         $this->assertSame(2, $matches->len()->toInt());
         $this->assertSame(['été', 'été'], $matches->map(static fn(Str $match) => $match->toString())->toArray());
 
-        $str2 = Str::from('😄 hello 😁 world 😀');
+        $str2 = Str::of('😄 hello 😁 world 😀');
         $matches2 = $str2->matches('/😄|😁|😀/u')->map(static fn(Str $match) => $match->toString());
 
         $this->assertSame(3, $matches2->len()->toInt());
@@ -244,7 +244,7 @@ final class StrAccessTest extends TestCase
         $this->assertContains('😁', $matches2->toArray());
         $this->assertContains('😀', $matches2->toArray());
 
-        $str3 = Str::from('Hello مرحبا world');
+        $str3 = Str::of('Hello مرحبا world');
         $matches3 = $str3->matches("/م\w+/u")->map(static fn(Str $match) => $match->toString());
 
         $this->assertSame(1, $matches3->len()->toInt());
@@ -253,7 +253,7 @@ final class StrAccessTest extends TestCase
 
     public function testMatchIndices(): void
     {
-        $str = Str::from('apple orange banana apple');
+        $str = Str::of('apple orange banana apple');
         $indices = $str->matchIndices("/a\w+e/");
 
         $this->assertGreaterThan(0, $indices->len());
@@ -267,7 +267,7 @@ final class StrAccessTest extends TestCase
 
     public function testMatchIndicesWithComplexUtf8(): void
     {
-        $str = Str::from('Hello 😄 world 😁 test 😀');
+        $str = Str::of('Hello 😄 world 😁 test 😀');
         $indices = $str->matchIndices('/😄|😁|😀/u');
 
         $this->assertSame(3, $indices->len()->toInt());
@@ -278,7 +278,7 @@ final class StrAccessTest extends TestCase
         $this->assertSame('😀', $matchesWithIndices[2][1]->toString());
         $this->assertGreaterThan($matchesWithIndices[1][0], $matchesWithIndices[2][0]);
 
-        $str2 = Str::from('en English, zh 中文, ar العربية, ru Русский');
+        $str2 = Str::of('en English, zh 中文, ar العربية, ru Русский');
         $indices2 = $str2->matchIndices("/[\p{Han}\p{Arabic}\p{Cyrillic}]+/u");
 
         $this->assertSame(3, $indices2->len()->toInt());

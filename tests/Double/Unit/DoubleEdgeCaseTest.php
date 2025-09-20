@@ -11,8 +11,8 @@ final class DoubleEdgeCaseTest extends TestCase
 {
     public function testEdgeCaseAddZero(): void
     {
-        $a = Double::from(42.5);
-        $zero = Double::from(0.0);
+        $a = Double::of(42.5);
+        $zero = Double::of(0.0);
 
         $result = $a->add($zero);
 
@@ -22,7 +22,7 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCaseSubtractSelf(): void
     {
-        $a = Double::from(42.5);
+        $a = Double::of(42.5);
 
         $result = $a->sub($a);
 
@@ -31,8 +31,8 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCaseMultiplyByZero(): void
     {
-        $a = Double::from(42.5);
-        $zero = Double::from(0.0);
+        $a = Double::of(42.5);
+        $zero = Double::of(0.0);
 
         $result = $a->mul($zero);
 
@@ -41,8 +41,8 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCaseMultiplyByOne(): void
     {
-        $a = Double::from(42.5);
-        $one = Double::from(1.0);
+        $a = Double::of(42.5);
+        $one = Double::of(1.0);
 
         $result = $a->mul($one);
 
@@ -52,7 +52,7 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCaseDivideBySelf(): void
     {
-        $a = Double::from(42.5);
+        $a = Double::of(42.5);
 
         $result = $a->div($a);
 
@@ -62,8 +62,8 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCaseDivideZeroByNumber(): void
     {
-        $zero = Double::from(0.0);
-        $a = Double::from(42.5);
+        $zero = Double::of(0.0);
+        $a = Double::of(42.5);
 
         $result = $zero->div($a);
 
@@ -73,7 +73,7 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCasePowWithNegativeBase(): void
     {
-        $negative = Double::from(-2.0);
+        $negative = Double::of(-2.0);
 
         $pow2 = $negative->pow(2.0);
         $pow3 = $negative->pow(3.0);
@@ -84,7 +84,7 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCasePowWithZeroBase(): void
     {
-        $zero = Double::from(0.0);
+        $zero = Double::of(0.0);
 
         $pow0 = $zero->pow(0.0);
         $pow1 = $zero->pow(1.0);
@@ -97,7 +97,7 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCaseSqrtOfPerfectSquare(): void
     {
-        $a = Double::from(144.0);
+        $a = Double::of(144.0);
 
         $result = $a->sqrt();
 
@@ -106,7 +106,7 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCaseSqrtOfOne(): void
     {
-        $one = Double::from(1.0);
+        $one = Double::of(1.0);
 
         $result = $one->sqrt();
 
@@ -115,7 +115,7 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCaseSqrtOfZero(): void
     {
-        $zero = Double::from(0.0);
+        $zero = Double::of(0.0);
 
         $result = $zero->sqrt();
 
@@ -124,13 +124,13 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCaseClampWithInvertedBoundaries(): void
     {
-        $a = Double::from(15.5);
+        $a = Double::of(15.5);
 
         $result = $a->clamp(20.5, 10.5);
 
         $this->assertSame(15.5, $result->toFloat(), 'Clamping with swapped boundaries should work correctly');
 
-        $b = Double::from(5.5);
+        $b = Double::of(5.5);
         $resultB = $b->clamp(20.5, 10.5);
 
         $this->assertSame(10.5, $resultB->toFloat(), 'Value below both boundaries should be clamped to min');
@@ -138,7 +138,7 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCaseMapReturnsMaxFloat(): void
     {
-        $a = Double::from(5.5);
+        $a = Double::of(5.5);
 
         $result = $a->map(static fn() => \PHP_FLOAT_MAX);
 
@@ -147,7 +147,7 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testEdgeCaseMapReturnsMinFloat(): void
     {
-        $a = Double::from(5.5);
+        $a = Double::of(5.5);
 
         $result = $a->map(static fn() => -\PHP_FLOAT_MAX);
 
@@ -159,7 +159,7 @@ final class DoubleEdgeCaseTest extends TestCase
         $inf = Double::infinity();
         $negInf = Double::negInfinity();
         $nan = Double::nan();
-        $regular = Double::from(42.5);
+        $regular = Double::of(42.5);
 
         $this->assertTrue($inf->add($regular)->isInfinite());
         $this->assertTrue($inf->add($regular)->toFloat() > 0);
@@ -188,15 +188,15 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testApproxEqPrecision(): void
     {
-        $a = Double::from(0.1);
-        $b = Double::from(0.3);
+        $a = Double::of(0.1);
+        $b = Double::of(0.3);
         $sum = $a->add($a)->add($a); // 0.1 + 0.1 + 0.1
 
         $this->assertFalse($sum->eq($b), '0.1 + 0.1 + 0.1 should not exactly equal 0.3 due to floating point precision');
         $this->assertTrue($sum->approxEq($b), '0.1 + 0.1 + 0.1 should approximately equal 0.3');
 
-        $tiny1 = Double::from(1e-16);
-        $tiny2 = Double::from(1.0000000000000001e-16);
+        $tiny1 = Double::of(1e-16);
+        $tiny2 = Double::of(1.0000000000000001e-16);
 
         $this->assertFalse($tiny1->eq($tiny2), 'Small differences should be detectable with exact equality');
         $this->assertTrue($tiny1->approxEq($tiny2), 'Small differences should be ignored with approximate equality');
@@ -204,16 +204,16 @@ final class DoubleEdgeCaseTest extends TestCase
 
     public function testErrorHandling(): void
     {
-        $invalidLog = Double::from(-1.0)->ln();
+        $invalidLog = Double::of(-1.0)->ln();
         $this->assertTrue($invalidLog->isNan());
 
-        $invalidLog2 = Double::from(-1.0)->log2();
+        $invalidLog2 = Double::of(-1.0)->log2();
         $this->assertTrue($invalidLog2->isNan());
 
-        $invalidAsin = Double::from(2.0)->asin();
+        $invalidAsin = Double::of(2.0)->asin();
         $this->assertTrue($invalidAsin->isNan());
 
-        $invalidAcos = Double::from(-2.0)->acos();
+        $invalidAcos = Double::of(-2.0)->acos();
         $this->assertTrue($invalidAcos->isNan());
     }
 }

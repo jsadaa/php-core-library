@@ -11,42 +11,42 @@ final class DoubleMathTest extends TestCase
 {
     public function testLn(): void
     {
-        $a = Double::from(100.0);
+        $a = Double::of(100.0);
 
         $ln = $a->ln();
         $this->assertEqualsWithDelta(4.605, $ln->toFloat(), 0.001);
 
-        $log0 = Double::from(0)->ln();
+        $log0 = Double::of(0)->ln();
         $this->assertTrue($log0->isNan());
 
-        $logNegative = Double::from(-1)->ln();
+        $logNegative = Double::of(-1)->ln();
         $this->assertTrue($logNegative->isNan());
     }
 
     public function testLog(): void
     {
-        $a = Double::from(100.0);
+        $a = Double::of(100.0);
         $log = $a->log(10.0);
         $this->assertSame(2.0, $log->toFloat());
 
-        $b = Double::from(\M_E); // ~2.71828
+        $b = Double::of(\M_E); // ~2.71828
         $logE = $b->log(\M_E);
         $this->assertSame(1.0, $logE->toFloat());
 
-        $c = Double::from(25.0);
+        $c = Double::of(25.0);
         $log5 = $c->log(5.0);
         $this->assertEqualsWithDelta(2.0, $log5->toFloat(), 0.0001);
 
-        $d = Double::from(16.0);
-        $base = Double::from(2.0);
+        $d = Double::of(16.0);
+        $base = Double::of(2.0);
         $log2 = $d->log($base);
         $this->assertSame(4.0, $log2->toFloat());
 
-        $negative = Double::from(-10.0);
+        $negative = Double::of(-10.0);
         $logNegative = $negative->log(10.0);
         $this->assertTrue($logNegative->isNan());
 
-        $e = Double::from(10.0);
+        $e = Double::of(10.0);
         $logNegativeBase = $e->log(-2.0);
         $this->assertTrue($logNegativeBase->isNan());
 
@@ -59,44 +59,44 @@ final class DoubleMathTest extends TestCase
 
     public function testLog2(): void
     {
-        $a = Double::from(8.0);
+        $a = Double::of(8.0);
         $log2 = $a->log2();
         $this->assertSame(3.0, $log2->toFloat());
 
-        $b = Double::from(9.0);
+        $b = Double::of(9.0);
         $log2b = $b->log2();
         $this->assertEqualsWithDelta(3.17, $log2b->toFloat(), 0.01);
     }
 
     public function testLog10(): void
     {
-        $a = Double::from(1000.0);
+        $a = Double::of(1000.0);
         $log10 = $a->log10();
         $this->assertSame(3.0, $log10->toFloat());
 
-        $b = Double::from(500.0);
+        $b = Double::of(500.0);
         $log10b = $b->log10();
         $this->assertEqualsWithDelta(2.699, $log10b->toFloat(), 0.001);
     }
 
     public function testSqrt(): void
     {
-        $a = Double::from(16.0);
+        $a = Double::of(16.0);
         $sqrt = $a->sqrt();
 
         $this->assertSame(4.0, $sqrt->toFloat());
 
-        $b = Double::from(10.0);
+        $b = Double::of(10.0);
         $sqrtb = $b->sqrt();
 
         $this->assertEqualsWithDelta(3.162, $sqrtb->toFloat(), 0.001);
 
-        $negative = Double::from(-4.0);
+        $negative = Double::of(-4.0);
         $sqrtNegative = $negative->sqrt();
 
         $this->assertTrue($sqrtNegative->isNan());
 
-        $zero = Double::from(0.0);
+        $zero = Double::of(0.0);
         $sqrtZero = $zero->sqrt();
 
         $this->assertSame(0.0, $sqrtZero->toFloat());
@@ -104,31 +104,31 @@ final class DoubleMathTest extends TestCase
 
     public function testCbrt(): void
     {
-        $a = Double::from(27.0);
+        $a = Double::of(27.0);
         $this->assertSame(3.0, $a->cbrt()->toFloat());
 
-        $b = Double::from(-8.0);
+        $b = Double::of(-8.0);
         $this->assertSame(-2.0, $b->cbrt()->toFloat());
 
-        $c = Double::from(10.0);
+        $c = Double::of(10.0);
         $this->assertEqualsWithDelta(2.154, $c->cbrt()->toFloat(), 0.001);
     }
 
     public function testExp(): void
     {
-        $a = Double::from(1.0);
+        $a = Double::of(1.0);
         $this->assertEqualsWithDelta(2.718, $a->exp()->toFloat(), 0.001);
 
-        $b = Double::from(0.0);
+        $b = Double::of(0.0);
         $this->assertSame(1.0, $b->exp()->toFloat());
 
-        $c = Double::from(-1.0);
+        $c = Double::of(-1.0);
         $this->assertEqualsWithDelta(0.368, $c->exp()->toFloat(), 0.001);
     }
 
     public function testTrigonometricFunctions(): void
     {
-        $zero = Double::from(0.0);
+        $zero = Double::of(0.0);
         $halfPi = Double::pi()->div(2.0)->unwrap();
         $pi = Double::pi();
 
@@ -151,10 +151,10 @@ final class DoubleMathTest extends TestCase
 
     public function testInverseTrigonometricFunctions(): void
     {
-        $zero = Double::from(0.0);
-        $half = Double::from(0.5);
-        $one = Double::from(1.0);
-        $outOfRange = Double::from(1.5);
+        $zero = Double::of(0.0);
+        $half = Double::of(0.5);
+        $one = Double::of(1.0);
+        $outOfRange = Double::of(1.5);
 
         $this->assertSame(0.0, $zero->asin()->toFloat());
         $this->assertEqualsWithDelta(
@@ -197,24 +197,24 @@ final class DoubleMathTest extends TestCase
 
     public function testAtan2(): void
     {
-        $y1 = Double::from(1.0);
-        $x1 = Double::from(1.0);
+        $y1 = Double::of(1.0);
+        $x1 = Double::of(1.0);
         $this->assertEqualsWithDelta(
             0.7854, // π/4
             $y1->atan2($x1)->toFloat(),
             0.001,
         );
 
-        $y2 = Double::from(1.0);
-        $x2 = Double::from(-1.0);
+        $y2 = Double::of(1.0);
+        $x2 = Double::of(-1.0);
         $this->assertEqualsWithDelta(
             2.3562, // 3π/4
             $y2->atan2($x2)->toFloat(),
             0.001,
         );
 
-        $y3 = Double::from(-1.0);
-        $x3 = Double::from(-1.0);
+        $y3 = Double::of(-1.0);
+        $x3 = Double::of(-1.0);
         $this->assertEqualsWithDelta(
             -2.3562, // -3π/4
             $y3->atan2($x3)->toFloat(),
@@ -224,8 +224,8 @@ final class DoubleMathTest extends TestCase
 
     public function testHyperbolicFunctions(): void
     {
-        $zero = Double::from(0.0);
-        $one = Double::from(1.0);
+        $zero = Double::of(0.0);
+        $one = Double::of(1.0);
 
         $this->assertSame(0.0, $zero->sinh()->toFloat());
         $this->assertEqualsWithDelta(1.1752, $one->sinh()->toFloat(), 0.001);
@@ -239,7 +239,7 @@ final class DoubleMathTest extends TestCase
 
     public function testToRadiansAndToDegrees(): void
     {
-        $degrees90 = Double::from(90.0);
+        $degrees90 = Double::of(90.0);
         $radians = $degrees90->toRadians();
         $this->assertEqualsWithDelta(1.5708, $radians->toFloat(), 0.001); // π/2
 

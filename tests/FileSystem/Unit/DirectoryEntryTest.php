@@ -58,8 +58,8 @@ final class DirectoryEntryTest extends TestCase
 
     public function testGetPathFromDirectoryEntry(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $entry = DirectoryEntry::from($path);
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $entry = DirectoryEntry::of($path);
         $returnedPath = $entry->path();
 
         $this->assertSame($path->toString(), $returnedPath->toString());
@@ -67,16 +67,16 @@ final class DirectoryEntryTest extends TestCase
 
     public function testGetFileNameFromDirectoryEntry(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $entry = DirectoryEntry::from($path);
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $entry = DirectoryEntry::of($path);
         $fileName = $entry->fileName();
 
         $this->assertTrue($fileName->isSome());
         $this->assertSame('testFile.txt', $fileName->unwrap()->toString());
 
         // Test with a directory without trailing slash
-        $path = Path::from($this->root->url() . '/emptyDir');
-        $entry = DirectoryEntry::from($path);
+        $path = Path::of($this->root->url() . '/emptyDir');
+        $entry = DirectoryEntry::of($path);
         $fileName = $entry->fileName();
 
         $this->assertTrue($fileName->isSome());
@@ -85,24 +85,24 @@ final class DirectoryEntryTest extends TestCase
 
     public function testGetFileTypeFromDirectoryEntry(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $entry = DirectoryEntry::from($path);
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $entry = DirectoryEntry::of($path);
         $fileType = $entry->fileType();
 
         $this->assertTrue($fileType->isFile());
         $this->assertFalse($fileType->isDir());
         $this->assertFalse($fileType->isSymLink());
 
-        $path = Path::from($this->root->url() . '/emptyDir');
-        $entry = DirectoryEntry::from($path);
+        $path = Path::of($this->root->url() . '/emptyDir');
+        $entry = DirectoryEntry::of($path);
         $fileType = $entry->fileType();
 
         $this->assertTrue($fileType->isDir());
         $this->assertFalse($fileType->isFile());
         $this->assertFalse($fileType->isSymLink());
 
-        $path = Path::from($this->tempDir . '/testLink');
-        $entry = DirectoryEntry::from($path);
+        $path = Path::of($this->tempDir . '/testLink');
+        $entry = DirectoryEntry::of($path);
         $fileType = $entry->fileType();
 
         $this->assertTrue($fileType->isSymLink());
@@ -112,8 +112,8 @@ final class DirectoryEntryTest extends TestCase
 
     public function testGetMetadataFromDirectoryEntry(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $entry = DirectoryEntry::from($path);
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $entry = DirectoryEntry::of($path);
         $result = $entry->metadata();
 
         $this->assertTrue($result->isOk());
@@ -123,8 +123,8 @@ final class DirectoryEntryTest extends TestCase
         $this->assertFalse($metadata->isDir());
         $this->assertEquals(12, $metadata->len()->toInt());
 
-        $path = Path::from($this->root->url() . '/emptyDir');
-        $entry = DirectoryEntry::from($path);
+        $path = Path::of($this->root->url() . '/emptyDir');
+        $entry = DirectoryEntry::of($path);
         $result = $entry->metadata();
 
         $this->assertTrue($result->isOk());
@@ -133,8 +133,8 @@ final class DirectoryEntryTest extends TestCase
         $this->assertTrue($metadata->isDir());
         $this->assertFalse($metadata->isFile());
 
-        $path = Path::from($this->tempDir . '/testLink');
-        $entry = DirectoryEntry::from($path);
+        $path = Path::of($this->tempDir . '/testLink');
+        $entry = DirectoryEntry::of($path);
         $result = $entry->metadata();
 
         $this->assertTrue($result->isOk());

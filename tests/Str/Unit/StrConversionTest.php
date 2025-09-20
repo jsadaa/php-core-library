@@ -12,7 +12,7 @@ final class StrConversionTest extends TestCase
 {
     public function testParseIntWithValidInput(): void
     {
-        $str = Str::from('123');
+        $str = Str::of('123');
         $result = $str->parseInteger();
 
         $this->assertTrue($result->isOk());
@@ -21,7 +21,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseIntWithNegativeNumber(): void
     {
-        $str = Str::from('-123');
+        $str = Str::of('-123');
         $result = $str->parseInteger();
 
         $this->assertTrue($result->isOk());
@@ -30,7 +30,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseIntWithInvalidInput(): void
     {
-        $str = Str::from('123abc');
+        $str = Str::of('123abc');
         $result = $str->parseInteger();
 
         $this->assertTrue($result->isErr());
@@ -47,7 +47,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseIntWithFloatString(): void
     {
-        $str = Str::from('123.45');
+        $str = Str::of('123.45');
         $result = $str->parseInteger();
 
         $this->assertTrue($result->isErr());
@@ -56,7 +56,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseFloatWithValidInput(): void
     {
-        $str = Str::from('123.45');
+        $str = Str::of('123.45');
         $result = $str->parseDouble();
 
         $this->assertTrue($result->isOk());
@@ -65,7 +65,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseFloatWithNegativeNumber(): void
     {
-        $str = Str::from('-123.45');
+        $str = Str::of('-123.45');
         $result = $str->parseDouble();
 
         $this->assertTrue($result->isOk());
@@ -74,7 +74,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseFloatWithIntegerString(): void
     {
-        $str = Str::from('123');
+        $str = Str::of('123');
         $result = $str->parseDouble();
 
         $this->assertTrue($result->isOk());
@@ -83,7 +83,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseFloatWithInvalidInput(): void
     {
-        $str = Str::from('123.45abc');
+        $str = Str::of('123.45abc');
         $result = $str->parseDouble();
 
         $this->assertTrue($result->isErr());
@@ -101,7 +101,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseBoolWithTrueString(): void
     {
-        $str = Str::from('true');
+        $str = Str::of('true');
         $result = $str->parseBool();
 
         $this->assertTrue($result->isOk());
@@ -110,7 +110,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseBoolWithFalseString(): void
     {
-        $str = Str::from('false');
+        $str = Str::of('false');
         $result = $str->parseBool();
 
         $this->assertTrue($result->isOk());
@@ -119,7 +119,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseBoolWithOneString(): void
     {
-        $str = Str::from('1');
+        $str = Str::of('1');
         $result = $str->parseBool();
 
         $this->assertTrue($result->isOk());
@@ -128,7 +128,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseBoolWithZeroString(): void
     {
-        $str = Str::from('0');
+        $str = Str::of('0');
         $result = $str->parseBool();
 
         $this->assertTrue($result->isOk());
@@ -137,7 +137,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseBoolWithCaseInsensitiveInput(): void
     {
-        $str = Str::from('TRUE');
+        $str = Str::of('TRUE');
         $result = $str->parseBool();
 
         $this->assertTrue($result->isOk());
@@ -146,7 +146,7 @@ final class StrConversionTest extends TestCase
 
     public function testParseBoolWithInvalidInput(): void
     {
-        $str = Str::from('maybe');
+        $str = Str::of('maybe');
         $result = $str->parseBool();
 
         $this->assertTrue($result->isErr());

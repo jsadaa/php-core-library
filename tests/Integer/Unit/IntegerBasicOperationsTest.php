@@ -12,8 +12,8 @@ final class IntegerBasicOperationsTest extends TestCase
 {
     public function testAdd(): void
     {
-        $a = Integer::from(5);
-        $b = Integer::from(3);
+        $a = Integer::of(5);
+        $b = Integer::of(3);
 
         $result = $a->add($b);
 
@@ -22,7 +22,7 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testAddWithNativeInt(): void
     {
-        $a = Integer::from(5);
+        $a = Integer::of(5);
 
         $result = $a->add(3);
 
@@ -31,8 +31,8 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testSub(): void
     {
-        $a = Integer::from(10);
-        $b = Integer::from(7);
+        $a = Integer::of(10);
+        $b = Integer::of(7);
 
         $result = $a->sub($b);
 
@@ -41,7 +41,7 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testSubWithNativeInt(): void
     {
-        $a = Integer::from(10);
+        $a = Integer::of(10);
 
         $result = $a->sub(7);
 
@@ -50,8 +50,8 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testMul(): void
     {
-        $a = Integer::from(5);
-        $b = Integer::from(4);
+        $a = Integer::of(5);
+        $b = Integer::of(4);
 
         $result = $a->mul($b);
 
@@ -60,7 +60,7 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testMulWithNativeInt(): void
     {
-        $a = Integer::from(5);
+        $a = Integer::of(5);
 
         $result = $a->mul(4);
 
@@ -69,8 +69,8 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testDiv(): void
     {
-        $a = Integer::from(10);
-        $b = Integer::from(2);
+        $a = Integer::of(10);
+        $b = Integer::of(2);
 
         $result = $a->div($b);
 
@@ -80,7 +80,7 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testDivWithNativeInt(): void
     {
-        $a = Integer::from(10);
+        $a = Integer::of(10);
 
         $result = $a->div(2);
 
@@ -90,8 +90,8 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testDivByZero(): void
     {
-        $a = Integer::from(10);
-        $b = Integer::from(0);
+        $a = Integer::of(10);
+        $b = Integer::of(0);
 
         $result = $a->div($b);
 
@@ -103,8 +103,8 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testDivWithRounding(): void
     {
-        $a = Integer::from(10);
-        $b = Integer::from(3);
+        $a = Integer::of(10);
+        $b = Integer::of(3);
 
         $result = $a->div($b);
 
@@ -114,15 +114,15 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testDivFloor(): void
     {
-        $a = Integer::from(10);
-        $b = Integer::from(3);
+        $a = Integer::of(10);
+        $b = Integer::of(3);
 
         $result = $a->divFloor($b);
 
         $this->assertTrue($result->isOk());
         $this->assertSame(3, $result->unwrap()->toInt(), 'Floor division with positive numbers');
 
-        $negativeA = Integer::from(-10);
+        $negativeA = Integer::of(-10);
         $resultNegative = $negativeA->divFloor($b);
 
         $this->assertTrue($resultNegative->isOk());
@@ -131,15 +131,15 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testDivCeil(): void
     {
-        $a = Integer::from(10);
-        $b = Integer::from(3);
+        $a = Integer::of(10);
+        $b = Integer::of(3);
 
         $result = $a->divCeil($b);
 
         $this->assertTrue($result->isOk());
         $this->assertSame(4, $result->unwrap()->toInt(), 'Ceiling division with positive numbers');
 
-        $negativeA = Integer::from(-10);
+        $negativeA = Integer::of(-10);
         $resultNegative = $negativeA->divCeil($b);
 
         $this->assertTrue($resultNegative->isOk());
@@ -148,9 +148,9 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testAbs(): void
     {
-        $positive = Integer::from(5);
-        $negative = Integer::from(-5);
-        $zero = Integer::from(0);
+        $positive = Integer::of(5);
+        $negative = Integer::of(-5);
+        $zero = Integer::of(0);
 
         $this->assertSame(5, $positive->abs()->toInt());
         $this->assertSame(5, $negative->abs()->toInt());
@@ -159,9 +159,9 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testAbsDiff(): void
     {
-        $a = Integer::from(10);
-        $b = Integer::from(15);
-        $c = Integer::from(5);
+        $a = Integer::of(10);
+        $b = Integer::of(15);
+        $c = Integer::of(5);
 
         $this->assertSame(5, $a->absDiff($b)->toInt());
         $this->assertSame(5, $b->absDiff($a)->toInt());
@@ -171,13 +171,13 @@ final class IntegerBasicOperationsTest extends TestCase
 
     public function testPow(): void
     {
-        $base = Integer::from(2);
+        $base = Integer::of(2);
 
         $this->assertSame(1, $base->pow(0)->toInt());
         $this->assertSame(2, $base->pow(1)->toInt());
         $this->assertSame(4, $base->pow(2)->toInt());
         $this->assertSame(8, $base->pow(3)->toInt());
-        $this->assertSame(8, $base->pow(Integer::from(3))->toInt());
+        $this->assertSame(8, $base->pow(Integer::of(3))->toInt());
 
         $this->assertSame(0, $base->pow(-1)->toInt());
     }

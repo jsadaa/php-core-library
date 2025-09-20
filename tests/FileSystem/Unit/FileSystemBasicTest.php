@@ -61,7 +61,7 @@ final class FileSystemBasicTest extends TestCase
     {
         \mkdir($this->tempDir . '/nestedDir', 0777, true);
 
-        $path = Path::from($this->tempDir . '/nestedDir/../testFile.txt');
+        $path = Path::of($this->tempDir . '/nestedDir/../testFile.txt');
         $result = FileSystem::canonicalize($path);
 
         $this->assertTrue($result->isOk(), 'Canonicalization should succeed');
@@ -73,7 +73,7 @@ final class FileSystemBasicTest extends TestCase
 
     public function testMetadataForFile(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $result = FileSystem::metadata($path);
 
         $this->assertTrue($result->isOk());
@@ -87,7 +87,7 @@ final class FileSystemBasicTest extends TestCase
 
     public function testMetadataForDirectory(): void
     {
-        $path = Path::from($this->root->url() . '/emptyDir');
+        $path = Path::of($this->root->url() . '/emptyDir');
         $result = FileSystem::metadata($path);
 
         $this->assertTrue($result->isOk());
@@ -100,7 +100,7 @@ final class FileSystemBasicTest extends TestCase
 
     public function testMetadataForNonExistentPath(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistent.txt');
+        $path = Path::of($this->root->url() . '/nonExistent.txt');
         $result = FileSystem::metadata($path);
 
         $this->assertTrue($result->isErr());
@@ -111,7 +111,7 @@ final class FileSystemBasicTest extends TestCase
 
     public function testSymlinkMetadata(): void
     {
-        $path = Path::from($this->tempDir . '/testLink');
+        $path = Path::of($this->tempDir . '/testLink');
         $result = FileSystem::symlinkMetadata($path);
 
         $this->assertTrue($result->isOk());
@@ -125,16 +125,16 @@ final class FileSystemBasicTest extends TestCase
 
     public function testExistsForExistingPath(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $this->assertTrue(FileSystem::exists($path));
 
-        $path = Path::from($this->root->url() . '/emptyDir');
+        $path = Path::of($this->root->url() . '/emptyDir');
         $this->assertTrue(FileSystem::exists($path));
     }
 
     public function testExistsForNonExistingPath(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistent.txt');
+        $path = Path::of($this->root->url() . '/nonExistent.txt');
         $this->assertFalse(FileSystem::exists($path));
     }
 }

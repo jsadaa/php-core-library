@@ -66,21 +66,21 @@ final class PermissionsTest extends TestCase
 
     public function testCreateWithIntegerMode(): void
     {
-        $mode = Integer::from(0644);
+        $mode = Integer::of(0644);
         $permissions = Permissions::create($mode);
         $this->assertEquals(0644, $permissions->mode()->toInt());
     }
 
     public function testFromPath(): void
     {
-        $path = Path::from($this->tempDir . '/testFile.txt');
-        $permissions = Permissions::from($path);
+        $path = Path::of($this->tempDir . '/testFile.txt');
+        $permissions = Permissions::of($path);
 
         $this->assertTrue($permissions->isReadable());
         $this->assertTrue($permissions->isWritable());
 
-        $readOnlyPath = Path::from($this->tempDir . '/readOnlyFile.txt');
-        $readOnlyPermissions = Permissions::from($readOnlyPath);
+        $readOnlyPath = Path::of($this->tempDir . '/readOnlyFile.txt');
+        $readOnlyPermissions = Permissions::of($readOnlyPath);
 
         $this->assertTrue($readOnlyPermissions->isReadable());
         $this->assertFalse($readOnlyPermissions->isWritable());
@@ -89,7 +89,7 @@ final class PermissionsTest extends TestCase
     public function testFromStringPath(): void
     {
         $pathString = $this->tempDir . '/testFile.txt';
-        $permissions = Permissions::from($pathString);
+        $permissions = Permissions::of($pathString);
 
         $this->assertTrue($permissions->isReadable());
         $this->assertTrue($permissions->isWritable());
@@ -97,8 +97,8 @@ final class PermissionsTest extends TestCase
 
     public function testFromNonExistentPath(): void
     {
-        $path = Path::from($this->tempDir . '/nonExistent.txt');
-        $permissions = Permissions::from($path);
+        $path = Path::of($this->tempDir . '/nonExistent.txt');
+        $permissions = Permissions::of($path);
 
         $this->assertEquals(0, $permissions->mode()->toInt());
     }
@@ -157,7 +157,7 @@ final class PermissionsTest extends TestCase
         $newPermissions = $permissions->setMode(0755);
         $this->assertEquals(0755, $newPermissions->mode()->toInt());
 
-        $integerMode = Integer::from(0444);
+        $integerMode = Integer::of(0444);
         $readOnlyPermissions = $permissions->setMode($integerMode);
         $this->assertEquals(0444, $readOnlyPermissions->mode()->toInt());
     }
@@ -182,7 +182,7 @@ final class PermissionsTest extends TestCase
 
     public function testApplyToExistingFile(): void
     {
-        $path = Path::from($this->tempDir . '/testFile.txt');
+        $path = Path::of($this->tempDir . '/testFile.txt');
         $permissions = Permissions::create(0600);
 
         $result = $permissions->apply($path);
@@ -194,7 +194,7 @@ final class PermissionsTest extends TestCase
 
     public function testApplyToNonExistentFile(): void
     {
-        $path = Path::from($this->tempDir . '/nonExistent.txt');
+        $path = Path::of($this->tempDir . '/nonExistent.txt');
         $permissions = Permissions::create(0644);
 
         $result = $permissions->apply($path);
@@ -216,7 +216,7 @@ final class PermissionsTest extends TestCase
 
     public function testApplyReturnsCorrectPath(): void
     {
-        $path = Path::from($this->tempDir . '/testFile.txt');
+        $path = Path::of($this->tempDir . '/testFile.txt');
         $permissions = Permissions::create(0644);
 
         $result = $permissions->apply($path);

@@ -12,8 +12,8 @@ final class DoubleBasicOperationsTest extends TestCase
 {
     public function testAdd(): void
     {
-        $a = Double::from(5.5);
-        $b = Double::from(3.2);
+        $a = Double::of(5.5);
+        $b = Double::of(3.2);
 
         $result = $a->add($b);
 
@@ -22,7 +22,7 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testAddWithNativeFloat(): void
     {
-        $a = Double::from(5.5);
+        $a = Double::of(5.5);
 
         $result = $a->add(3.2);
 
@@ -31,7 +31,7 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testAddWithNativeInt(): void
     {
-        $a = Double::from(5.5);
+        $a = Double::of(5.5);
 
         $result = $a->add(3);
 
@@ -40,8 +40,8 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testSub(): void
     {
-        $a = Double::from(10.5);
-        $b = Double::from(7.2);
+        $a = Double::of(10.5);
+        $b = Double::of(7.2);
 
         $result = $a->sub($b);
 
@@ -50,7 +50,7 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testSubWithNativeFloat(): void
     {
-        $a = Double::from(10.5);
+        $a = Double::of(10.5);
 
         $result = $a->sub(7.2);
 
@@ -59,7 +59,7 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testSubWithNativeInt(): void
     {
-        $a = Double::from(10.5);
+        $a = Double::of(10.5);
 
         $result = $a->sub(7);
 
@@ -68,8 +68,8 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testMul(): void
     {
-        $a = Double::from(5.5);
-        $b = Double::from(2.0);
+        $a = Double::of(5.5);
+        $b = Double::of(2.0);
 
         $result = $a->mul($b);
 
@@ -78,7 +78,7 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testMulWithNativeFloat(): void
     {
-        $a = Double::from(5.5);
+        $a = Double::of(5.5);
 
         $result = $a->mul(2.0);
 
@@ -87,7 +87,7 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testMulWithNativeInt(): void
     {
-        $a = Double::from(5.5);
+        $a = Double::of(5.5);
 
         $result = $a->mul(2);
 
@@ -96,8 +96,8 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testDiv(): void
     {
-        $a = Double::from(10.0);
-        $b = Double::from(2.0);
+        $a = Double::of(10.0);
+        $b = Double::of(2.0);
 
         $result = $a->div($b);
 
@@ -107,7 +107,7 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testDivWithNativeFloat(): void
     {
-        $a = Double::from(10.0);
+        $a = Double::of(10.0);
 
         $result = $a->div(2.0);
 
@@ -117,7 +117,7 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testDivWithNativeInt(): void
     {
-        $a = Double::from(10.0);
+        $a = Double::of(10.0);
 
         $result = $a->div(2);
 
@@ -127,8 +127,8 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testDivByZero(): void
     {
-        $a = Double::from(10.0);
-        $b = Double::from(0.0);
+        $a = Double::of(10.0);
+        $b = Double::of(0.0);
 
         $result = $a->div($b);
 
@@ -140,8 +140,8 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testRem(): void
     {
-        $a = Double::from(10.5);
-        $b = Double::from(3.0);
+        $a = Double::of(10.5);
+        $b = Double::of(3.0);
 
         $result = $a->rem($b);
 
@@ -150,8 +150,8 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testRemByZero(): void
     {
-        $a = Double::from(10.5);
-        $b = Double::from(0.0);
+        $a = Double::of(10.5);
+        $b = Double::of(0.0);
 
         $result = $a->rem($b);
 
@@ -160,9 +160,9 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testAbs(): void
     {
-        $positive = Double::from(5.5);
-        $negative = Double::from(-5.5);
-        $zero = Double::from(0.0);
+        $positive = Double::of(5.5);
+        $negative = Double::of(-5.5);
+        $zero = Double::of(0.0);
 
         $this->assertSame(5.5, $positive->abs()->toFloat());
         $this->assertSame(5.5, $negative->abs()->toFloat());
@@ -171,9 +171,9 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testAbsDiff(): void
     {
-        $a = Double::from(10.5);
-        $b = Double::from(15.2);
-        $c = Double::from(5.3);
+        $a = Double::of(10.5);
+        $b = Double::of(15.2);
+        $c = Double::of(5.3);
 
         $this->assertEqualsWithDelta(4.7, $a->absDiff($b)->toFloat(), 0.0001);
         $this->assertEqualsWithDelta(4.7, $b->absDiff($a)->toFloat(), 0.0001);
@@ -183,13 +183,13 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testPow(): void
     {
-        $base = Double::from(2.0);
+        $base = Double::of(2.0);
 
         $this->assertSame(1.0, $base->pow(0)->toFloat());
         $this->assertSame(2.0, $base->pow(1)->toFloat());
         $this->assertSame(4.0, $base->pow(2)->toFloat());
         $this->assertSame(8.0, $base->pow(3)->toFloat());
-        $this->assertSame(8.0, $base->pow(Double::from(3))->toFloat());
+        $this->assertSame(8.0, $base->pow(Double::of(3))->toFloat());
         $this->assertSame(0.5, $base->pow(-1)->toFloat(), 'Negative exponent should work with floats');
 
         $fractionalExp = $base->pow(0.5);
@@ -198,12 +198,12 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testRound(): void
     {
-        $a = Double::from(3.2);
-        $b = Double::from(3.5);
-        $c = Double::from(3.8);
-        $d = Double::from(-3.2);
-        $e = Double::from(-3.5);
-        $f = Double::from(-3.8);
+        $a = Double::of(3.2);
+        $b = Double::of(3.5);
+        $c = Double::of(3.8);
+        $d = Double::of(-3.2);
+        $e = Double::of(-3.5);
+        $f = Double::of(-3.8);
 
         $this->assertSame(3, $a->round()->toInt());
         $this->assertSame(4, $b->round()->toInt());
@@ -215,10 +215,10 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testFloor(): void
     {
-        $a = Double::from(3.2);
-        $b = Double::from(3.8);
-        $c = Double::from(-3.2);
-        $d = Double::from(-3.8);
+        $a = Double::of(3.2);
+        $b = Double::of(3.8);
+        $c = Double::of(-3.2);
+        $d = Double::of(-3.8);
 
         $this->assertSame(3, $a->floor()->toInt());
         $this->assertSame(3, $b->floor()->toInt());
@@ -228,10 +228,10 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testCeil(): void
     {
-        $a = Double::from(3.2);
-        $b = Double::from(3.8);
-        $c = Double::from(-3.2);
-        $d = Double::from(-3.8);
+        $a = Double::of(3.2);
+        $b = Double::of(3.8);
+        $c = Double::of(-3.2);
+        $d = Double::of(-3.8);
 
         $this->assertSame(4, $a->ceil()->toInt());
         $this->assertSame(4, $b->ceil()->toInt());
@@ -241,10 +241,10 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testTrunc(): void
     {
-        $a = Double::from(3.2);
-        $b = Double::from(3.8);
-        $c = Double::from(-3.2);
-        $d = Double::from(-3.8);
+        $a = Double::of(3.2);
+        $b = Double::of(3.8);
+        $c = Double::of(-3.2);
+        $d = Double::of(-3.8);
 
         $this->assertSame(3, $a->trunc()->toInt());
         $this->assertSame(3, $b->trunc()->toInt());
@@ -254,8 +254,8 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testFract(): void
     {
-        $a = Double::from(3.25);
-        $b = Double::from(-3.25);
+        $a = Double::of(3.25);
+        $b = Double::of(-3.25);
 
         $this->assertSame(0.25, $a->fract()->toFloat());
         $this->assertSame(0.75, $b->fract()->toFloat());
@@ -263,7 +263,7 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testMap(): void
     {
-        $a = Double::from(5.5);
+        $a = Double::of(5.5);
 
         $doubled = $a->map(static fn($x) => $x * 2);
         $this->assertSame(11.0, $doubled->toFloat());
@@ -277,8 +277,8 @@ final class DoubleBasicOperationsTest extends TestCase
 
     public function testToInt(): void
     {
-        $a = Double::from(3.7);
-        $b = Double::from(-3.7);
+        $a = Double::of(3.7);
+        $b = Double::of(-3.7);
 
         $this->assertSame(3, $a->toInt());
         $this->assertSame(-3, $b->toInt());

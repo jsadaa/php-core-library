@@ -13,8 +13,8 @@ final class IntegerOverflowTest extends TestCase
 {
     public function testOverflowingAdd(): void
     {
-        $a = Integer::from(5);
-        $b = Integer::from(3);
+        $a = Integer::of(5);
+        $b = Integer::of(3);
 
         $result = $a->overflowingAdd($b);
 
@@ -24,8 +24,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testOverflowingAddWithMaxInt(): void
     {
-        $max = Integer::from(\PHP_INT_MAX);
-        $one = Integer::from(1);
+        $max = Integer::of(\PHP_INT_MAX);
+        $one = Integer::of(1);
 
         $result = $max->overflowingAdd($one);
 
@@ -35,8 +35,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testOverflowingSub(): void
     {
-        $a = Integer::from(10);
-        $b = Integer::from(7);
+        $a = Integer::of(10);
+        $b = Integer::of(7);
 
         $result = $a->overflowingSub($b);
 
@@ -46,8 +46,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testOverflowingSubWithMinInt(): void
     {
-        $min = Integer::from(\PHP_INT_MIN);
-        $one = Integer::from(1);
+        $min = Integer::of(\PHP_INT_MIN);
+        $one = Integer::of(1);
 
         $result = $min->overflowingSub($one);
 
@@ -57,8 +57,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testOverflowingMul(): void
     {
-        $a = Integer::from(5);
-        $b = Integer::from(4);
+        $a = Integer::of(5);
+        $b = Integer::of(4);
 
         $result = $a->overflowingMul($b);
 
@@ -69,7 +69,7 @@ final class IntegerOverflowTest extends TestCase
     public function testOverflowingMulWithLargeValues(): void
     {
         // A value close to sqrt(PHP_INT_MAX)
-        $largeValue = Integer::from((int)\sqrt(\PHP_INT_MAX) + 1);
+        $largeValue = Integer::of((int)\sqrt(\PHP_INT_MAX) + 1);
 
         $result = $largeValue->overflowingMul($largeValue);
 
@@ -79,8 +79,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testOverflowingDiv(): void
     {
-        $a = Integer::from(10);
-        $b = Integer::from(2);
+        $a = Integer::of(10);
+        $b = Integer::of(2);
 
         $result = $a->overflowingDiv($b);
 
@@ -90,8 +90,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testOverflowingDivByZero(): void
     {
-        $a = Integer::from(10);
-        $zero = Integer::from(0);
+        $a = Integer::of(10);
+        $zero = Integer::of(0);
 
         $result = $a->overflowingDiv($zero);
 
@@ -102,8 +102,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testSaturatingAdd(): void
     {
-        $a = Integer::from(5);
-        $b = Integer::from(3);
+        $a = Integer::of(5);
+        $b = Integer::of(3);
 
         $result = $a->saturatingAdd($b);
 
@@ -112,8 +112,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testSaturatingAddWithMaxInt(): void
     {
-        $max = Integer::from(\PHP_INT_MAX);
-        $one = Integer::from(1);
+        $max = Integer::of(\PHP_INT_MAX);
+        $one = Integer::of(1);
 
         $result = $max->saturatingAdd($one);
 
@@ -122,8 +122,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testSaturatingSub(): void
     {
-        $a = Integer::from(10);
-        $b = Integer::from(7);
+        $a = Integer::of(10);
+        $b = Integer::of(7);
 
         $result = $a->saturatingSub($b);
 
@@ -132,8 +132,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testSaturatingSubWithMinInt(): void
     {
-        $min = Integer::from(\PHP_INT_MIN);
-        $one = Integer::from(1);
+        $min = Integer::of(\PHP_INT_MIN);
+        $one = Integer::of(1);
 
         $result = $min->saturatingSub($one);
 
@@ -142,8 +142,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testSaturatingMul(): void
     {
-        $a = Integer::from(5);
-        $b = Integer::from(4);
+        $a = Integer::of(5);
+        $b = Integer::of(4);
 
         $result = $a->saturatingMul($b);
 
@@ -153,7 +153,7 @@ final class IntegerOverflowTest extends TestCase
     public function testSaturatingMulWithLargeValues(): void
     {
         // A value close to sqrt(PHP_INT_MAX)
-        $largeValue = Integer::from((int)\sqrt(\PHP_INT_MAX) + 1);
+        $largeValue = Integer::of((int)\sqrt(\PHP_INT_MAX) + 1);
 
         $result = $largeValue->saturatingMul($largeValue);
 
@@ -162,8 +162,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testSaturatingDiv(): void
     {
-        $a = Integer::from(10);
-        $b = Integer::from(2);
+        $a = Integer::of(10);
+        $b = Integer::of(2);
 
         $result = $a->saturatingDiv($b);
 
@@ -173,8 +173,8 @@ final class IntegerOverflowTest extends TestCase
 
     public function testSaturatingDivByZero(): void
     {
-        $a = Integer::from(10);
-        $zero = Integer::from(0);
+        $a = Integer::of(10);
+        $zero = Integer::of(0);
 
         $result = $a->saturatingDiv($zero);
 

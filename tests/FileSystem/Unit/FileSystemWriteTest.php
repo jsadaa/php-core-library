@@ -33,7 +33,7 @@ final class FileSystemWriteTest extends TestCase
 
     public function testWriteToNewFile(): void
     {
-        $path = Path::from($this->root->url() . '/newFile.txt');
+        $path = Path::of($this->root->url() . '/newFile.txt');
         $content = 'This is new content';
         $result = FileSystem::write($path, $content);
 
@@ -44,7 +44,7 @@ final class FileSystemWriteTest extends TestCase
 
     public function testWriteToExistingFile(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
+        $path = Path::of($this->root->url() . '/testFile.txt');
         $newContent = 'This is updated content';
         $result = FileSystem::write($path, $newContent);
 
@@ -55,7 +55,7 @@ final class FileSystemWriteTest extends TestCase
     public function testWriteWithByteArray(): void
     {
         // Convert byte array to string because FileSystem::write only accepts string
-        $path = Path::from($this->root->url() . '/binaryFile.bin');
+        $path = Path::of($this->root->url() . '/binaryFile.bin');
         $bytes = [0x00, 0x01, 0x02, 0x03, 0xFF, 0xFE];
         $binaryString = \pack('C*', ...$bytes);
         $result = FileSystem::write($path, $binaryString);
@@ -70,7 +70,7 @@ final class FileSystemWriteTest extends TestCase
 
     public function testWriteToReadOnlyFile(): void
     {
-        $path = Path::from($this->root->url() . '/readOnlyFile.txt');
+        $path = Path::of($this->root->url() . '/readOnlyFile.txt');
         $newContent = 'Attempt to write to read-only file';
         $result = FileSystem::write($path, $newContent);
 
@@ -83,7 +83,7 @@ final class FileSystemWriteTest extends TestCase
 
     public function testWriteToInvalidPath(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistentDir/file.txt');
+        $path = Path::of($this->root->url() . '/nonExistentDir/file.txt');
         $content = 'Content for invalid path';
         $result = FileSystem::write($path, $content);
 
@@ -94,8 +94,8 @@ final class FileSystemWriteTest extends TestCase
 
     public function testCopy(): void
     {
-        $sourcePath = Path::from($this->root->url() . '/testFile.txt');
-        $destPath = Path::from($this->root->url() . '/copiedFile.txt');
+        $sourcePath = Path::of($this->root->url() . '/testFile.txt');
+        $destPath = Path::of($this->root->url() . '/copiedFile.txt');
 
         $result = FileSystem::copyFile($sourcePath, $destPath);
 
@@ -109,8 +109,8 @@ final class FileSystemWriteTest extends TestCase
 
     public function testCopyToExistingDestination(): void
     {
-        $sourcePath = Path::from($this->root->url() . '/testFile.txt');
-        $destPath = Path::from($this->root->url() . '/readOnlyFile.txt');
+        $sourcePath = Path::of($this->root->url() . '/testFile.txt');
+        $destPath = Path::of($this->root->url() . '/readOnlyFile.txt');
 
         $result = FileSystem::copyFile($sourcePath, $destPath);
 
@@ -120,8 +120,8 @@ final class FileSystemWriteTest extends TestCase
 
     public function testCopyFromNonExistentSource(): void
     {
-        $sourcePath = Path::from($this->root->url() . '/nonExistentFile.txt');
-        $destPath = Path::from($this->root->url() . '/destination.txt');
+        $sourcePath = Path::of($this->root->url() . '/nonExistentFile.txt');
+        $destPath = Path::of($this->root->url() . '/destination.txt');
 
         $result = FileSystem::copyFile($sourcePath, $destPath);
 
@@ -132,8 +132,8 @@ final class FileSystemWriteTest extends TestCase
 
     public function testRename(): void
     {
-        $oldPath = Path::from($this->root->url() . '/testFile.txt');
-        $newPath = Path::from($this->root->url() . '/renamedFile.txt');
+        $oldPath = Path::of($this->root->url() . '/testFile.txt');
+        $newPath = Path::of($this->root->url() . '/renamedFile.txt');
         $initialContent = \file_get_contents($oldPath->toString());
 
         $result = FileSystem::renameFile($oldPath, $newPath);

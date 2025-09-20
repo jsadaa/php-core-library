@@ -25,7 +25,7 @@ final class SystemTimeTest extends TestCase
 
     public function testFromTimestampWithInteger(): void
     {
-        $timestamp = Integer::from(1640995200);
+        $timestamp = Integer::of(1640995200);
         $time = SystemTime::fromTimestamp($timestamp);
 
         $this->assertEquals(1640995200, $time->seconds()->toInt());

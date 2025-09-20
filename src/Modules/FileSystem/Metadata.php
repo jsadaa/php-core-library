@@ -45,8 +45,8 @@ final readonly class Metadata {
      * @psalm-pure
      * @psalm-suppress ImpureMethodCall
      */
-    public static function from(string | Path $path): Result {
-        $path = $path instanceof Path ? $path : Path::from($path);
+    public static function of(string | Path $path): Result {
+        $path = $path instanceof Path ? $path : Path::of($path);
 
         if (!$path->exists()) {
             /** @var Result<self, FileNotFound|InvalidMetadata> */
@@ -83,9 +83,9 @@ final readonly class Metadata {
         /** @var Result<Metadata, FileNotFound|InvalidMetadata> */
         return Result::ok(new self(
             $path,
-            Permissions::from($path),
-            FileType::from($path),
-            Integer::from($size),
+            Permissions::of($path),
+            FileType::of($path),
+            Integer::of($size),
             SystemTime::fromTimestamp($modified),
             SystemTime::fromTimestamp($accessed),
             SystemTime::fromTimestamp($created),

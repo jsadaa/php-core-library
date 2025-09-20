@@ -44,9 +44,9 @@ final readonly class SystemTime {
      */
     public static function fromTimestamp(int | Integer $timestamp): self
     {
-        $seconds = $timestamp instanceof Integer ? $timestamp : Integer::from($timestamp);
+        $seconds = $timestamp instanceof Integer ? $timestamp : Integer::of($timestamp);
         $seconds = $seconds->abs();
-        $nanos = Integer::from(0);
+        $nanos = Integer::of(0);
 
         return new self($seconds, $nanos);
     }
@@ -65,11 +65,11 @@ final readonly class SystemTime {
     public static function now(): self {
         // Get the current timestamp with microseconds
         $microtime = \microtime(true);
-        $seconds = Integer::from((int)$microtime);
+        $seconds = Integer::of((int)$microtime);
 
         // Extract the nanoseconds (PHP only provides microseconds)
         $fractional = $microtime - (float)(int)$microtime;
-        $nanos = Integer::from((int)($fractional * (float)Duration::NANOS_PER_SECOND));
+        $nanos = Integer::of((int)($fractional * (float)Duration::NANOS_PER_SECOND));
 
         return new self($seconds, $nanos);
     }
@@ -84,7 +84,7 @@ final readonly class SystemTime {
      * @psalm-pure
      */
     public static function unixEpoch(): self {
-        return new self(Integer::from(0), Integer::from(0));
+        return new self(Integer::of(0), Integer::of(0));
     }
 
     /**
@@ -107,8 +107,8 @@ final readonly class SystemTime {
             if ($this->nanos->ge($earlier->nanos)) {
                 $nanos = $this->nanos->sub($earlier->nanos);
             } else {
-                $seconds = $seconds->sub(Integer::from(1));
-                $nanos = $this->nanos->add(Integer::from(Duration::NANOS_PER_SECOND))->sub($earlier->nanos);
+                $seconds = $seconds->sub(Integer::of(1));
+                $nanos = $this->nanos->add(Integer::of(Duration::NANOS_PER_SECOND))->sub($earlier->nanos);
             }
 
             /** @var Result<Duration, TimeReversal|DurationOverflow> */
@@ -158,12 +158,12 @@ final readonly class SystemTime {
         $nanos = $duration->subsecNanos();
 
         $newNanos = $this->nanos->add($nanos);
-        $additionalSeconds = Integer::from(0);
+        $additionalSeconds = Integer::of(0);
 
         // Handle nanosecond overflow
-        if ($newNanos->ge(Integer::from(Duration::NANOS_PER_SECOND))) {
-            $additionalSeconds = Integer::from(1);
-            $newNanos = $newNanos->sub(Integer::from(Duration::NANOS_PER_SECOND));
+        if ($newNanos->ge(Integer::of(Duration::NANOS_PER_SECOND))) {
+            $additionalSeconds = Integer::of(1);
+            $newNanos = $newNanos->sub(Integer::of(Duration::NANOS_PER_SECOND));
         }
 
         // Add seconds with overflow checking
@@ -201,12 +201,12 @@ final readonly class SystemTime {
         $nanos = $duration->subsecNanos();
 
         $newNanos = $this->nanos->sub($nanos);
-        $additionalSeconds = Integer::from(0);
+        $additionalSeconds = Integer::of(0);
 
         // Handle nanosecond underflow
-        if ($newNanos->lt(Integer::from(0))) {
-            $additionalSeconds = Integer::from(-1);
-            $newNanos = $newNanos->add(Integer::from(Duration::NANOS_PER_SECOND));
+        if ($newNanos->lt(Integer::of(0))) {
+            $additionalSeconds = Integer::of(-1);
+            $newNanos = $newNanos->add(Integer::of(Duration::NANOS_PER_SECOND));
         }
 
         // Subtract seconds with underflow checking
@@ -311,7 +311,7 @@ final readonly class SystemTime {
     {
         return new self(
             Integer::maximum(),
-            Integer::from(Duration::NANOS_PER_SECOND - 1),
+            Integer::of(Duration::NANOS_PER_SECOND - 1),
         );
     }
 
@@ -387,9 +387,9 @@ final readonly class SystemTime {
             return Result::err(new TimeBeforeUnixEpoch('DateTimeImmutable represents a time before Unix epoch'));
         }
 
-        $seconds = Integer::from($timestamp);
+        $seconds = Integer::of($timestamp);
         $microseconds = (int)$datetime->format('u');
-        $nanos = Integer::from($microseconds * Duration::NANOS_PER_MICRO);
+        $nanos = Integer::of($microseconds * Duration::NANOS_PER_MICRO);
 
         /** @var Result<SystemTime, TimeBeforeUnixEpoch> */
         return Result::ok(new self($seconds, $nanos));

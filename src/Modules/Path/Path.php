@@ -41,7 +41,7 @@ final readonly class Path {
      * @return self A new Path instance
      * @psalm-pure
      */
-    public static function from(string | Str $path): self
+    public static function of(string | Str $path): self
     {
         return new self($path instanceof Str ? $path->toString() : $path);
     }
@@ -166,7 +166,7 @@ final readonly class Path {
      */
     public function toStr(): Str
     {
-        return Str::from($this->path);
+        return Str::of($this->path);
     }
 
     /**
@@ -236,7 +236,7 @@ final readonly class Path {
         }
 
         /** @var Option<Str> */
-        return Option::some(Str::from($fileName));
+        return Option::some(Str::of($fileName));
     }
 
     /**
@@ -307,7 +307,7 @@ final readonly class Path {
             return Option::none();
         }
 
-        return Option::some(Str::from($fileStem));
+        return Option::some(Str::of($fileStem));
     }
 
     /**
@@ -326,7 +326,7 @@ final readonly class Path {
             return Option::none();
         }
 
-        return Option::some(Str::from($extension));
+        return Option::some(Str::of($extension));
     }
 
     /**

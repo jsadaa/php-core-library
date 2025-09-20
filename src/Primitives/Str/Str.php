@@ -61,7 +61,7 @@ final readonly class Str implements \Stringable
      * @return self A new Str instance
      * @psalm-pure
      */
-    public static function from(
+    public static function of(
         string $value,
     ): self {
         return new self($value);
@@ -95,7 +95,7 @@ final readonly class Str implements \Stringable
      */
     public function len(): Integer
     {
-        return Integer::from(\strlen($this->value));
+        return Integer::of(\strlen($this->value));
     }
 
     /**
@@ -212,7 +212,7 @@ final readonly class Str implements \Stringable
      */
     public function truncate(int | Integer $length): self
     {
-        $length = $length instanceof Integer ? $length : Integer::from($length);
+        $length = $length instanceof Integer ? $length : Integer::of($length);
 
         if ($length->le(0)) {
             return self::new();
@@ -235,8 +235,8 @@ final readonly class Str implements \Stringable
      */
     public function replace(string | self $search, string | self $replace, bool $useRegex = false): self
     {
-        $search = $search instanceof self ? $search : self::from($search);
-        $replace = $replace instanceof self ? $replace : self::from($replace);
+        $search = $search instanceof self ? $search : self::of($search);
+        $replace = $replace instanceof self ? $replace : self::of($replace);
 
         // If the search string is empty, return the string as is
         if ($search->isEmpty()) {
@@ -295,7 +295,7 @@ final readonly class Str implements \Stringable
         }
 
         /** @var Sequence<Integer> */
-        return Sequence::ofArray(\array_values($unpacked))->map(static fn(int $byte) => Integer::from($byte));
+        return Sequence::ofArray(\array_values($unpacked))->map(static fn(int $byte) => Integer::of($byte));
     }
 
     /**
@@ -318,7 +318,7 @@ final readonly class Str implements \Stringable
         $chars = \mb_str_split($this->value, 1, self::UTF8);
 
         /** @var Sequence<Str> */
-        return Sequence::ofArray($chars)->map(static fn(string $char) => Str::from($char));
+        return Sequence::ofArray($chars)->map(static fn(string $char) => Str::of($char));
     }
 
     /**
@@ -357,7 +357,7 @@ final readonly class Str implements \Stringable
 
         /** @var Sequence<Str> */
         return Sequence::ofArray($parts)->map(
-            static fn(string $part) => Str::from($part),
+            static fn(string $part) => Str::of($part),
         );
     }
 
@@ -401,7 +401,7 @@ final readonly class Str implements \Stringable
 
         /** @var Sequence<Str> */
         return Sequence::ofArray($parts)->map(
-            static fn(string $part) => Str::from($part),
+            static fn(string $part) => Str::of($part),
         );
     }
 
@@ -414,7 +414,7 @@ final readonly class Str implements \Stringable
      */
     public function padStart(int | Integer $targetLength, string | self $padString): self
     {
-        $targetLength = $targetLength instanceof Integer ? $targetLength : Integer::from($targetLength);
+        $targetLength = $targetLength instanceof Integer ? $targetLength : Integer::of($targetLength);
         $targetLength = $targetLength->max(0);
         $padString = $padString instanceof self ? $padString->toString() : $padString;
 
@@ -448,7 +448,7 @@ final readonly class Str implements \Stringable
      */
     public function padEnd(int | Integer $targetLength, string | self $padString): self
     {
-        $targetLength = $targetLength instanceof Integer ? $targetLength : Integer::from($targetLength);
+        $targetLength = $targetLength instanceof Integer ? $targetLength : Integer::of($targetLength);
         $targetLength = $targetLength->max(0);
         $padString = $padString instanceof self ? $padString->toString() : $padString;
 
@@ -577,7 +577,7 @@ final readonly class Str implements \Stringable
      */
     public function repeat(int | Integer $count): self
     {
-        $count = $count instanceof Integer ? $count : Integer::from($count);
+        $count = $count instanceof Integer ? $count : Integer::of($count);
         $count = $count->max(0);
 
         if ($count->eq(0) || $this->isEmpty()) {
@@ -724,7 +724,7 @@ final readonly class Str implements \Stringable
      */
     public function wrap(int | Integer $width, string $break = "\n"): self
     {
-        $width = $width instanceof Integer ? $width : Integer::from($width);
+        $width = $width instanceof Integer ? $width : Integer::of($width);
         $width = $width->max(1);
 
         if ($this->isEmpty()) {
@@ -839,7 +839,7 @@ final readonly class Str implements \Stringable
         }
 
         /** @var Result<Integer, ParseError> */
-        return Result::ok(Integer::from($value));
+        return Result::ok(Integer::of($value));
     }
 
     /**
@@ -887,7 +887,7 @@ final readonly class Str implements \Stringable
         }
 
         /** @var Result<Double, ParseError> */
-        return Result::ok(Double::from($floatValue));
+        return Result::ok(Double::of($floatValue));
     }
 
     /**
@@ -987,7 +987,7 @@ final readonly class Str implements \Stringable
         }
 
         return Sequence::ofArray($matches[0])->map(
-            static fn(string $match) => Str::from($match),
+            static fn(string $match) => Str::of($match),
         );
     }
 
@@ -1055,7 +1055,7 @@ final readonly class Str implements \Stringable
             $charOffset = \mb_strlen($substring, self::UTF8);
 
             /** @var array{Integer, Str} $offset */
-            $offset = [Integer::from($charOffset), self::from($matchText)];
+            $offset = [Integer::of($charOffset), self::of($matchText)];
             $offsets[] = $offset;
         }
 
@@ -1173,8 +1173,8 @@ final readonly class Str implements \Stringable
      */
     public function getRange(int | Integer $start, int | Integer $length): Option
     {
-        $start = $start instanceof Integer ? $start : Integer::from($start);
-        $length = $length instanceof Integer ? $length : Integer::from($length);
+        $start = $start instanceof Integer ? $start : Integer::of($start);
+        $length = $length instanceof Integer ? $length : Integer::of($length);
         $size = $this->chars()->len();
 
         if ($start->lt(0) || $start->ge($size)) {
@@ -1198,7 +1198,7 @@ final readonly class Str implements \Stringable
      */
     public function get(int | Integer $index): Option
     {
-        $index = $index instanceof Integer ? $index : Integer::from($index);
+        $index = $index instanceof Integer ? $index : Integer::of($index);
 
         if ($index->lt(0) || $index->ge($this->chars()->len())) {
             return Option::none();
@@ -1259,7 +1259,7 @@ final readonly class Str implements \Stringable
 
         /** @var Sequence<Str> */
         return Sequence::ofArray($lines)->map(
-            static fn(string $line) => Str::from($line),
+            static fn(string $line) => Str::of($line),
         );
     }
 
@@ -1271,7 +1271,7 @@ final readonly class Str implements \Stringable
      */
     public function take(int | Integer $length): self
     {
-        $length = $length instanceof Integer ? $length : Integer::from($length);
+        $length = $length instanceof Integer ? $length : Integer::of($length);
 
         if ($length->le(0) || $this->isEmpty()) {
             return self::new();
@@ -1290,7 +1290,7 @@ final readonly class Str implements \Stringable
      */
     public function skip(int | Integer $length): self
     {
-        $length = $length instanceof Integer ? $length : Integer::from($length);
+        $length = $length instanceof Integer ? $length : Integer::of($length);
 
         if ($this->isEmpty()) {
             return self::new();
@@ -1332,7 +1332,7 @@ final readonly class Str implements \Stringable
         }
 
         /** @var Result<Str, EncodingError> */
-        return $result->map(static fn(string $encoded) => Str::from($encoded));
+        return $result->map(static fn(string $encoded) => Str::of($encoded));
     }
 
     /**

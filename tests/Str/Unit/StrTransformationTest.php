@@ -12,7 +12,7 @@ final class StrTransformationTest extends TestCase
 {
     public function testToLowercase(): void
     {
-        $str = Str::from('Hello WORLD');
+        $str = Str::of('Hello WORLD');
         $lower = $str->toLowercase();
 
         $this->assertSame('Hello WORLD', $str->toString(), 'Original string should remain unchanged');
@@ -29,7 +29,7 @@ final class StrTransformationTest extends TestCase
 
     public function testToUppercase(): void
     {
-        $str = Str::from('Hello world');
+        $str = Str::of('Hello world');
         $upper = $str->toUppercase();
 
         $this->assertSame('Hello world', $str->toString(), 'Original string should remain unchanged');
@@ -38,19 +38,19 @@ final class StrTransformationTest extends TestCase
 
     public function testToLowercaseWithVariousUtf8(): void
     {
-        $str = Str::from('HÉLLÖ WÖRLD');
+        $str = Str::of('HÉLLÖ WÖRLD');
         $lower = $str->toLowercase();
         $this->assertSame('héllö wörld', $lower->toString());
 
-        $str2 = Str::from('РУССКИЙ ЯЗЫК'); // RUSSKIY YAZYK
+        $str2 = Str::of('РУССКИЙ ЯЗЫК'); // RUSSKIY YAZYK
         $lower2 = $str2->toLowercase();
         $this->assertSame('русский язык', $lower2->toString());
 
-        $str3 = Str::from('ΕΛΛΗΝΙΚΆ');
+        $str3 = Str::of('ΕΛΛΗΝΙΚΆ');
         $lower3 = $str3->toLowercase();
         $this->assertSame('ελληνικά', $lower3->toString());
 
-        $strTurkish = Str::from('İSTANBUL');
+        $strTurkish = Str::of('İSTANBUL');
         $lowerTurkish = $strTurkish->toLowercase();
         $expectedLower = \mb_strtolower($strTurkish->toString(), 'UTF-8');
         $this->assertSame($expectedLower, $lowerTurkish->toString());
@@ -58,15 +58,15 @@ final class StrTransformationTest extends TestCase
 
     public function testToUppercaseWithVariousUtf8(): void
     {
-        $str = Str::from('héllö wörld');
+        $str = Str::of('héllö wörld');
         $upper = $str->toUppercase();
         $this->assertSame('HÉLLÖ WÖRLD', $upper->toString());
 
-        $str2 = Str::from('русский язык'); // russkiy yazyk
+        $str2 = Str::of('русский язык'); // russkiy yazyk
         $upper2 = $str2->toUppercase();
         $this->assertSame('РУССКИЙ ЯЗЫК', $upper2->toString());
 
-        $str3 = Str::from('ελληνικά');
+        $str3 = Str::of('ελληνικά');
         $upper3 = $str3->toUppercase();
         $this->assertSame('ΕΛΛΗΝΙΚΆ', $upper3->toString());
     }
@@ -79,8 +79,8 @@ final class StrTransformationTest extends TestCase
 
         // Test with composed vs precomposed characters
         // é can be represented as a single character (U+00E9) or as e + accent (U+0065 U+0301)
-        $composed = Str::from('Café'); // with precomposed é
-        $decomposed = Str::from("Cafe\xCC\x81"); // with e + combining accent
+        $composed = Str::of('Café'); // with precomposed é
+        $decomposed = Str::of("Cafe\xCC\x81"); // with e + combining accent
 
         // The two strings may be different internally depending on the implementation
         // but they should be visually equivalent
@@ -98,7 +98,7 @@ final class StrTransformationTest extends TestCase
 
     public function testTrim(): void
     {
-        $str = Str::from('  Hello World  ');
+        $str = Str::of('  Hello World  ');
         $trimmed = $str->trim();
 
         $this->assertSame('  Hello World  ', $str->toString(), 'Original string should remain unchanged');
@@ -107,7 +107,7 @@ final class StrTransformationTest extends TestCase
 
     public function testTrimStart(): void
     {
-        $str = Str::from('  Hello World  ');
+        $str = Str::of('  Hello World  ');
         $trimmed = $str->trimStart();
 
         $this->assertSame('Hello World  ', $trimmed->toString());
@@ -115,7 +115,7 @@ final class StrTransformationTest extends TestCase
 
     public function testTrimEnd(): void
     {
-        $str = Str::from('  Hello World  ');
+        $str = Str::of('  Hello World  ');
         $trimmed = $str->trimEnd();
 
         $this->assertSame('  Hello World', $trimmed->toString());
@@ -125,7 +125,7 @@ final class StrTransformationTest extends TestCase
     {
         // String with non-breaking spaces and other Unicode whitespace
         // Use actual Unicode characters instead of escape sequences
-        $str = Str::from(" \u{00A0} \u{2002} Hello World \u{2003} \u{2009} ");
+        $str = Str::of(" \u{00A0} \u{2002} Hello World \u{2003} \u{2009} ");
         $trimmed = $str->trim();
 
         $this->assertEquals('Hello World', $trimmed->toString());
@@ -145,7 +145,7 @@ final class StrTransformationTest extends TestCase
             $this->markTestSkipped('intl extension is not available');
         }
 
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
 
         // Normalize to composed form (NFC)
         $normalized = $str->normalize('NFC');
@@ -156,7 +156,7 @@ final class StrTransformationTest extends TestCase
 
     public function testNormalizeWithInvalidForm(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
 
         $str = $str->normalize('INVALID');
         $this->assertEquals(
@@ -168,7 +168,7 @@ final class StrTransformationTest extends TestCase
 
     public function testEscapeUnicode(): void
     {
-        $str = Str::from('Hello é');
+        $str = Str::of('Hello é');
         $escaped = $str->escapeUnicode();
 
         $this->assertSame('Hello \u00e9', $escaped->toString());
@@ -183,8 +183,8 @@ final class StrTransformationTest extends TestCase
         }
 
         // 1. Test with decomposed and composed characters (accented letters)
-        $composed = Str::from('café'); // é as a single character
-        $decomposed = Str::from("cafe\u{0301}"); // e + combining accent
+        $composed = Str::of('café'); // é as a single character
+        $decomposed = Str::of("cafe\u{0301}"); // e + combining accent
 
         // Verify that NFC composes the decomposed characters
         $nfcDecomposed = $decomposed->normalize('NFC')->unwrap();
@@ -199,8 +199,8 @@ final class StrTransformationTest extends TestCase
             'NFD should decompose composed characters');
 
         // 2. Test with ligatures and their equivalents (NFKC/NFKD)
-        $ligature = Str::from('ﬁ'); // U+FB01: LATIN SMALL LIGATURE FI
-        $separate = Str::from('fi'); // 'f' + 'i' separated
+        $ligature = Str::of('ﬁ'); // U+FB01: LATIN SMALL LIGATURE FI
+        $separate = Str::of('fi'); // 'f' + 'i' separated
 
         // NFKC should convert the ligature to separate characters
         $nfkcLigature = $ligature->normalize('NFKC')->unwrap();
@@ -208,27 +208,27 @@ final class StrTransformationTest extends TestCase
             'NFKC should convert ligatures to separate characters');
 
         // 3. Test with different symbols that have compatible equivalents
-        $fraction = Str::from('½'); // U+00BD: VULGAR FRACTION ONE HALF
+        $fraction = Str::of('½'); // U+00BD: VULGAR FRACTION ONE HALF
         $nfkcFraction = $fraction->normalize('NFKC')->unwrap();
         // Not exactly equal because implementations may vary, but should be different
         $this->assertNotSame($fraction->toString(), $nfkcFraction->toString(),
             'NFKC should transform fractions to compatible form');
 
         // 4. Test with special mathematical characters
-        $math = Str::from('ℕ'); // U+2115: DOUBLE-STRUCK CAPITAL N
+        $math = Str::of('ℕ'); // U+2115: DOUBLE-STRUCK CAPITAL N
         $nfkcMath = $math->normalize('NFKC')->unwrap();
         $this->assertSame('N', $nfkcMath->toString(),
             'NFKC should convert mathematical characters to their ASCII equivalents');
 
         // 5. Test with hangul characters (Korean)
-        $hangulComposed = Str::from('한');  // U+D55C: Korean syllable "han"
+        $hangulComposed = Str::of('한');  // U+D55C: Korean syllable "han"
         $hangulNfd = $hangulComposed->normalize('NFD')->unwrap();
         $hangulNfc = $hangulNfd->normalize('NFC')->unwrap();
         $this->assertSame($hangulComposed->toString(), $hangulNfc->toString(),
             'NFC should correctly recompose decomposed hangul characters');
 
         // 6. Test with emojis
-        $emoji = Str::from('👨‍👩‍👧'); // family emoji
+        $emoji = Str::of('👨‍👩‍👧'); // family emoji
         $emojiNfc = $emoji->normalize('NFC')->unwrap();
         $this->assertTrue($emojiNfc->isValidUtf8(),
             'Normalization of emojis must produce valid UTF-8');
@@ -240,13 +240,13 @@ final class StrTransformationTest extends TestCase
             'Normalization of an empty string should produce an empty string');
 
         // 8. Test with pure ASCII string (should be invariant)
-        $ascii = Str::from('Hello, world!');
+        $ascii = Str::of('Hello, world!');
         $asciiNfc = $ascii->normalize('NFC')->unwrap();
         $this->assertSame($ascii->toString(), $asciiNfc->toString(),
             'Normalization of a pure ASCII string should be invariant');
 
         // 9. Test with mixed multilingual strings
-        $mixed = Str::from('Café ñ Київ 东京 مرحبا');
+        $mixed = Str::of('Café ñ Київ 东京 مرحبا');
         $mixedNfc = $mixed->normalize('NFC')->unwrap();
         $this->assertTrue($mixedNfc->isValidUtf8(),
             'Normalization of a mixed multilingual string should produce valid UTF-8');
@@ -258,7 +258,7 @@ final class StrTransformationTest extends TestCase
             $this->markTestSkipped('intl extension is not available');
         }
 
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $result = $str->normalize('INVALID_FORM');
         $this->assertTrue($result->isErr(),
             'Normalize should return an error for an invalid form');
@@ -279,7 +279,7 @@ final class StrTransformationTest extends TestCase
             $this->markTestSkipped('intl extension is not available');
         }
 
-        $str = Str::from('café résumé');
+        $str = Str::of('café résumé');
 
         $nfc = $str->normalize('NFC')->unwrap();
         $nfd = $str->normalize('NFD')->unwrap();
@@ -308,8 +308,8 @@ final class StrTransformationTest extends TestCase
         $this->assertEquals(11, $nfcLen, 'NFC string should have 11 code points'); // the 3 "é" in composed form, so it's the same count as visual representation
         $this->assertEquals(14, $nfdLen, 'NFD string should have 14 code points'); // the 3 "é" in decomposed form (e + combining accent), so you have 3 more characters
 
-        $composedE = Str::from('é'); // precomposed character
-        $decomposedE = Str::from("e\u{0301}"); // e + combining accent
+        $composedE = Str::of('é'); // precomposed character
+        $decomposedE = Str::of("e\u{0301}"); // e + combining accent
 
         $composedNFC = $composedE->normalize('NFC')->unwrap();
         $decomposedNFC = $decomposedE->normalize('NFC')->unwrap();
@@ -323,8 +323,8 @@ final class StrTransformationTest extends TestCase
             $this->markTestSkipped('intl extension is not available');
         }
 
-        $str1 = Str::from('café'); // with precomposed character
-        $str2 = Str::from("cafe\u{0301}"); // with decomposed character
+        $str1 = Str::of('café'); // with precomposed character
+        $str2 = Str::of("cafe\u{0301}"); // with decomposed character
 
         // Verify they are different at the binary level
         $this->assertNotEquals($str1->bytes()->toArray(), $str2->bytes()->toArray(),
@@ -343,7 +343,7 @@ final class StrTransformationTest extends TestCase
 
     public function testPadStart(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $padded = $str->padStart(10, '-');
 
         $this->assertSame('Hello', $str->toString(), 'Original string should remain unchanged');
@@ -352,7 +352,7 @@ final class StrTransformationTest extends TestCase
 
     public function testPadStartWithSmallerTarget(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $padded = $str->padStart(3, '-');
 
         $this->assertSame('Hello', $padded->toString());
@@ -360,7 +360,7 @@ final class StrTransformationTest extends TestCase
 
     public function testPadStartWithMultiCharPad(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $padded = $str->padStart(10, 'ab');
 
         $this->assertSame('ababaHello', $padded->toString());
@@ -368,7 +368,7 @@ final class StrTransformationTest extends TestCase
 
     public function testPadStartWithUtf8(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $padded = $str->padStart(10, '😀');
 
         $this->assertStringStartsWith('😀', $padded->toString());
@@ -379,7 +379,7 @@ final class StrTransformationTest extends TestCase
 
     public function testPadEnd(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $padded = $str->padEnd(10, '-');
 
         $this->assertSame('Hello', $str->toString(), 'Original string should remain unchanged');
@@ -388,7 +388,7 @@ final class StrTransformationTest extends TestCase
 
     public function testPadEndWithSmallerTarget(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $padded = $str->padEnd(3, '-');
 
         $this->assertSame('Hello', $padded->toString());
@@ -396,7 +396,7 @@ final class StrTransformationTest extends TestCase
 
     public function testPadEndWithMultiCharPad(): void
     {
-        $str = Str::from('Hello');
+        $str = Str::of('Hello');
         $padded = $str->padEnd(10, 'ab');
 
         $this->assertSame('Helloababa', $padded->toString());
@@ -404,7 +404,7 @@ final class StrTransformationTest extends TestCase
 
     public function testRepeat(): void
     {
-        $str = Str::from('abc');
+        $str = Str::of('abc');
         $repeated = $str->repeat(3);
 
         $this->assertSame('abc', $str->toString(), 'Original string should remain unchanged');
@@ -413,7 +413,7 @@ final class StrTransformationTest extends TestCase
 
     public function testRepeatWithZeroCount(): void
     {
-        $str = Str::from('abc');
+        $str = Str::of('abc');
         $repeated = $str->repeat(0);
 
         $this->assertTrue($repeated->isEmpty());
@@ -421,7 +421,7 @@ final class StrTransformationTest extends TestCase
 
     public function testWrap(): void
     {
-        $str = Str::from('The quick brown fox jumps over the lazy dog');
+        $str = Str::of('The quick brown fox jumps over the lazy dog');
         $wrapped = $str->wrap(10);
 
         $lines = \preg_split('/\r?\n/', $wrapped->toString());
@@ -435,7 +435,7 @@ final class StrTransformationTest extends TestCase
 
     public function testWrapWithCustomBreak(): void
     {
-        $str = Str::from('The quick brown fox jumps over the lazy dog');
+        $str = Str::of('The quick brown fox jumps over the lazy dog');
         $wrapped = $str->wrap(10, '<br>');
 
         $this->assertSame('The quick<br>brown fox<br>jumps over<br>the lazy<br>dog', $wrapped->toString());
@@ -443,7 +443,7 @@ final class StrTransformationTest extends TestCase
 
     public function testStripPrefixWithMatch(): void
     {
-        $str = Str::from('HelloWorld');
+        $str = Str::of('HelloWorld');
         $stripped = $str->stripPrefix('Hello');
 
         $this->assertSame('HelloWorld', $str->toString(), 'Original string should remain unchanged');
@@ -452,7 +452,7 @@ final class StrTransformationTest extends TestCase
 
     public function testStripPrefixWithoutMatch(): void
     {
-        $str = Str::from('HelloWorld');
+        $str = Str::of('HelloWorld');
         $stripped = $str->stripPrefix('Hi');
 
         $this->assertSame('HelloWorld', $stripped->toString());
@@ -460,7 +460,7 @@ final class StrTransformationTest extends TestCase
 
     public function testStripPrefixWithUtf8(): void
     {
-        $str = Str::from('😀étudiant');
+        $str = Str::of('😀étudiant');
         $stripped = $str->stripPrefix('😀');
 
         $this->assertSame('étudiant', $stripped->toString());
@@ -468,7 +468,7 @@ final class StrTransformationTest extends TestCase
 
     public function testStripSuffixWithMatch(): void
     {
-        $str = Str::from('HelloWorld');
+        $str = Str::of('HelloWorld');
         $stripped = $str->stripSuffix('World');
 
         $this->assertSame('HelloWorld', $str->toString(), 'Original string should remain unchanged');
@@ -477,7 +477,7 @@ final class StrTransformationTest extends TestCase
 
     public function testStripSuffixWithoutMatch(): void
     {
-        $str = Str::from('HelloWorld');
+        $str = Str::of('HelloWorld');
         $stripped = $str->stripSuffix('Universe');
 
         $this->assertSame('HelloWorld', $stripped->toString());
@@ -485,7 +485,7 @@ final class StrTransformationTest extends TestCase
 
     public function testStripSuffixWithUtf8(): void
     {
-        $str = Str::from('maison😀');
+        $str = Str::of('maison😀');
         $stripped = $str->stripSuffix('😀');
 
         $this->assertSame('maison', $stripped->toString());

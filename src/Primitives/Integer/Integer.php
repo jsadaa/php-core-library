@@ -28,7 +28,7 @@ final readonly class Integer {
      * @return self A new Integer instance
      * @psalm-pure
      */
-    public static function from(int $value): self
+    public static function of(int $value): self
     {
         return new self($value);
     }
@@ -821,7 +821,7 @@ final readonly class Integer {
      */
     public static function maximum(): self
     {
-        return self::from(\PHP_INT_MAX);
+        return self::of(\PHP_INT_MAX);
     }
 
     /**
@@ -831,6 +831,6 @@ final readonly class Integer {
      */
     public static function minimum(): self
     {
-        return self::from(\PHP_INT_MIN);
+        return self::of(\PHP_INT_MIN);
     }
 }

@@ -29,7 +29,7 @@ final readonly class Double
      *
      * @psalm-pure
      */
-    public static function from(float | int | self $value): self
+    public static function of(float | int | self $value): self
     {
         if ($value instanceof self) {
             return new self($value->value);
@@ -273,14 +273,14 @@ final readonly class Double
         $otherValue = $other instanceof self ? $other->value : (float) $other;
 
         if ($this->value < $otherValue) {
-            return Integer::from(-1);
+            return Integer::of(-1);
         }
 
         if ($this->value > $otherValue) {
-            return Integer::from(1);
+            return Integer::of(1);
         }
 
-        return Integer::from(0);
+        return Integer::of(0);
     }
 
     /**
@@ -315,14 +315,14 @@ final readonly class Double
     public function signum(): Integer
     {
         if ($this->value < 0) {
-            return Integer::from(-1);
+            return Integer::of(-1);
         }
 
         if ($this->value > 0) {
-            return Integer::from(1);
+            return Integer::of(1);
         }
 
-        return Integer::from(0);
+        return Integer::of(0);
     }
 
     /**
@@ -524,7 +524,7 @@ final readonly class Double
      */
     public function round(): Integer
     {
-        return Integer::from((int)\round($this->value));
+        return Integer::of((int)\round($this->value));
     }
 
     /**
@@ -533,7 +533,7 @@ final readonly class Double
      */
     public function floor(): Integer
     {
-        return Integer::from((int)\floor($this->value));
+        return Integer::of((int)\floor($this->value));
     }
 
     /**
@@ -542,7 +542,7 @@ final readonly class Double
      */
     public function ceil(): Integer
     {
-        return Integer::from((int)\ceil($this->value));
+        return Integer::of((int)\ceil($this->value));
     }
 
     /**
@@ -551,7 +551,7 @@ final readonly class Double
      */
     public function trunc(): Integer
     {
-        return Integer::from((int) $this->value);
+        return Integer::of((int) $this->value);
     }
 
     /**

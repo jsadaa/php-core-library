@@ -155,7 +155,7 @@ The `Str` type provides immutable UTF-8 string operations with proper multi-byte
 
 ```php
 // Create string instances
-$str = Str::from('Hello World');
+$str = Str::of('Hello World');
 $empty = Str::new();
 
 // Character access and content checks
@@ -166,10 +166,10 @@ $starts = $str->startsWith('Hello');  // true
 
 // String manipulation
 $lowercase = $str->toLowercase();        // "hello world"
-$replaced = $str->replace(Str::from('World'), Str::from('PHP')); // "Hello PHP"
-$trimmed = Str::from('  Hello  ')->trim(); // "Hello"
+$replaced = $str->replace(Str::of('World'), Str::of('PHP')); // "Hello PHP"
+$trimmed = Str::of('  Hello  ')->trim(); // "Hello"
 $padded = $str->padStart(15, '-');       // "----Hello World"
-$modified = $str->insertAt(5, Str::from(', ')); // "Hello, World"
+$modified = $str->insertAt(5, Str::of(', ')); // "Hello, World"
 $beginning = $str->take(5);              // "Hello"
 $end = $str->drop(6);                    // "World"
 
@@ -179,9 +179,9 @@ $words = $str->splitWhitespace();        // Sequence of words
 $chars = $str->chars();                  // Sequence containing ['H','e','l','l','o',...]
 
 // Parsing to other types
-$number = Str::from('42')->parseInt();    // Result::ok(42)
-$float = Str::from('3.14')->parseFloat(); // Result::ok(3.14)
-$bool = Str::from('true')->parseBool();   // Result::ok(true)
+$number = Str::of('42')->parseInt();    // Result::ok(42)
+$float = Str::of('3.14')->parseFloat(); // Result::ok(3.14)
+$bool = Str::of('true')->parseBool();   // Result::ok(true)
 
 // ... And more
 ```
@@ -200,29 +200,29 @@ The `Double` type provides an immutable wrapper around PHP floating-point number
 
 ```php
 // Create Double instances
-$double = Double::from(42.5);
-$fromInt = Double::from(42);  // Convert int to double
+$double = Double::of(42.5);
+$fromInt = Double::of(42);  // Convert int to double
 $special = Double::pi();      // Constants like π, e, etc.
 
 // Basic arithmetic operations
-$sum = $double->add(10.5);          // Double::from(53.0)
-$diff = $double->sub(5.5);          // Double::from(37.0)
-$product = $double->mul(2.0);       // Double::from(85.0)
-$quotient = $double->div(2.0);      // Result::ok(Double::from(21.25))
+$sum = $double->add(10.5);          // Double::of(53.0)
+$diff = $double->sub(5.5);          // Double::of(37.0)
+$product = $double->mul(2.0);       // Double::of(85.0)
+$quotient = $double->div(2.0);      // Result::ok(Double::of(21.25))
 
 // Mathematical functions
-$sqrt = Double::from(16.0)->sqrt();                 // Double::from(4.0)
-$exp = Double::from(1.0)->exp();                    // Double::from(2.718...)
-$log = Double::from(Math.E)->ln();                  // Double::from(1.0) - natural log
+$sqrt = Double::of(16.0)->sqrt();                 // Double::of(4.0)
+$exp = Double::of(1.0)->exp();                    // Double::of(2.718...)
+$log = Double::of(Math.E)->ln();                  // Double::of(1.0) - natural log
 
 // Trigonometric functions
-$sin = Double::from(Math.PI / 2)->sin();            // Double::from(1.0)
-$cos = Double::from(0.0)->cos();                    // Double::from(1.0)
-$tan = Double::from(Math.PI / 4)->tan();            // Double::from(1.0)
+$sin = Double::of(Math.PI / 2)->sin();            // Double::of(1.0)
+$cos = Double::of(0.0)->cos();                    // Double::of(1.0)
+$tan = Double::of(Math.PI / 4)->tan();            // Double::of(1.0)
 
 // Rounding and special operations
-$rounded = Double::from(3.7)->round();              // Integer::from(4)
-$isFinite = Double::from(42.5)->isFinite();         // true
+$rounded = Double::of(3.7)->round();              // Integer::of(4)
+$isFinite = Double::of(42.5)->isFinite();         // true
 $approxEqual = $double->approxEq(42.500000001);     // true - within epsilon
 
 // ... And more
@@ -243,44 +243,44 @@ The `Integer` type provides an immutable wrapper around PHP integers with safe a
 
 ```php
 // Create Integer instances
-$int = Integer::from(42);
+$int = Integer::of(42);
 
 // Basic arithmetic operations
-$sum = $int->add(10);               // Integer::from(52)
-$diff = $int->sub(5);               // Integer::from(37)
-$product = $int->mul(2);            // Integer::from(84)
-$quotient = $int->div(2);           // Result::ok(Integer::from(21))
+$sum = $int->add(10);               // Integer::of(52)
+$diff = $int->sub(5);               // Integer::of(37)
+$product = $int->mul(2);            // Integer::of(84)
+$quotient = $int->div(2);           // Result::ok(Integer::of(21))
 
 // Handling integer overflow
-$max = Integer::from(PHP_INT_MAX);
+$max = Integer::of(PHP_INT_MAX);
 $overflow = $max->overflowingAdd(1);     // Result::err(new \OverflowException('Integer overflow'))
 
 // Saturating operations (clamp at min/max integer bounds)
-$saturated = $max->saturatingAdd(1);     // Integer::from(PHP_INT_MAX) - doesn't overflow
-$saturatedSub = Integer::from(PHP_INT_MIN)->saturatingSub(1); // Integer::from(PHP_INT_MIN)
+$saturated = $max->saturatingAdd(1);     // Integer::of(PHP_INT_MAX) - doesn't overflow
+$saturatedSub = Integer::of(PHP_INT_MIN)->saturatingSub(1); // Integer::of(PHP_INT_MIN)
 $saturatedDiv = $int->saturatingDiv(0);   // Result::err(new \InvalidArgumentException('Division by zero'))
 
 // Math operations
-$absolute = Integer::from(-5)->abs();              // Integer::from(5)
-$absDiff = Integer::from(10)->absDiff(7);          // Integer::from(3)
-$absDiff = Integer::from(-5)->absDiff(-10);        // Integer::from(5)
-$power = Integer::from(2)->pow(3);                 // Integer::from(8)
-$sqrt = Integer::from(16)->sqrt();                 // Integer::from(4)
+$absolute = Integer::of(-5)->abs();              // Integer::of(5)
+$absDiff = Integer::of(10)->absDiff(7);          // Integer::of(3)
+$absDiff = Integer::of(-5)->absDiff(-10);        // Integer::of(5)
+$power = Integer::of(2)->pow(3);                 // Integer::of(8)
+$sqrt = Integer::of(16)->sqrt();                 // Integer::of(4)
 
 // Basic arithmetic
-$sum = Integer::from(5)->add(3);                   // Integer::from(8)
-$difference = Integer::from(10)->sub(4);           // Integer::from(6)
-$product = Integer::from(6)->mul(7);               // Integer::from(42)
-$quotient = Integer::from(10)->div(2);             // Result::ok(Integer::from(5))
+$sum = Integer::of(5)->add(3);                   // Integer::of(8)
+$difference = Integer::of(10)->sub(4);           // Integer::of(6)
+$product = Integer::of(6)->mul(7);               // Integer::of(42)
+$quotient = Integer::of(10)->div(2);             // Result::ok(Integer::of(5))
 
 // Mathematical operations
-$abs = Integer::from(-5)->abs();                   // Integer::from(5)
-$power = Integer::from(2)->pow(3);                 // Integer::from(8)
-$sqrt = Integer::from(16)->sqrt();                 // Integer::from(4)
+$abs = Integer::of(-5)->abs();                   // Integer::of(5)
+$power = Integer::of(2)->pow(3);                 // Integer::of(8)
+$sqrt = Integer::of(16)->sqrt();                 // Integer::of(4)
 
 // Bitwise operations
-$andResult = Integer::from(10)->and(6);            // Integer::from(2) - (1010 & 0110 = 0010)
-$leftShift = Integer::from(5)->leftShift(1);       // Integer::from(10) - (101 << 1 = 1010)
+$andResult = Integer::of(10)->and(6);            // Integer::of(2) - (1010 & 0110 = 0010)
+$leftShift = Integer::of(5)->leftShift(1);       // Integer::of(10) - (101 << 1 = 1010)
 
 // ... And more
 ```
@@ -308,7 +308,7 @@ if ($result->isOk()) {
 
 // Directory operations
 $entries = FileSystem::readDir('/var/log')->unwrap();
-$logFiles = $entries->filter(fn($entry) => $entry->fileName()->unwrapOr(Str::from(''))->endsWith('.log'));
+$logFiles = $entries->filter(fn($entry) => $entry->fileName()->unwrapOr(Str::of(''))->endsWith('.log'));
 
 // Atomic file operations
 $file = File::from('/path/to/config.json')->unwrap();
@@ -337,14 +337,14 @@ The Path module provides cross-platform path manipulation and validation:
 
 ```php
 // Path creation and manipulation
-$path = Path::from('/var/www/html/index.php');
+$path = Path::of('/var/www/html/index.php');
 $parent = $path->parent(); // Option<Path>
 $fileName = $path->fileName(); // Option<Str>
 $extension = $path->extension(); // Option<Str>
 
 // Path joining and validation
-$basePath = Path::from('/var/www');
-$fullPath = $basePath->join(Path::from('uploads/image.jpg'));
+$basePath = Path::of('/var/www');
+$fullPath = $basePath->join(Path::of('uploads/image.jpg'));
 
 // Path inspection
 if ($path->isAbsolute()) {
@@ -468,8 +468,8 @@ let mut s = String::from("Hello");
 s.push_str(" World");
 
 // PHP Core Library uses immutability:
-$s = Str::from("Hello");
-$s = $s->append(Str::from(" World"));
+$s = Str::of("Hello");
+$s = $s->append(Str::of(" World"));
 ```
 
 This approach reflects a **hybrid** between Rust’s conceptual strengths and PHP’s practical realities, bringing the benefits of functional programming and data safety to a language not originally designed with these patterns in mind.

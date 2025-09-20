@@ -45,7 +45,7 @@ final class IntegerFunctionalExtendedTest extends TestCase
 
             for ($i = 2; $i <= $limit; $i++) {
                 if ($sieve[$i]) {
-                    $primes = $primes->push(Integer::from($i));
+                    $primes = $primes->push(Integer::of($i));
                 }
             }
 
@@ -83,7 +83,7 @@ final class IntegerFunctionalExtendedTest extends TestCase
                 return false;
             }
 
-            $i = Integer::from(3);
+            $i = Integer::of(3);
 
             while ($i->cmp($sqrt)->toInt() <= 0) {
                 $mod = $n->div($i)->match(
@@ -91,7 +91,7 @@ final class IntegerFunctionalExtendedTest extends TestCase
                         return $n->sub($quotient->mul($i));
                     },
                     static function() {
-                        return Integer::from(1);
+                        return Integer::of(1);
                     },
                 );
 
@@ -105,26 +105,26 @@ final class IntegerFunctionalExtendedTest extends TestCase
             return true;  // No divisors found
         };
 
-        $this->assertTrue($isPrime(Integer::from(2)));
-        $this->assertTrue($isPrime(Integer::from(3)));
-        $this->assertTrue($isPrime(Integer::from(5)));
-        $this->assertTrue($isPrime(Integer::from(7)));
-        $this->assertTrue($isPrime(Integer::from(11)));
-        $this->assertTrue($isPrime(Integer::from(13)));
+        $this->assertTrue($isPrime(Integer::of(2)));
+        $this->assertTrue($isPrime(Integer::of(3)));
+        $this->assertTrue($isPrime(Integer::of(5)));
+        $this->assertTrue($isPrime(Integer::of(7)));
+        $this->assertTrue($isPrime(Integer::of(11)));
+        $this->assertTrue($isPrime(Integer::of(13)));
 
-        $this->assertFalse($isPrime(Integer::from(1)));
-        $this->assertFalse($isPrime(Integer::from(4)));
-        $this->assertFalse($isPrime(Integer::from(6)));
-        $this->assertFalse($isPrime(Integer::from(8)));
-        $this->assertFalse($isPrime(Integer::from(9)));
-        $this->assertFalse($isPrime(Integer::from(10)));
+        $this->assertFalse($isPrime(Integer::of(1)));
+        $this->assertFalse($isPrime(Integer::of(4)));
+        $this->assertFalse($isPrime(Integer::of(6)));
+        $this->assertFalse($isPrime(Integer::of(8)));
+        $this->assertFalse($isPrime(Integer::of(9)));
+        $this->assertFalse($isPrime(Integer::of(10)));
     }
 
     public function testBinaryOperations(): void
     {
         // Test the operations
-        $a = Integer::from(0b1010); // 10 in decimal
-        $b = Integer::from(0b1100); // 12 in decimal
+        $a = Integer::of(0b1010); // 10 in decimal
+        $b = Integer::of(0b1100); // 12 in decimal
 
         $this->assertSame(0b1000, $a->and($b)->toInt()); // 1010 AND 1100 = 1000 (8)
         $this->assertSame(0b1110, $a->or($b)->toInt()); // 1010 OR 1100 = 1110 (14)
@@ -140,24 +140,24 @@ final class IntegerFunctionalExtendedTest extends TestCase
             }
 
             // A power of 2 has only one bit set, so (n & (n-1)) should be 0
-            $nMinus1 = $n->sub(Integer::from(1));
+            $nMinus1 = $n->sub(Integer::of(1));
             $result = $n->and($nMinus1);
 
             return $result->eq(0);
         };
 
-        $this->assertTrue($isPowerOfTwo(Integer::from(1)));
-        $this->assertTrue($isPowerOfTwo(Integer::from(2)));
-        $this->assertTrue($isPowerOfTwo(Integer::from(4)));
-        $this->assertTrue($isPowerOfTwo(Integer::from(8)));
-        $this->assertTrue($isPowerOfTwo(Integer::from(16)));
-        $this->assertTrue($isPowerOfTwo(Integer::from(32)));
+        $this->assertTrue($isPowerOfTwo(Integer::of(1)));
+        $this->assertTrue($isPowerOfTwo(Integer::of(2)));
+        $this->assertTrue($isPowerOfTwo(Integer::of(4)));
+        $this->assertTrue($isPowerOfTwo(Integer::of(8)));
+        $this->assertTrue($isPowerOfTwo(Integer::of(16)));
+        $this->assertTrue($isPowerOfTwo(Integer::of(32)));
 
-        $this->assertFalse($isPowerOfTwo(Integer::from(0)));
-        $this->assertFalse($isPowerOfTwo(Integer::from(3)));
-        $this->assertFalse($isPowerOfTwo(Integer::from(6)));
-        $this->assertFalse($isPowerOfTwo(Integer::from(10)));
-        $this->assertFalse($isPowerOfTwo(Integer::from(15)));
+        $this->assertFalse($isPowerOfTwo(Integer::of(0)));
+        $this->assertFalse($isPowerOfTwo(Integer::of(3)));
+        $this->assertFalse($isPowerOfTwo(Integer::of(6)));
+        $this->assertFalse($isPowerOfTwo(Integer::of(10)));
+        $this->assertFalse($isPowerOfTwo(Integer::of(15)));
     }
 
     public function testFractionImplementation(): void
@@ -179,7 +179,7 @@ final class IntegerFunctionalExtendedTest extends TestCase
                         return $a->sub($quotient->mul($b));
                     },
                     static function() {
-                        return Integer::from(0);
+                        return Integer::of(0);
                     },
                 );
 
@@ -225,19 +225,19 @@ final class IntegerFunctionalExtendedTest extends TestCase
             return $makeFraction($newNum, $newDen);
         };
 
-        $f1 = $makeFraction(Integer::from(3), Integer::from(4)); // 3/4
+        $f1 = $makeFraction(Integer::of(3), Integer::of(4)); // 3/4
         $this->assertSame(3, $f1['num']->toInt());
         $this->assertSame(4, $f1['den']->toInt());
 
-        $f2 = $makeFraction(Integer::from(6), Integer::from(8)); // 6/8 -> 3/4
+        $f2 = $makeFraction(Integer::of(6), Integer::of(8)); // 6/8 -> 3/4
         $this->assertSame(3, $f2['num']->toInt());
         $this->assertSame(4, $f2['den']->toInt());
 
-        $f3 = $makeFraction(Integer::from(-2), Integer::from(5)); // -2/5
+        $f3 = $makeFraction(Integer::of(-2), Integer::of(5)); // -2/5
         $this->assertSame(-2, $f3['num']->toInt());
         $this->assertSame(5, $f3['den']->toInt());
 
-        $f4 = $makeFraction(Integer::from(2), Integer::from(-5)); // 2/-5 -> -2/5
+        $f4 = $makeFraction(Integer::of(2), Integer::of(-5)); // 2/-5 -> -2/5
         $this->assertSame(-2, $f4['num']->toInt());
         $this->assertSame(5, $f4['den']->toInt());
 

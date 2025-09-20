@@ -24,7 +24,7 @@ Creates a new Integer instance from a native PHP integer.
 
 ```php
 // Create from an integer value
-$int = Integer::from(42);
+$int = Integer::of(42);
 ```
 
 ## Basic Operations
@@ -34,7 +34,7 @@ $int = Integer::from(42);
 Returns the wrapped native PHP integer value.
 
 ```php
-$int = Integer::from(42);
+$int = Integer::of(42);
 $native = $int->toInt(); // 42
 ```
 
@@ -43,7 +43,7 @@ $native = $int->toInt(); // 42
 Converts the integer to a floating-point number.
 
 ```php
-$int = Integer::from(42);
+$int = Integer::of(42);
 $float = $int->toFloat(); // 42.0
 ```
 
@@ -54,10 +54,10 @@ $float = $int->toFloat(); // 42.0
 Checks if the integer is positive (greater than 0).
 
 ```php
-$int = Integer::from(42);
+$int = Integer::of(42);
 $isPositive = $int->isPositive(); // true
 
-$zero = Integer::from(0);
+$zero = Integer::of(0);
 $isPositive = $zero->isPositive(); // false
 ```
 
@@ -66,10 +66,10 @@ $isPositive = $zero->isPositive(); // false
 Checks if the integer is negative (less than 0).
 
 ```php
-$int = Integer::from(-42);
+$int = Integer::of(-42);
 $isNegative = $int->isNegative(); // true
 
-$zero = Integer::from(0);
+$zero = Integer::of(0);
 $isNegative = $zero->isNegative(); // false
 ```
 
@@ -78,10 +78,10 @@ $isNegative = $zero->isNegative(); // false
 Checks if the integer is even.
 
 ```php
-$int = Integer::from(42);
+$int = Integer::of(42);
 $isEven = $int->isEven(); // true
 
-$odd = Integer::from(43);
+$odd = Integer::of(43);
 $isEven = $odd->isEven(); // false
 ```
 
@@ -90,10 +90,10 @@ $isEven = $odd->isEven(); // false
 Checks if the integer is odd.
 
 ```php
-$int = Integer::from(43);
+$int = Integer::of(43);
 $isOdd = $int->isOdd(); // true
 
-$even = Integer::from(42);
+$even = Integer::of(42);
 $isOdd = $even->isOdd(); // false
 ```
 
@@ -102,7 +102,7 @@ $isOdd = $even->isOdd(); // false
 Checks if the integer is a multiple of another value.
 
 ```php
-$int = Integer::from(10);
+$int = Integer::of(10);
 $isMultiple = $int->isMultipleOf(2); // true
 $isMultiple = $int->isMultipleOf(3); // false
 ```
@@ -112,14 +112,14 @@ $isMultiple = $int->isMultipleOf(3); // false
 Returns the sign of the integer as -1, 0, or 1.
 
 ```php
-$negative = Integer::from(-42);
-$sign = $negative->signum(); // Integer::from(-1)
+$negative = Integer::of(-42);
+$sign = $negative->signum(); // Integer::of(-1)
 
-$zero = Integer::from(0);
-$sign = $zero->signum(); // Integer::from(0)
+$zero = Integer::of(0);
+$sign = $zero->signum(); // Integer::of(0)
 
-$positive = Integer::from(42);
-$sign = $positive->signum(); // Integer::from(1)
+$positive = Integer::of(42);
+$sign = $positive->signum(); // Integer::of(1)
 ```
 
 ## Arithmetic Operations
@@ -129,9 +129,9 @@ $sign = $positive->signum(); // Integer::from(1)
 Adds another integer and returns the result.
 
 ```php
-$int = Integer::from(5);
-$sum = $int->add(3); // Integer::from(8)
-$sum = $int->add(Integer::from(7)); // Integer::from(12)
+$int = Integer::of(5);
+$sum = $int->add(3); // Integer::of(8)
+$sum = $int->add(Integer::of(7)); // Integer::of(12)
 ```
 
 ### Subtract
@@ -139,9 +139,9 @@ $sum = $int->add(Integer::from(7)); // Integer::from(12)
 Subtracts another integer and returns the result.
 
 ```php
-$int = Integer::from(10);
-$diff = $int->sub(3); // Integer::from(7)
-$diff = $int->sub(Integer::from(5)); // Integer::from(5)
+$int = Integer::of(10);
+$diff = $int->sub(3); // Integer::of(7)
+$diff = $int->sub(Integer::of(5)); // Integer::of(5)
 ```
 
 ### Multiply
@@ -149,9 +149,9 @@ $diff = $int->sub(Integer::from(5)); // Integer::from(5)
 Multiplies by another integer and returns the result.
 
 ```php
-$int = Integer::from(4);
-$product = $int->mul(3); // Integer::from(12)
-$product = $int->mul(Integer::from(5)); // Integer::from(20)
+$int = Integer::of(4);
+$product = $int->mul(3); // Integer::of(12)
+$product = $int->mul(Integer::of(5)); // Integer::of(20)
 ```
 
 ### Divide
@@ -159,9 +159,9 @@ $product = $int->mul(Integer::from(5)); // Integer::from(20)
 Divides by another integer and returns the result. Returns an error if the divisor is zero.
 
 ```php
-$int = Integer::from(10);
-$resultDiv = $int->div(2); // Result::ok(Integer::from(5))
-$resultDiv = $int->div(Integer::from(3)); // Result::ok(Integer::from(3)) - integer division
+$int = Integer::of(10);
+$resultDiv = $int->div(2); // Result::ok(Integer::of(5))
+$resultDiv = $int->div(Integer::of(3)); // Result::ok(Integer::of(3)) - integer division
 $resultErr = $int->div(0); // Result::err(new \InvalidArgumentException('Division by zero'))
 ```
 
@@ -170,10 +170,10 @@ $resultErr = $int->div(0); // Result::err(new \InvalidArgumentException('Divisio
 Divides by another integer and returns the floor of the result. Rounds towards negative infinity.
 
 ```php
-$int = Integer::from(10);
-$resultDiv = $int->divFloor(3); // Result::ok(Integer::from(3))
-$negative = Integer::from(-10);
-$resultDiv = $negative->divFloor(3); // Result::ok(Integer::from(-4))
+$int = Integer::of(10);
+$resultDiv = $int->divFloor(3); // Result::ok(Integer::of(3))
+$negative = Integer::of(-10);
+$resultDiv = $negative->divFloor(3); // Result::ok(Integer::of(-4))
 ```
 
 ### Division with Ceiling
@@ -181,10 +181,10 @@ $resultDiv = $negative->divFloor(3); // Result::ok(Integer::from(-4))
 Divides by another integer and returns the ceiling of the result. Rounds towards positive infinity.
 
 ```php
-$int = Integer::from(10);
-$resultDiv = $int->divCeil(3); // Result::ok(Integer::from(4))
-$negative = Integer::from(-10);
-$resultDiv = $negative->divCeil(3); // Result::ok(Integer::from(-3))
+$int = Integer::of(10);
+$resultDiv = $int->divCeil(3); // Result::ok(Integer::of(4))
+$negative = Integer::of(-10);
+$resultDiv = $negative->divCeil(3); // Result::ok(Integer::of(-3))
 ```
 
 ### Absolute Value
@@ -192,8 +192,8 @@ $resultDiv = $negative->divCeil(3); // Result::ok(Integer::from(-3))
 Returns the absolute value of this integer.
 
 ```php
-$int = Integer::from(-5);
-$abs = $int->abs(); // Integer::from(5)
+$int = Integer::of(-5);
+$abs = $int->abs(); // Integer::of(5)
 ```
 
 ### Absolute Difference
@@ -201,9 +201,9 @@ $abs = $int->abs(); // Integer::from(5)
 Returns the absolute difference between this integer and another value.
 
 ```php
-$int = Integer::from(10);
-$diff = $int->absDiff(7); // Integer::from(3)
-$diff = $int->absDiff(Integer::from(15)); // Integer::from(5)
+$int = Integer::of(10);
+$diff = $int->absDiff(7); // Integer::of(3)
+$diff = $int->absDiff(Integer::of(15)); // Integer::of(5)
 ```
 
 ### Power
@@ -211,9 +211,9 @@ $diff = $int->absDiff(Integer::from(15)); // Integer::from(5)
 Raises this integer to the power of the given exponent.
 
 ```php
-$int = Integer::from(2);
-$squared = $int->pow(2); // Integer::from(4)
-$cubed = $int->pow(Integer::from(3)); // Integer::from(8)
+$int = Integer::of(2);
+$squared = $int->pow(2); // Integer::of(4)
+$cubed = $int->pow(Integer::of(3)); // Integer::of(8)
 ```
 
 ### Min
@@ -221,9 +221,9 @@ $cubed = $int->pow(Integer::from(3)); // Integer::from(8)
 Returns the minimum of this integer and another value.
 
 ```php
-$int = Integer::from(10);
-$min = $int->min(5); // Integer::from(5)
-$min = $int->min(Integer::from(15)); // Integer::from(10)
+$int = Integer::of(10);
+$min = $int->min(5); // Integer::of(5)
+$min = $int->min(Integer::of(15)); // Integer::of(10)
 ```
 
 ### Max
@@ -231,9 +231,9 @@ $min = $int->min(Integer::from(15)); // Integer::from(10)
 Returns the maximum of this integer and another value.
 
 ```php
-$int = Integer::from(10);
-$max = $int->max(5); // Integer::from(10)
-$max = $int->max(Integer::from(15)); // Integer::from(15)
+$int = Integer::of(10);
+$max = $int->max(5); // Integer::of(10)
+$max = $int->max(Integer::of(15)); // Integer::of(15)
 ```
 
 ### Clamp
@@ -241,10 +241,10 @@ $max = $int->max(Integer::from(15)); // Integer::from(15)
 Restricts the integer to a specified range.
 
 ```php
-$int = Integer::from(10);
-$clamped = $int->clamp(5, 15); // Integer::from(10) - within range
-$clamped = $int->clamp(15, 20); // Integer::from(15) - below range
-$clamped = $int->clamp(1, 5); // Integer::from(5) - above range
+$int = Integer::of(10);
+$clamped = $int->clamp(5, 15); // Integer::of(10) - within range
+$clamped = $int->clamp(15, 20); // Integer::of(15) - below range
+$clamped = $int->clamp(1, 5); // Integer::of(5) - above range
 ```
 
 ## Overflow-Safe Arithmetic
@@ -254,10 +254,10 @@ $clamped = $int->clamp(1, 5); // Integer::from(5) - above range
 Adds another integer, checking for overflow. Returns an error on overflow.
 
 ```php
-$int = Integer::from(10);
-$sum = $int->overflowingAdd(5); // Result::ok(Integer::from(15))
+$int = Integer::of(10);
+$sum = $int->overflowingAdd(5); // Result::ok(Integer::of(15))
 
-$max = Integer::from(PHP_INT_MAX);
+$max = Integer::of(PHP_INT_MAX);
 $overflow = $max->overflowingAdd(1); // Result::err(new \OverflowException('Integer overflow'))
 ```
 
@@ -266,10 +266,10 @@ $overflow = $max->overflowingAdd(1); // Result::err(new \OverflowException('Inte
 Subtracts another integer, checking for overflow. Returns an error on overflow.
 
 ```php
-$int = Integer::from(10);
-$diff = $int->overflowingSub(5); // Result::ok(Integer::from(5))
+$int = Integer::of(10);
+$diff = $int->overflowingSub(5); // Result::ok(Integer::of(5))
 
-$min = Integer::from(PHP_INT_MIN);
+$min = Integer::of(PHP_INT_MIN);
 $overflow = $min->overflowingSub(1); // Result::err(new \OverflowException('Integer overflow'))
 ```
 
@@ -278,10 +278,10 @@ $overflow = $min->overflowingSub(1); // Result::err(new \OverflowException('Inte
 Multiplies by another integer, checking for overflow. Returns an error on overflow.
 
 ```php
-$int = Integer::from(10);
-$product = $int->overflowingMul(5); // Result::ok(Integer::from(50))
+$int = Integer::of(10);
+$product = $int->overflowingMul(5); // Result::ok(Integer::of(50))
 
-$large = Integer::from(PHP_INT_MAX / 2 + 1);
+$large = Integer::of(PHP_INT_MAX / 2 + 1);
 $overflow = $large->overflowingMul(2); // Result::err(new \OverflowException('Integer overflow'))
 ```
 
@@ -290,8 +290,8 @@ $overflow = $large->overflowingMul(2); // Result::err(new \OverflowException('In
 Divides by another integer, checking for overflow and division by zero. Returns an error on either condition.
 
 ```php
-$int = Integer::from(10);
-$quotient = $int->overflowingDiv(2); // Result::ok(Integer::from(5))
+$int = Integer::of(10);
+$quotient = $int->overflowingDiv(2); // Result::ok(Integer::of(5))
 $divByZero = $int->overflowingDiv(0); // Result::err(new \InvalidArgumentException('Division by zero'))
 ```
 
@@ -304,11 +304,11 @@ Saturating arithmetic operations clamp the result to the maximum or minimum inte
 Adds another integer, saturating at the bounds of the integer range.
 
 ```php
-$int = Integer::from(10);
-$sum = $int->saturatingAdd(5); // Integer::from(15)
+$int = Integer::of(10);
+$sum = $int->saturatingAdd(5); // Integer::of(15)
 
-$max = Integer::from(PHP_INT_MAX);
-$saturated = $max->saturatingAdd(1); // Integer::from(PHP_INT_MAX) - saturates instead of overflowing
+$max = Integer::of(PHP_INT_MAX);
+$saturated = $max->saturatingAdd(1); // Integer::of(PHP_INT_MAX) - saturates instead of overflowing
 ```
 
 ### Saturating Subtract
@@ -316,11 +316,11 @@ $saturated = $max->saturatingAdd(1); // Integer::from(PHP_INT_MAX) - saturates i
 Subtracts another integer, saturating at the bounds of the integer range.
 
 ```php
-$int = Integer::from(10);
-$diff = $int->saturatingSub(5); // Integer::from(5)
+$int = Integer::of(10);
+$diff = $int->saturatingSub(5); // Integer::of(5)
 
-$min = Integer::from(PHP_INT_MIN);
-$saturated = $min->saturatingSub(1); // Integer::from(PHP_INT_MIN) - saturates instead of overflowing
+$min = Integer::of(PHP_INT_MIN);
+$saturated = $min->saturatingSub(1); // Integer::of(PHP_INT_MIN) - saturates instead of overflowing
 ```
 
 ### Saturating Multiply
@@ -328,11 +328,11 @@ $saturated = $min->saturatingSub(1); // Integer::from(PHP_INT_MIN) - saturates i
 Multiplies by another integer, saturating at the bounds of the integer range.
 
 ```php
-$int = Integer::from(10);
-$product = $int->saturatingMul(5); // Integer::from(50)
+$int = Integer::of(10);
+$product = $int->saturatingMul(5); // Integer::of(50)
 
-$large = Integer::from(PHP_INT_MAX / 2 + 1);
-$saturated = $large->saturatingMul(3); // Integer::from(PHP_INT_MAX) - saturates instead of overflowing
+$large = Integer::of(PHP_INT_MAX / 2 + 1);
+$saturated = $large->saturatingMul(3); // Integer::of(PHP_INT_MAX) - saturates instead of overflowing
 ```
 
 ### Saturating Divide
@@ -340,9 +340,9 @@ $saturated = $large->saturatingMul(3); // Integer::from(PHP_INT_MAX) - saturates
 Divides by another integer, saturating at the bounds of the integer range and handling division by zero.
 
 ```php
-$int = Integer::from(10);
-$quotient = $int->saturatingDiv(2); // Integer::from(5)
-$divByZero = $int->saturatingDiv(0); // Integer::from(0) - returns 0 for division by zero
+$int = Integer::of(10);
+$quotient = $int->saturatingDiv(2); // Integer::of(5)
+$divByZero = $int->saturatingDiv(0); // Integer::of(0) - returns 0 for division by zero
 ```
 
 ## Comparison
@@ -352,9 +352,9 @@ $divByZero = $int->saturatingDiv(0); // Integer::from(0) - returns 0 for divisio
 Checks if this integer equals another value.
 
 ```php
-$int = Integer::from(42);
+$int = Integer::of(42);
 $isEqual = $int->eq(42); // true
-$isEqual = $int->eq(Integer::from(42)); // true
+$isEqual = $int->eq(Integer::of(42)); // true
 $isEqual = $int->eq(43); // false
 ```
 
@@ -363,9 +363,9 @@ $isEqual = $int->eq(43); // false
 Checks if this integer is greater than another value.
 
 ```php
-$int = Integer::from(42);
+$int = Integer::of(42);
 $isGreaterThan = $int->gt(40); // true
-$isGreaterThan = $int->gt(Integer::from(43)); // false
+$isGreaterThan = $int->gt(Integer::of(43)); // false
 ```
 
 ### Greater Than or Equal
@@ -373,9 +373,9 @@ $isGreaterThan = $int->gt(Integer::from(43)); // false
 Checks if this integer is greater than or equal to another value.
 
 ```php
-$int = Integer::from(42);
+$int = Integer::of(42);
 $isGreaterThanOrEqual = $int->ge(42); // true
-$isGreaterThanOrEqual = $int->ge(Integer::from(43)); // false
+$isGreaterThanOrEqual = $int->ge(Integer::of(43)); // false
 ```
 
 ### Less Than
@@ -383,9 +383,9 @@ $isGreaterThanOrEqual = $int->ge(Integer::from(43)); // false
 Checks if this integer is less than another value.
 
 ```php
-$int = Integer::from(42);
+$int = Integer::of(42);
 $isLessThan = $int->lt(43); // true
-$isLessThan = $int->lt(Integer::from(40)); // false
+$isLessThan = $int->lt(Integer::of(40)); // false
 ```
 
 ### Less Than or Equal
@@ -393,9 +393,9 @@ $isLessThan = $int->lt(Integer::from(40)); // false
 Checks if this integer is less than or equal to another value.
 
 ```php
-$int = Integer::from(42);
+$int = Integer::of(42);
 $isLessThanOrEqual = $int->le(42); // true
-$isLessThanOrEqual = $int->le(Integer::from(40)); // false
+$isLessThanOrEqual = $int->le(Integer::of(40)); // false
 ```
 
 ### Compare
@@ -403,9 +403,9 @@ $isLessThanOrEqual = $int->le(Integer::from(40)); // false
 Compares this integer with another value and returns -1, 0, or 1.
 
 ```php
-$int = Integer::from(42);
+$int = Integer::of(42);
 $cmp = $int->cmp(40); // 1 (greater)
-$cmp = $int->cmp(Integer::from(42)); // 0 (equal)
+$cmp = $int->cmp(Integer::of(42)); // 0 (equal)
 $cmp = $int->cmp(50); // -1 (less)
 ```
 
@@ -416,8 +416,8 @@ $cmp = $int->cmp(50); // -1 (less)
 Returns the natural logarithm (base e) of this integer.
 
 ```php
-$int = Integer::from(10);
-$log = $int->log(); // Integer::from(2) - floor of natural log
+$int = Integer::of(10);
+$log = $int->log(); // Integer::of(2) - floor of natural log
 ```
 
 ### Logarithm (Base 2)
@@ -425,8 +425,8 @@ $log = $int->log(); // Integer::from(2) - floor of natural log
 Returns the base-2 logarithm of this integer.
 
 ```php
-$int = Integer::from(8);
-$log2 = $int->log2(); // Integer::from(3)
+$int = Integer::of(8);
+$log2 = $int->log2(); // Integer::of(3)
 ```
 
 ### Logarithm (Base 10)
@@ -434,8 +434,8 @@ $log2 = $int->log2(); // Integer::from(3)
 Returns the base-10 logarithm of this integer.
 
 ```php
-$int = Integer::from(100);
-$log10 = $int->log10(); // Integer::from(2)
+$int = Integer::of(100);
+$log10 = $int->log10(); // Integer::of(2)
 ```
 
 ### Square Root
@@ -443,11 +443,11 @@ $log10 = $int->log10(); // Integer::from(2)
 Returns the square root of this integer, rounded down.
 
 ```php
-$int = Integer::from(16);
-$sqrt = $int->sqrt(); // Integer::from(4)
+$int = Integer::of(16);
+$sqrt = $int->sqrt(); // Integer::of(4)
 
-$int = Integer::from(10);
-$sqrt = $int->sqrt(); // Integer::from(3) - floor of square root
+$int = Integer::of(10);
+$sqrt = $int->sqrt(); // Integer::of(3) - floor of square root
 ```
 
 ## Bit Operations
@@ -457,8 +457,8 @@ $sqrt = $int->sqrt(); // Integer::from(3) - floor of square root
 Performs a bitwise AND operation.
 
 ```php
-$int = Integer::from(10); // 1010 in binary
-$result = $int->and(6); // 1010 & 0110 = 0010 = Integer::from(2)
+$int = Integer::of(10); // 1010 in binary
+$result = $int->and(6); // 1010 & 0110 = 0010 = Integer::of(2)
 ```
 
 ### Bitwise OR
@@ -466,8 +466,8 @@ $result = $int->and(6); // 1010 & 0110 = 0010 = Integer::from(2)
 Performs a bitwise OR operation.
 
 ```php
-$int = Integer::from(10); // 1010 in binary
-$result = $int->or(6); // 1010 | 0110 = 1110 = Integer::from(14)
+$int = Integer::of(10); // 1010 in binary
+$result = $int->or(6); // 1010 | 0110 = 1110 = Integer::of(14)
 ```
 
 ### Bitwise XOR
@@ -475,8 +475,8 @@ $result = $int->or(6); // 1010 | 0110 = 1110 = Integer::from(14)
 Performs a bitwise XOR operation.
 
 ```php
-$int = Integer::from(10); // 1010 in binary
-$result = $int->xor(6); // 1010 ^ 0110 = 1100 = Integer::from(12)
+$int = Integer::of(10); // 1010 in binary
+$result = $int->xor(6); // 1010 ^ 0110 = 1100 = Integer::of(12)
 ```
 
 ### Bitwise NOT
@@ -484,7 +484,7 @@ $result = $int->xor(6); // 1010 ^ 0110 = 1100 = Integer::from(12)
 Performs a bitwise NOT operation.
 
 ```php
-$int = Integer::from(10);
+$int = Integer::of(10);
 $result = $int->not(); // ~10 = -11
 ```
 
@@ -493,8 +493,8 @@ $result = $int->not(); // ~10 = -11
 Performs a left shift operation.
 
 ```php
-$int = Integer::from(5); // 101 in binary
-$result = $int->leftShift(1); // 101 << 1 = 1010 = Integer::from(10)
+$int = Integer::of(5); // 101 in binary
+$result = $int->leftShift(1); // 101 << 1 = 1010 = Integer::of(10)
 ```
 
 ### Right Shift
@@ -502,8 +502,8 @@ $result = $int->leftShift(1); // 101 << 1 = 1010 = Integer::from(10)
 Performs a right shift operation.
 
 ```php
-$int = Integer::from(10); // 1010 in binary
-$result = $int->rightShift(1); // 1010 >> 1 = 101 = Integer::from(5)
+$int = Integer::of(10); // 1010 in binary
+$result = $int->rightShift(1); // 1010 >> 1 = 101 = Integer::of(5)
 ```
 
 ## Type Safety
@@ -511,11 +511,11 @@ $result = $int->rightShift(1); // 1010 >> 1 = 101 = Integer::from(5)
 The Integer class provides type safety through immutable operations. All methods that perform calculations return new Integer instances rather than modifying the original, ensuring consistent behavior.
 
 ```php
-$a = Integer::from(10);
+$a = Integer::of(10);
 $b = $a->add(5); // $b is 15, $a remains 10
 
 // Method chaining for complex calculations
-$result = Integer::from(10)
+$result = Integer::of(10)
     ->mul(2)        // 20
     ->add(5)        // 25
     ->sub(3);       // 22
@@ -531,7 +531,7 @@ The Integer class uses the Result type for operations that may fail:
 This approach allows for clean error handling without exceptions:
 
 ```php
-$result = Integer::from(10)->div(0);
+$result = Integer::of(10)->div(0);
 $quotient = $result->match(
     fn($value) => "Result: $value",
     fn($error) => "Error: {$error->getMessage()}"

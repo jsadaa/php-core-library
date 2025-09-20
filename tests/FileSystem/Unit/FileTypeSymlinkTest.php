@@ -55,8 +55,8 @@ final class FileTypeSymlinkTest extends TestCase
 
     public function testDetectFileType(): void
     {
-        $filePath = Path::from($this->root->url() . '/testFile.txt');
-        $fileType = FileType::from($filePath);
+        $filePath = Path::of($this->root->url() . '/testFile.txt');
+        $fileType = FileType::of($filePath);
 
         $this->assertTrue($fileType->isFile());
         $this->assertFalse($fileType->isDir());
@@ -65,8 +65,8 @@ final class FileTypeSymlinkTest extends TestCase
 
     public function testDetectDirectoryType(): void
     {
-        $dirPath = Path::from($this->root->url() . '/emptyDir');
-        $fileType = FileType::from($dirPath);
+        $dirPath = Path::of($this->root->url() . '/emptyDir');
+        $fileType = FileType::of($dirPath);
 
         $this->assertTrue($fileType->isDir());
         $this->assertFalse($fileType->isFile());
@@ -75,8 +75,8 @@ final class FileTypeSymlinkTest extends TestCase
 
     public function testDetectSymlinkType(): void
     {
-        $linkPath = Path::from($this->tempDir . '/testLink');
-        $fileType = FileType::from($linkPath);
+        $linkPath = Path::of($this->tempDir . '/testLink');
+        $fileType = FileType::of($linkPath);
 
         $this->assertTrue($fileType->isSymLink());
         $this->assertFalse($fileType->isFile());
@@ -85,13 +85,13 @@ final class FileTypeSymlinkTest extends TestCase
 
     public function testFileTypeFactoryMethods(): void
     {
-        $filePath = Path::from($this->root->url() . '/testFile.txt');
-        $this->assertTrue(FileType::from($filePath)->isFile());
+        $filePath = Path::of($this->root->url() . '/testFile.txt');
+        $this->assertTrue(FileType::of($filePath)->isFile());
 
-        $dirPath = Path::from($this->root->url() . '/emptyDir');
-        $this->assertTrue(FileType::from($dirPath)->isDir());
+        $dirPath = Path::of($this->root->url() . '/emptyDir');
+        $this->assertTrue(FileType::of($dirPath)->isDir());
 
-        $linkPath = Path::from($this->tempDir . '/testLink');
-        $this->assertTrue(FileType::from($linkPath)->isSymLink());
+        $linkPath = Path::of($this->tempDir . '/testLink');
+        $this->assertTrue(FileType::of($linkPath)->isSymLink());
     }
 }

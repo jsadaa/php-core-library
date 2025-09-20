@@ -30,9 +30,9 @@ final readonly class FileType {
      * @return self A new FileType instance representing the detected type
      * @psalm-pure
      */
-    public static function from(string | Path $path): self
+    public static function of(string | Path $path): self
     {
-        return new self($path instanceof Path ? $path : Path::from($path));
+        return new self($path instanceof Path ? $path : Path::of($path));
     }
 
     /**

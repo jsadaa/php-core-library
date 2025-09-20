@@ -20,7 +20,7 @@ final class DurationTest extends TestCase
 
     public function testNewWithInteger(): void
     {
-        $duration = Duration::new(Integer::from(3), Integer::from(250_000_000));
+        $duration = Duration::new(Integer::of(3), Integer::of(250_000_000));
         $this->assertEquals(3, $duration->toSeconds()->toInt());
         $this->assertEquals(250_000_000, $duration->subsecNanos()->toInt());
     }
@@ -34,7 +34,7 @@ final class DurationTest extends TestCase
 
     public function testFromSecondsWithInteger(): void
     {
-        $duration = Duration::fromSeconds(Integer::from(15));
+        $duration = Duration::fromSeconds(Integer::of(15));
         $this->assertEquals(15, $duration->toSeconds()->toInt());
         $this->assertEquals(0, $duration->subsecNanos()->toInt());
     }
@@ -49,7 +49,7 @@ final class DurationTest extends TestCase
 
     public function testFromMillisWithInteger(): void
     {
-        $duration = Duration::fromMillis(Integer::from(1500));
+        $duration = Duration::fromMillis(Integer::of(1500));
         $this->assertEquals(1, $duration->toSeconds()->toInt());
         $this->assertEquals(500, $duration->subsecMillis()->toInt());
     }
@@ -64,7 +64,7 @@ final class DurationTest extends TestCase
 
     public function testFromMicrosWithInteger(): void
     {
-        $duration = Duration::fromMicros(Integer::from(2_750_000));
+        $duration = Duration::fromMicros(Integer::of(2_750_000));
         $this->assertEquals(2, $duration->toSeconds()->toInt());
         $this->assertEquals(750_000, $duration->subsecMicros()->toInt());
     }
@@ -78,7 +78,7 @@ final class DurationTest extends TestCase
 
     public function testFromNanosWithInteger(): void
     {
-        $duration = Duration::fromNanos(Integer::from(3_250_000_000));
+        $duration = Duration::fromNanos(Integer::of(3_250_000_000));
         $this->assertEquals(3, $duration->toSeconds()->toInt());
         $this->assertEquals(250_000_000, $duration->subsecNanos()->toInt());
     }
@@ -92,7 +92,7 @@ final class DurationTest extends TestCase
 
     public function testFromMinsWithInteger(): void
     {
-        $duration = Duration::fromMins(Integer::from(5));
+        $duration = Duration::fromMins(Integer::of(5));
         $this->assertEquals(300, $duration->toSeconds()->toInt());
     }
 
@@ -105,7 +105,7 @@ final class DurationTest extends TestCase
 
     public function testFromHoursWithInteger(): void
     {
-        $duration = Duration::fromHours(Integer::from(1));
+        $duration = Duration::fromHours(Integer::of(1));
         $this->assertEquals(3600, $duration->toSeconds()->toInt());
     }
 
@@ -118,7 +118,7 @@ final class DurationTest extends TestCase
 
     public function testFromDaysWithInteger(): void
     {
-        $duration = Duration::fromDays(Integer::from(2));
+        $duration = Duration::fromDays(Integer::of(2));
         $this->assertEquals(172800, $duration->toSeconds()->toInt());
     }
 
@@ -131,7 +131,7 @@ final class DurationTest extends TestCase
 
     public function testFromWeeksWithInteger(): void
     {
-        $duration = Duration::fromWeeks(Integer::from(2));
+        $duration = Duration::fromWeeks(Integer::of(2));
         $this->assertEquals(1209600, $duration->toSeconds()->toInt());
     }
 
@@ -305,7 +305,7 @@ final class DurationTest extends TestCase
     public function testMulWithInteger(): void
     {
         $dur = Duration::fromSeconds(4);
-        $result = $dur->mul(Integer::from(2));
+        $result = $dur->mul(Integer::of(2));
 
         $this->assertTrue($result->isOk());
         $product = $result->unwrap();
@@ -362,7 +362,7 @@ final class DurationTest extends TestCase
     public function testDivWithInteger(): void
     {
         $dur = Duration::fromSeconds(20);
-        $result = $dur->div(Integer::from(4));
+        $result = $dur->div(Integer::of(4));
 
         $this->assertTrue($result->isOk());
         $quotient = $result->unwrap();

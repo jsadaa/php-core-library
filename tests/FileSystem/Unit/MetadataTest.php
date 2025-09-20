@@ -63,8 +63,8 @@ final class MetadataTest extends TestCase
 
     public function testMetadataFromNonExistentPath(): void
     {
-        $path = Path::from($this->root->url() . '/nonExistent.txt');
-        $result = Metadata::from($path);
+        $path = Path::of($this->root->url() . '/nonExistent.txt');
+        $result = Metadata::of($path);
 
         $this->assertTrue($result->isErr());
         $this->assertInstanceOf(FileNotFound::class, $result->unwrapErr());
@@ -72,8 +72,8 @@ final class MetadataTest extends TestCase
 
     public function testGetPath(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::from($path)->unwrap();
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $metadata = Metadata::of($path)->unwrap();
 
         $returnedPath = $metadata->path();
         $this->assertEquals($path->toString(), $returnedPath->toString());
@@ -81,8 +81,8 @@ final class MetadataTest extends TestCase
 
     public function testGetFileType(): void
     {
-        $filePath = Path::from($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::from($filePath)->unwrap();
+        $filePath = Path::of($this->root->url() . '/testFile.txt');
+        $metadata = Metadata::of($filePath)->unwrap();
         $fileType = $metadata->fileType();
 
         $this->assertInstanceOf(FileType::class, $fileType);
@@ -90,16 +90,16 @@ final class MetadataTest extends TestCase
         $this->assertFalse($fileType->isDir());
         $this->assertFalse($fileType->isSymLink());
 
-        $dirPath = Path::from($this->root->url() . '/emptyDir');
-        $metadata = Metadata::from($dirPath)->unwrap();
+        $dirPath = Path::of($this->root->url() . '/emptyDir');
+        $metadata = Metadata::of($dirPath)->unwrap();
         $fileType = $metadata->fileType();
 
         $this->assertTrue($fileType->isDir());
         $this->assertFalse($fileType->isFile());
         $this->assertFalse($fileType->isSymLink());
 
-        $linkPath = Path::from($this->tempDir . '/testLink');
-        $metadata = Metadata::from($linkPath)->unwrap();
+        $linkPath = Path::of($this->tempDir . '/testLink');
+        $metadata = Metadata::of($linkPath)->unwrap();
         $fileType = $metadata->fileType();
 
         $this->assertTrue($fileType->isSymLink());
@@ -109,19 +109,19 @@ final class MetadataTest extends TestCase
 
     public function testIsSymLink(): void
     {
-        $filePath = Path::from($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::from($filePath)->unwrap();
+        $filePath = Path::of($this->root->url() . '/testFile.txt');
+        $metadata = Metadata::of($filePath)->unwrap();
         $this->assertFalse($metadata->isSymLink());
 
-        $linkPath = Path::from($this->tempDir . '/testLink');
-        $metadata = Metadata::from($linkPath)->unwrap();
+        $linkPath = Path::of($this->tempDir . '/testLink');
+        $metadata = Metadata::of($linkPath)->unwrap();
         $this->assertTrue($metadata->isSymLink());
     }
 
     public function testGetModified(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::from($path)->unwrap();
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $metadata = Metadata::of($path)->unwrap();
 
         $modifiedTime = $metadata->modified();
         $this->assertInstanceOf(SystemTime::class, $modifiedTime);
@@ -133,8 +133,8 @@ final class MetadataTest extends TestCase
 
     public function testGetAccessed(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::from($path)->unwrap();
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $metadata = Metadata::of($path)->unwrap();
 
         $accessedTime = $metadata->accessed();
         $this->assertInstanceOf(SystemTime::class, $accessedTime);
@@ -146,8 +146,8 @@ final class MetadataTest extends TestCase
 
     public function testGetCreated(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::from($path)->unwrap();
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $metadata = Metadata::of($path)->unwrap();
 
         $createdTime = $metadata->created();
         $this->assertInstanceOf(SystemTime::class, $createdTime);
@@ -159,41 +159,41 @@ final class MetadataTest extends TestCase
 
     public function testIsReadable(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::from($path)->unwrap();
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $metadata = Metadata::of($path)->unwrap();
         $this->assertTrue($metadata->isReadable());
 
-        $readOnlyPath = Path::from($this->root->url() . '/readOnlyFile.txt');
-        $metadata = Metadata::from($readOnlyPath)->unwrap();
+        $readOnlyPath = Path::of($this->root->url() . '/readOnlyFile.txt');
+        $metadata = Metadata::of($readOnlyPath)->unwrap();
         $this->assertTrue($metadata->isReadable());
     }
 
     public function testIsWritable(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::from($path)->unwrap();
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $metadata = Metadata::of($path)->unwrap();
         $this->assertTrue($metadata->isWritable());
 
-        $readOnlyPath = Path::from($this->root->url() . '/readOnlyFile.txt');
-        $metadata = Metadata::from($readOnlyPath)->unwrap();
+        $readOnlyPath = Path::of($this->root->url() . '/readOnlyFile.txt');
+        $metadata = Metadata::of($readOnlyPath)->unwrap();
         $this->assertFalse($metadata->isWritable());
     }
 
     public function testIsExecutable(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::from($path)->unwrap();
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $metadata = Metadata::of($path)->unwrap();
         $this->assertFalse($metadata->isExecutable());
 
-        $execPath = Path::from($this->tempDir . '/executableFile.sh');
-        $metadata = Metadata::from($execPath)->unwrap();
+        $execPath = Path::of($this->tempDir . '/executableFile.sh');
+        $metadata = Metadata::of($execPath)->unwrap();
         $this->assertTrue($metadata->isExecutable());
     }
 
     public function testGetPermissions(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::from($path)->unwrap();
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $metadata = Metadata::of($path)->unwrap();
 
         $permissions = $metadata->permissions();
         $this->assertInstanceOf(Permissions::class, $permissions);
@@ -204,8 +204,8 @@ final class MetadataTest extends TestCase
 
     public function testTimestampsConsistency(): void
     {
-        $path = Path::from($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::from($path)->unwrap();
+        $path = Path::of($this->root->url() . '/testFile.txt');
+        $metadata = Metadata::of($path)->unwrap();
 
         $created = $metadata->created()->seconds();
         $modified = $metadata->modified()->seconds();
@@ -226,7 +226,7 @@ final class MetadataTest extends TestCase
     public function testMetadataFromStringPath(): void
     {
         $pathString = $this->root->url() . '/testFile.txt';
-        $result = Metadata::from($pathString);
+        $result = Metadata::of($pathString);
 
         $this->assertTrue($result->isOk());
         $metadata = $result->unwrap();
@@ -236,8 +236,8 @@ final class MetadataTest extends TestCase
 
     public function testMetadataFromPathObject(): void
     {
-        $pathObject = Path::from($this->root->url() . '/testFile.txt');
-        $result = Metadata::from($pathObject);
+        $pathObject = Path::of($this->root->url() . '/testFile.txt');
+        $result = Metadata::of($pathObject);
 
         $this->assertTrue($result->isOk());
         $metadata = $result->unwrap();

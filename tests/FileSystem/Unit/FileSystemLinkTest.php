@@ -34,8 +34,8 @@ final class FileSystemLinkTest extends TestCase
 
     public function testHardLink(): void
     {
-        $sourcePath = Path::from($this->tempDir . '/sourceFile.txt');
-        $linkPath = Path::from($this->tempDir . '/hardlink.txt');
+        $sourcePath = Path::of($this->tempDir . '/sourceFile.txt');
+        $linkPath = Path::of($this->tempDir . '/hardlink.txt');
 
         $result = FileSystem::hardLink($sourcePath, $linkPath);
 
@@ -49,8 +49,8 @@ final class FileSystemLinkTest extends TestCase
 
     public function testHardLinkToNonExistentFile(): void
     {
-        $sourcePath = Path::from($this->tempDir . '/nonExistentFile.txt');
-        $linkPath = Path::from($this->tempDir . '/hardlink.txt');
+        $sourcePath = Path::of($this->tempDir . '/nonExistentFile.txt');
+        $linkPath = Path::of($this->tempDir . '/hardlink.txt');
 
         $result = FileSystem::hardLink($sourcePath, $linkPath);
 
@@ -60,8 +60,8 @@ final class FileSystemLinkTest extends TestCase
 
     public function testSoftLink(): void
     {
-        $sourcePath = Path::from($this->tempDir . '/sourceFile.txt');
-        $linkPath = Path::from($this->tempDir . '/softlink.txt');
+        $sourcePath = Path::of($this->tempDir . '/sourceFile.txt');
+        $linkPath = Path::of($this->tempDir . '/softlink.txt');
 
         $result = FileSystem::symLink($sourcePath, $linkPath);
 
@@ -76,8 +76,8 @@ final class FileSystemLinkTest extends TestCase
 
     public function testSoftLinkToNonExistentFile(): void
     {
-        $sourcePath = Path::from($this->tempDir . '/nonExistentFile.txt');
-        $linkPath = Path::from($this->tempDir . '/softlink.txt');
+        $sourcePath = Path::of($this->tempDir . '/nonExistentFile.txt');
+        $linkPath = Path::of($this->tempDir . '/softlink.txt');
 
         $result = FileSystem::symLink($sourcePath, $linkPath);
 
@@ -87,8 +87,8 @@ final class FileSystemLinkTest extends TestCase
 
     public function testSoftLinkWithExistingTarget(): void
     {
-        $sourcePath = Path::from($this->tempDir . '/sourceFile.txt');
-        $linkPath = Path::from($this->tempDir . '/targetDir/softlink.txt');
+        $sourcePath = Path::of($this->tempDir . '/sourceFile.txt');
+        $linkPath = Path::of($this->tempDir . '/targetDir/softlink.txt');
 
         $result = FileSystem::symLink($sourcePath, $linkPath);
         $this->assertTrue($result->isOk());
