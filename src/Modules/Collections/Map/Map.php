@@ -6,6 +6,7 @@ namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Map;
 
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
+use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 
 /**
  * A collection of key-value pairs
@@ -63,7 +64,7 @@ final readonly class Map
      */
     public function clear(): self
     {
-        return new self($this->values->clear());
+        return new self(Sequence::new());
     }
 
     /**
@@ -118,6 +119,76 @@ final readonly class Map
     }
 
     /**
+     * FlatMap the collection based on a mapper function
+     *
+     * @template U
+     * @param callable(K, V): iterable<U> $mapper The mapper function
+     * @return self<K, U>
+     */
+    public function flatMap(callable $mapper): self
+    {
+        return new self(
+            $this
+                ->values
+                ->map(static fn(Pair $pair) => $mapper($pair->key(), $pair->value()))
+                ->flatten(),
+        );
+    }
+
+    /**
+     * Flatten the collection
+     *
+     * @return self<K, V>
+     */
+    public function flatten(): self
+    {
+        return new self(
+            $this
+                ->values
+                ->flatten(),
+        );
+    }
+
+    /**
+     * Iterate over the collection
+     *
+     * @param callable(K, V): void $callback The callback function
+     */
+    public function forEach(callable $callback): void
+    {
+        $this
+            ->values
+            ->forEach(static fn(Pair $pair) => $callback($pair->key(), $pair->value()));
+    }
+
+    /**
+     * Fold the collection
+     *
+     * @template U
+     * @template T
+     * @param callable(U|T, K, V): T $callback The callback function
+     * @param U $initial The initial value
+     * @return U|T
+     */
+    public function fold(callable $callback, mixed $initial): mixed
+    {
+        /**
+         * @psalm-suppress ImpureFunctionCall
+         * @psalm-suppress MixedArgument
+         */
+        return $this
+            ->values
+            ->fold(
+                static fn($carry, $pair) => $callback(
+                    $carry,
+                    $pair->key(),
+                    $pair->value(),
+                ),
+                $initial,
+            );
+    }
+
+    /**
      * Get the value associated with a key
      *
      * @param K $key The key to retrieve the value for
@@ -135,18 +206,18 @@ final readonly class Map
     }
 
     /**
-     * Insert a key-value pair into the map
+     * Add a key-value pair into the map
      *
      * @param K $key The key to insert
      * @param V $value The value to insert
      * @return self<K, V>
      */
-    public function insert(mixed $key, mixed $value): self
+    public function add(mixed $key, mixed $value): self
     {
         return new self(
             $this
                 ->values
-                ->push(Pair::of($key, $value)),
+                ->add(Pair::of($key, $value)),
         );
     }
 
@@ -232,5 +303,24 @@ final readonly class Map
                 ->values
                 ->append($other->values),
         );
+    }
+
+    /**
+     * Return the length of the map
+     *
+     */
+    public function len(): Integer
+    {
+        return $this->values->len();
+    }
+
+    /**
+     * Convert the map to an array
+     *
+     * @return array<array{K, V}>
+     */
+    public function toArray(): array
+    {
+        return $this->values->map(static fn(Pair $pair) => [$pair->key(), $pair->value()])->toArray();
     }
 }
