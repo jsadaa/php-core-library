@@ -9,6 +9,8 @@ use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 
 /**
+ * A collection of unique values.
+ *
  * @template T
  * @psalm-immutable
  */
@@ -26,6 +28,8 @@ final readonly class Set
     }
 
     /**
+     * Creates a new set from the given values.
+     *
      * @template U
      * @param U ...$values
      * @psalm-pure
@@ -38,6 +42,8 @@ final readonly class Set
     }
 
     /**
+     * Adds a value to the set.
+     *
      * @param T $value
      * @return Set<T>
      */
@@ -47,6 +53,8 @@ final readonly class Set
     }
 
     /**
+     * Clears the set.
+     *
      * @return Set<T>
      */
     public function clear(): self
@@ -55,6 +63,8 @@ final readonly class Set
     }
 
     /**
+     * Checks if the set contains a value.
+     *
      * @param T $value
      */
     public function contains(mixed $value): bool
@@ -63,6 +73,8 @@ final readonly class Set
     }
 
     /**
+     * Computes the difference between two sets.
+     *
      * @param Set<T> $other
      * @return Set<T>
      */
@@ -72,6 +84,8 @@ final readonly class Set
     }
 
     /**
+     * Computes the intersection of two sets.
+     *
      * @param Set<T> $other
      * @return Set<T>
      */
@@ -81,6 +95,8 @@ final readonly class Set
     }
 
     /**
+     * Checks if the set is disjoint with another set.
+     *
      * @param Set<T> $other
      */
     public function isDisjoint(self $other): bool
@@ -88,12 +104,18 @@ final readonly class Set
         return $this->intersection($other)->isEmpty();
     }
 
+    /**
+     * Checks if the set is empty.
+     *
+     */
     public function isEmpty(): bool
     {
         return $this->values->isEmpty();
     }
 
     /**
+     * Checks if the set is equal to another set.
+     *
      * @param Set<T> $other
      */
     public function eq(self $other): bool
@@ -102,6 +124,8 @@ final readonly class Set
     }
 
     /**
+     * Checks if the set is a subset of another set.
+     *
      * @param Set<T> $other
      */
     public function isSubset(self $other): bool
@@ -110,6 +134,8 @@ final readonly class Set
     }
 
     /**
+     * Checks if the set is a superset of another set.
+     *
      * @param Set<T> $other
      */
     public function isSuperset(self $other): bool
@@ -117,12 +143,18 @@ final readonly class Set
         return $this->intersection($other)->eq($other);
     }
 
+    /**
+     * Returns the number of elements in the set.
+     *
+     */
     public function len(): Integer
     {
         return $this->values->len();
     }
 
     /**
+     * Removes an element from the set.
+     *
      * @param T $value
      * @return self<T>
      */
@@ -132,6 +164,8 @@ final readonly class Set
     }
 
     /**
+     * Append another set to this set.
+     *
      * @param Set<T> $other
      * @return self<T>
      */
@@ -141,6 +175,8 @@ final readonly class Set
     }
 
     /**
+     * Map each element of the set to a new value.
+     *
      * @template U
      * @param callable(T): U $fn
      * @return self<U>
@@ -151,6 +187,8 @@ final readonly class Set
     }
 
     /**
+     * Map elements to iterables and then flatten the result into a single collection
+     *
      * @template U
      * @param callable(T): iterable<U> $fn
      * @return self<U>
@@ -161,6 +199,8 @@ final readonly class Set
     }
 
     /**
+     * Filter elements based on a predicate function.
+     *
      * @param callable(T): bool $fn
      * @return self<T>
      */
@@ -170,6 +210,8 @@ final readonly class Set
     }
 
     /**
+     * Check if any element in the set satisfies the given predicate.
+     *
      * @param callable(T): bool $fn
      */
     public function any(callable $fn): bool
@@ -178,6 +220,8 @@ final readonly class Set
     }
 
     /**
+     * Check if all elements in the set satisfy the given predicate.
+     *
      * @param callable(T): bool $fn
      */
     public function all(callable $fn): bool
@@ -186,6 +230,8 @@ final readonly class Set
     }
 
     /**
+     * Map each element to an optional value and filter out the None values
+     *
      * @template U
      * @param callable(T): Option<U> $fn
      * @return self<U>
@@ -196,6 +242,8 @@ final readonly class Set
     }
 
     /**
+     * Fold the collection to a single value using the given callback
+     *
      * @template U
      * @param callable(U, T): U $fn
      * @param U $initial
@@ -207,6 +255,8 @@ final readonly class Set
     }
 
     /**
+     * Flattens a collection of collections into a single collection
+     *
      * @return self<T>
      */
     public function flatten(): self
@@ -215,6 +265,8 @@ final readonly class Set
     }
 
     /**
+     * Apply the given callback to each element of the collection
+     *
      * @param callable(T): void $fn
      */
     public function forEach(callable $fn): void
@@ -223,6 +275,8 @@ final readonly class Set
     }
 
     /**
+     * Convert the collection to an array
+     *
      * @return array<T>
      */
     public function toArray(): array
