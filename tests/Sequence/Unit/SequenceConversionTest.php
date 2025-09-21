@@ -43,7 +43,7 @@ final class SequenceConversionTest extends TestCase
     public function testToListAfterModification(): void
     {
         $seq = Sequence::of(1, 2);
-        $newSequence = $seq->push(3);
+        $newSequence = $seq->add(3);
 
         $this->assertSame([1, 2, 3], $newSequence->toArray());
     }
@@ -84,7 +84,7 @@ final class SequenceConversionTest extends TestCase
         $obj2 = new \stdClass();
 
         $seq = Sequence::of($obj1);
-        $newSequence = $seq->push($obj2);
+        $newSequence = $seq->add($obj2);
 
         $this->assertSame('Sequence<stdClass>', (string)$newSequence);
     }

@@ -45,7 +45,7 @@ final class IntegerFunctionalExtendedTest extends TestCase
 
             for ($i = 2; $i <= $limit; $i++) {
                 if ($sieve[$i]) {
-                    $primes = $primes->push(Integer::of($i));
+                    $primes = $primes->add(Integer::of($i));
                 }
             }
 

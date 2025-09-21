@@ -12,7 +12,7 @@ final class SequenceModificationTest extends TestCase
 {
     public function testAddItemToSequence(): void
     {
-        $seq = Sequence::of('hello')->push('world');
+        $seq = Sequence::of('hello')->add('world');
 
         $this->assertSame(['hello', 'world'], $seq->toArray());
     }
@@ -20,16 +20,16 @@ final class SequenceModificationTest extends TestCase
     public function testAddMultipleItems(): void
     {
         $seq = Sequence::of(1)
-            ->push(2)
-            ->push(3)
-            ->push(4);
+            ->add(2)
+            ->add(3)
+            ->add(4);
 
         $this->assertSame([1, 2, 3, 4], $seq->toArray());
     }
 
     public function testPushToEmptySequence(): void
     {
-        $seq = Sequence::new()->push('first');
+        $seq = Sequence::new()->add('first');
 
         $this->assertSame(['first'], $seq->toArray());
     }
@@ -37,7 +37,7 @@ final class SequenceModificationTest extends TestCase
     public function testAddItemToEmptySequence(): void
     {
         $seq = Sequence::new();
-        $newSequence = $seq->push(42);
+        $newSequence = $seq->add(42);
 
         $this->assertTrue($seq->isEmpty(), 'Original Sequence should remain empty');
         $this->assertFalse($newSequence->isEmpty());
@@ -47,7 +47,7 @@ final class SequenceModificationTest extends TestCase
     public function testAddItemOfSameType(): void
     {
         $seq = Sequence::of('hello');
-        $newSequence = $seq->push('world');
+        $newSequence = $seq->add('world');
 
         $this->assertSame(
             ['hello'],

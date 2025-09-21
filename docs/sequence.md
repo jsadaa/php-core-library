@@ -424,13 +424,13 @@ $zipped = $seq1->zip($seq2); // Sequence [Sequence [1, 4], Sequence [2, 5], Sequ
 
 **Note:** If the Sequences are of different lengths, the resulting Sequence will be as long as the shorter one.
 
-### Push
+### Add
 
 Appends an element to the end of the collection, returning a new Sequence with the added element.
 
 ```php
 $seq = Sequence::of(1, 2, 3);
-$withFour = $seq->push(4); // Sequence [1, 2, 3, 4]
+$withFour = $seq->add(4); // Sequence [1, 2, 3, 4]
 ```
 
 ### Insert At

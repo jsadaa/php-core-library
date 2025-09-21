@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence;
 
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Error\IndexOutOfBounds;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Set\Set;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
@@ -488,12 +489,12 @@ final readonly class Sequence
     }
 
     /**
-     * Append an element to the end of the collection
+     * Add an element to the end of the collection
      *
      * @param T $item The element to append
      * @return self<T> A new collection with the element appended
      */
-    public function push(mixed $item): self
+    public function add(mixed $item): self
     {
         $newCollection = $this->collection;
         $newCollection[] = $item;
@@ -814,5 +815,15 @@ final readonly class Sequence
         \sort($sorted, $sortType);
 
         return new self($sorted);
+    }
+
+    /**
+     * Converts the collection to a Set.
+     *
+     * @return Set<T> A new Set instance with the deduplicated elements of the collection
+     */
+    public function toSet(): Set
+    {
+        return Set::ofArray($this->collection);
     }
 }

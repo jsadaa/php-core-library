@@ -60,7 +60,7 @@ final class StrFunctionalTest extends TestCase
                 $rowData[$fieldName] = $fieldValue;
             }
 
-            $dataRows = $dataRows->push($rowData);
+            $dataRows = $dataRows->add($rowData);
         }
 
         $this->assertSame(3, $dataRows->len()->toInt());

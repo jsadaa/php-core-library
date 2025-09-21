@@ -28,7 +28,7 @@ final class SequenceInspectionTest extends TestCase
         $seq = Sequence::new();
         $this->assertTrue($seq->isEmpty());
 
-        $seq = $seq->push('item');
+        $seq = $seq->add('item');
         $this->assertFalse($seq->isEmpty());
     }
 
@@ -45,7 +45,7 @@ final class SequenceInspectionTest extends TestCase
 
         $this->assertSame(5, $seq->len()->toInt());
 
-        $newSequence = $seq->push(6);
+        $newSequence = $seq->add(6);
         $this->assertSame(5, $seq->len()->toInt(), 'Original Sequence length should remain unchanged');
         $this->assertSame(6, $newSequence->len()->toInt());
     }
@@ -55,7 +55,7 @@ final class SequenceInspectionTest extends TestCase
         $seq = Sequence::of(1, 2);
         $this->assertSame(2, $seq->len()->toInt());
 
-        $seq = $seq->push(3);
+        $seq = $seq->add(3);
         $this->assertSame(3, $seq->len()->toInt());
     }
 

@@ -207,16 +207,16 @@ final readonly class Path {
         $parent = $this->parent();
 
         if ($parent->isNone()) {
-            return $ancestors->push($parent);
+            return $ancestors->add($parent);
         }
 
         while ($parent->isSome())
         {
-            $ancestors = $ancestors->push($parent);
+            $ancestors = $ancestors->add($parent);
             $parent = $parent->unwrap()->parent();
         }
 
-        return $ancestors->push(Option::none());
+        return $ancestors->add(Option::none());
     }
 
     /**

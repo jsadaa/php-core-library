@@ -399,7 +399,7 @@ Without static analysis, you lose most of the type safety benefits of this libra
 For example, with the Sequence collection, which is an ordered list of elements of the same type, nothing technically prevents you from adding mixed types to the collection, but most of the Sequence APIs will not work as expected and might throw exceptions at runtime.
 
 ```php
-$seq = Sequence::of(1, 2, 3)->push('string');
+$seq = Sequence::of(1, 2, 3)->add('string');
 $seq->map(fn($n) => $n * 2); // Uncaught TypeError: Unsupported operand types: string * int
 ```
 This enforces you to really think about your implementation and the types you are using.
@@ -432,7 +432,7 @@ This design choice leads to some important differences from Rust’s original AP
 
 | Operation | Rust (Mutable) | PHP Core Library (Immutable)  |
 | :-- | :-- |:------------------------------|
-| Add element to collection | `vec.push(item)` (in-place) | `$seq->push($item)` (new Sequence) |
+| Add element to collection | `vec.push(item)` (in-place) | `$seq->add($item)` (new Sequence) |
 | String concatenation | `s1.push_str(&s2)` | `$s1->append($s2)` (new Str)  |
 
 **Example with `Sequence::map`:**
