@@ -5,11 +5,12 @@ declare(strict_types = 1);
 namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Map;
 
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Set\Set;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 
 /**
- * A collection of key-value pairs
+ * A collection of key-value pairs where the keys are unique and the values can be of any type.
  * Type safety is enforced via static analysis only - no runtime type checking.
  *
  * @template K
@@ -199,10 +200,7 @@ final readonly class Map
         return $this
             ->values
             ->find(static fn(Pair $pair) => $pair->key() === $key)
-            ->match(
-                static fn(Pair $pair) => Option::some($pair->value()),
-                static fn() => Option::none(),
-            );
+            ->map(static fn(Pair $pair) => $pair->value());
     }
 
     /**
@@ -246,13 +244,13 @@ final readonly class Map
     }
 
     /**
-     * Return a sequence of all keys in the map
+     * Return a set of all keys in the map
      *
-     * @return Sequence<K>
+     * @return Set<K>
      */
-    public function keys(): Sequence
+    public function keys(): Set
     {
-        return $this->values->map(static fn(Pair $pair) => $pair->key());
+        return $this->values->map(static fn(Pair $pair) => $pair->key())->toSet();
     }
 
     /**
