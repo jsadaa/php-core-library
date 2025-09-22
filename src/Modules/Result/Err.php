@@ -43,7 +43,7 @@ final readonly class Err
      *
      * @return T The error value
      */
-    public function get(): mixed
+    public function unwrap(): mixed
     {
         return $this->error;
     }

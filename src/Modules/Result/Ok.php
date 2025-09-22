@@ -43,7 +43,7 @@ final readonly class Ok
      *
      * @return T The success value
      */
-    public function get(): mixed
+    public function unwrap(): mixed
     {
         return $this->value;
     }

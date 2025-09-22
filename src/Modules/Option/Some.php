@@ -41,9 +41,9 @@ final readonly class Some
     /**
      * Gets the contained value.
      *
-     * @return T The wrapped value
+     * @return T
      */
-    public function get(): mixed
+    public function unwrap(): mixed
     {
         return $this->value;
     }

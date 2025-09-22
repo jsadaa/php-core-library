@@ -36,10 +36,10 @@ final readonly class Result
     public function __toString(): string
     {
         if ($this->isOk()) {
-            return 'Result<' . \get_debug_type($this->value->get()) . '>';
+            return 'Result<' . \get_debug_type($this->value->unwrap()) . '>';
         }
 
-        return 'Err<' . \get_debug_type($this->value->get()) . '>';
+        return 'Err<' . \get_debug_type($this->value->unwrap()) . '>';
     }
 
     /**
@@ -61,7 +61,7 @@ final readonly class Result
     {
         if ($this->isErr()) {
             /** @var E */
-            $value = $this->value->get();
+            $value = $this->value->unwrap();
 
             /** @psalm-suppress ImpureFunctionCall */
             return $predicate($value);
@@ -80,7 +80,7 @@ final readonly class Result
     {
         if ($this->value instanceof Ok) {
             /** @var T */
-            $value = $this->value->get();
+            $value = $this->value->unwrap();
 
             return $value;
         }
@@ -98,7 +98,7 @@ final readonly class Result
     {
         if ($this->value instanceof Err) {
             /** @var E */
-            $value = $this->value->get();
+            $value = $this->value->unwrap();
 
             return $value;
         }
@@ -116,7 +116,7 @@ final readonly class Result
     {
         if ($this->value instanceof Ok) {
             /** @var T */
-            $value = $this->value->get();
+            $value = $this->value->unwrap();
 
             return $value;
         }
@@ -137,7 +137,7 @@ final readonly class Result
             return $default();
         }
 
-        return $this->value->get();
+        return $this->value->unwrap();
     }
 
     /**
@@ -149,11 +149,11 @@ final readonly class Result
     public function map(callable $mapper): self
     {
         if ($this->value instanceof Err) {
-            return self::err($this->value->get());
+            return self::err($this->value->unwrap());
         }
 
         /** @psalm-suppress ImpureFunctionCall */
-        return self::ok($mapper($this->value->get()));
+        return self::ok($mapper($this->value->unwrap()));
     }
 
     /**
@@ -166,13 +166,13 @@ final readonly class Result
     {
         if ($this->value instanceof Err) {
             /** @var E $unwrapped */
-            $unwrapped = $this->value->get();
+            $unwrapped = $this->value->unwrap();
 
             /** @psalm-suppress ImpureFunctionCall */
             return self::err($mapper($unwrapped));
         }
 
-        return self::ok($this->value->get());
+        return self::ok($this->value->unwrap());
     }
 
     /**
@@ -189,7 +189,7 @@ final readonly class Result
         }
 
         /** @psalm-suppress ImpureFunctionCall */
-        return $mapper($this->value->get());
+        return $mapper($this->value->unwrap());
     }
 
     /**
@@ -205,14 +205,14 @@ final readonly class Result
     {
         if ($this->value instanceof Err) {
             /** @var E $unwrapped */
-            $unwrapped = $this->value->get();
+            $unwrapped = $this->value->unwrap();
 
             /** @psalm-suppress ImpureFunctionCall */
             return $default($unwrapped);
         }
 
         /** @psalm-suppress ImpureFunctionCall */
-        return $mapper($this->value->get());
+        return $mapper($this->value->unwrap());
     }
 
     /**
@@ -261,7 +261,7 @@ final readonly class Result
         if ($this->isOk()) {
             /** @var Ok<T> $value */
             $value = $this->value;
-            $unwrapped = $value->get();
+            $unwrapped = $value->unwrap();
 
             /** @psalm-suppress ImpureFunctionCall */
             return $predicate($unwrapped);
@@ -284,7 +284,7 @@ final readonly class Result
         if ($this->isOk()) {
             /** @var Ok<T> $value */
             $value = $this->value;
-            $unwrapped = $value->get();
+            $unwrapped = $value->unwrap();
 
             /** @psalm-suppress ImpureFunctionCall */
             return $ok($unwrapped);
@@ -292,7 +292,7 @@ final readonly class Result
 
         /** @var Err<E> $value */
         $value = $this->value;
-        $unwrapped = $value->get();
+        $unwrapped = $value->unwrap();
 
         /** @psalm-suppress ImpureFunctionCall */
         return $err($unwrapped);
@@ -310,14 +310,14 @@ final readonly class Result
         if ($this->isOk()) {
             /** @var Ok<T> $value */
             $value = $this->value;
-            $unwrapped = $value->get();
+            $unwrapped = $value->unwrap();
 
             return $unwrapped instanceof self ? $unwrapped : self::ok($unwrapped);
         }
 
         /** @var Err<E> $value */
         $value = $this->value;
-        $unwrapped = $value->get();
+        $unwrapped = $value->unwrap();
 
         return $unwrapped instanceof self ? $unwrapped : self::err($unwrapped);
     }
@@ -333,7 +333,7 @@ final readonly class Result
         if ($this->isOk()) {
             /** @var Ok<T> $value */
             $value = $this->value;
-            $unwrapped = $value->get();
+            $unwrapped = $value->unwrap();
 
             /** @psalm-suppress ImpureFunctionCall */
             $callback($unwrapped);
@@ -343,7 +343,7 @@ final readonly class Result
 
         /** @var Err<E> $value */
         $value = $this->value;
-        $unwrapped = $value->get();
+        $unwrapped = $value->unwrap();
 
         return self::err($unwrapped);
     }
@@ -359,7 +359,7 @@ final readonly class Result
         if ($this->isErr()) {
             /** @var Err<E> $value */
             $value = $this->value;
-            $unwrapped = $value->get();
+            $unwrapped = $value->unwrap();
 
             /** @psalm-suppress ImpureFunctionCall */
             $callback($unwrapped);
@@ -369,7 +369,7 @@ final readonly class Result
 
         /** @var Ok<T> $value */
         $value = $this->value;
-        $unwrapped = $value->get();
+        $unwrapped = $value->unwrap();
 
         return self::ok($unwrapped);
     }
@@ -384,7 +384,7 @@ final readonly class Result
         if ($this->isOk()) {
             /** @var Ok<T> $value */
             $value = $this->value;
-            $unwrapped = $value->get();
+            $unwrapped = $value->unwrap();
 
             return Option::some($unwrapped);
         }
@@ -402,7 +402,7 @@ final readonly class Result
     {
         if ($this->isOk()) {
             /** @var T $unwrapped */
-            $unwrapped = $this->value->get();
+            $unwrapped = $this->value->unwrap();
 
             return self::ok($unwrapped);
         }
@@ -422,13 +422,13 @@ final readonly class Result
     {
         if ($this->isOk()) {
             /** @var T $unwrapped */
-            $unwrapped = $this->value->get();
+            $unwrapped = $this->value->unwrap();
 
             return self::ok($unwrapped);
         }
 
         /** @var E $unwrapped */
-        $unwrapped = $this->value->get();
+        $unwrapped = $this->value->unwrap();
 
         /** @psalm-suppress ImpureFunctionCall */
         return $callback($unwrapped);
@@ -445,14 +445,14 @@ final readonly class Result
     {
         if ($this->isOk()) {
             /** @var T $unwrapped */
-            $unwrapped = $this->value->get();
+            $unwrapped = $this->value->unwrap();
 
             /** @psalm-suppress ImpureFunctionCall */
             return $callback($unwrapped);
         }
 
         /** @var E $unwrapped */
-        $unwrapped = $this->value->get();
+        $unwrapped = $this->value->unwrap();
 
         return self::err($unwrapped);
     }
