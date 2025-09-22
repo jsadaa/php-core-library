@@ -442,7 +442,7 @@ Sets the length of the file.
 ```php
 // Truncate a file to zero length (empty it)
 $file = File::from('/path/to/log.txt')->unwrap();
-$result = $file->setLen(0);
+$result = $file->setSize(0);
 
 if ($result->isOk()) {
     echo "File emptied successfully";
@@ -452,12 +452,12 @@ if ($result->isOk()) {
 
 // Truncate a file to keep only the first 1024 bytes
 $file = File::from('/path/to/large-file.txt')->unwrap();
-$file->setLen(1024)->unwrap();
+$file->setSize(1024)->unwrap();
 echo "File truncated to 1 KB";
 
 // Create a fixed-size file (useful for certain database formats)
 $dbFile = File::new('/path/to/database.dat')->unwrap();
-$dbFile->setLen(4096)->unwrap(); // Create a 4KB file
+$dbFile->setSize(4096)->unwrap(); // Create a 4KB file
 echo "Created fixed-size database file";
 ```
 

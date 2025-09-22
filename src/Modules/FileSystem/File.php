@@ -423,7 +423,7 @@ final readonly class File {
     }
 
     /**
-     * Set the length of the file
+     * Set the size of the file
      *
      * Truncates or extends the file to the specified length. If the file is extended,
      * the extended area is filled with null bytes. If the file is truncated, all data
@@ -433,7 +433,7 @@ final readonly class File {
      * @return Result<File, WriteFailed|PermissionDenied> A Result containing the modified File or a write error
      * @psalm-suppress ImpureFunctionCall
      */
-    public function setLen(int | Integer $length): Result
+    public function setSize(int | Integer $length): Result
     {
         if (!Permissions::of($this->path)->isWritable()) {
             /** @var Result<File, WriteFailed|PermissionDenied> */

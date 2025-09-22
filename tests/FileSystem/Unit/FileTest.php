@@ -223,7 +223,7 @@ final class FileTest extends TestCase
         $this->assertEquals(0xFF, $bytes->get(4)->unwrap()->toInt());
     }
 
-    public function testSetLen(): void
+    public function testSetSize(): void
     {
         // Use real file since vfsStream may not support ftruncate properly
         $path = Path::of($this->tempDir . '/setLenTest.txt');
@@ -231,7 +231,7 @@ final class FileTest extends TestCase
         $file = File::from($path->toString())->unwrap(); // open in read write mode
 
         // Truncate file to 10 bytes
-        $result = $file->setLen(10);
+        $result = $file->setSize(10);
 
         $this->assertTrue($result->isOk());
 
