@@ -291,7 +291,7 @@ final readonly class Set
      */
     public function toSequence(): Sequence
     {
-        return Sequence::ofArray($this->values->toArray());
+        return $this->values;
     }
 
     /**
