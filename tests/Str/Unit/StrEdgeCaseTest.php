@@ -70,7 +70,7 @@ final class StrEdgeCaseTest extends TestCase
     {
         $str = Str::of('Hello');
         $parts = $str->splitAt(1000);
-        $this->assertSame(2, $parts->len()->toInt());
+        $this->assertSame(2, $parts->size()->toInt());
         $this->assertSame('Hello', $parts->get(0)->unwrap()->toString());
         $this->assertSame('', $parts->get(1)->unwrap()->toString());
 
@@ -88,12 +88,12 @@ final class StrEdgeCaseTest extends TestCase
 
         $str = Str::of('Hello');
         $result = $str->padStart(1000, '-');
-        $this->assertSame(1000, $result->chars()->len()->toInt(), 'Should pad to exactly the specified length');
+        $this->assertSame(1000, $result->chars()->size()->toInt(), 'Should pad to exactly the specified length');
         $this->assertStringEndsWith('Hello', $result->toString());
 
         $str = Str::of('Hello');
         $result = $str->padStart(7, '世');
-        $this->assertSame(7, $result->chars()->len()->toInt());
+        $this->assertSame(7, $result->chars()->size()->toInt());
         $this->assertSame('世世Hello', $result->toString());
     }
 
@@ -105,12 +105,12 @@ final class StrEdgeCaseTest extends TestCase
 
         $str = Str::of('Hello');
         $result = $str->padEnd(1000, '-');
-        $this->assertSame(1000, $result->len()->toInt(), 'Should pad to exactly the specified length');
+        $this->assertSame(1000, $result->size()->toInt(), 'Should pad to exactly the specified length');
         $this->assertStringStartsWith('Hello', $result->toString());
 
         $str = Str::of('Hello');
         $result = $str->padEnd(7, '世');
-        $this->assertSame(7, $result->chars()->len()->toInt());
+        $this->assertSame(7, $result->chars()->size()->toInt());
         $this->assertSame('Hello世世', $result->toString());
     }
 
@@ -118,11 +118,11 @@ final class StrEdgeCaseTest extends TestCase
     {
         $str = Str::of('a');
         $result = $str->repeat(10000);
-        $this->assertSame(10000, $result->len()->toInt(), 'Should repeat exactly the specified number of times');
+        $this->assertSame(10000, $result->size()->toInt(), 'Should repeat exactly the specified number of times');
 
         $str = Str::of('世');
         $result = $str->repeat(5);
-        $this->assertSame(5, $result->chars()->len()->toInt());
+        $this->assertSame(5, $result->chars()->size()->toInt());
         $this->assertSame('世世世世世', $result->toString());
 
         $str = Str::of('Hello');
@@ -202,13 +202,13 @@ final class StrEdgeCaseTest extends TestCase
         // All of these should be visually equivalent but might have different internal representations
         // With no automatic normalization, we should check they're equivalent when displayed, not identical internally
         // NFD and NFC can have different character counts but should represent the same text
-        $this->assertEquals(4, $nfc->chars()->len()->toInt(), 'NFC string should have length 4'); // "é" in composed form
-        $this->assertEquals(5, $nfd->chars()->len()->toInt(), 'NFD string should have length 5'); // "é" in decomposed form
+        $this->assertEquals(4, $nfc->chars()->size()->toInt(), 'NFC string should have length 4'); // "é" in composed form
+        $this->assertEquals(5, $nfd->chars()->size()->toInt(), 'NFD string should have length 5'); // "é" in decomposed form
         $this->assertTrue($nfc->isValidUtf8(), 'NFC should produce valid UTF-8');
         $this->assertTrue($nfd->isValidUtf8(), 'NFD should produce valid UTF-8');
 
-        $this->assertEquals(4, $nfkc->chars()->len()->toInt(), 'NFKC string should have length 4'); // "é" in composed form
-        $this->assertEquals(5, $nfkd->chars()->len()->toInt(), 'NFKD string should have length 5'); // "é" in decomposed form
+        $this->assertEquals(4, $nfkc->chars()->size()->toInt(), 'NFKC string should have length 4'); // "é" in composed form
+        $this->assertEquals(5, $nfkd->chars()->size()->toInt(), 'NFKD string should have length 5'); // "é" in decomposed form
         $this->assertTrue($nfkc->isValidUtf8(), 'NFKC should produce valid UTF-8');
         $this->assertTrue($nfkd->isValidUtf8(), 'NFKD should produce valid UTF-8');
 

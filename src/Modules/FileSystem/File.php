@@ -288,13 +288,13 @@ final readonly class File {
 
         $data = $range->unwrap();
 
-        if ($data->len()->lt($length)) {
+        if ($data->size()->lt($length)) {
             /** @var Result<Str, ReadFailed|PermissionDenied> */
             return Result::err(new ReadFailed(\sprintf(
                 'Unexpected end of file: %s (requested %d bytes but got %d)',
                 $this->path->toString(),
                 $length,
-                $data->len()->toInt(),
+                $data->size()->toInt(),
             )));
         }
 

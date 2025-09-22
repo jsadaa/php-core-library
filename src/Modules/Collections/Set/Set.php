@@ -147,9 +147,9 @@ final readonly class Set
      * Returns the number of elements in the set.
      *
      */
-    public function len(): Integer
+    public function size(): Integer
     {
-        return $this->values->len();
+        return $this->values->size();
     }
 
     /**

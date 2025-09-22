@@ -60,10 +60,10 @@ Gets the number of elements in the collection.
 
 ```php
 $seq = Sequence::of(1, 2, 3);
-$length = $seq->len(); // 3
+$length = $seq->size(); // 3
 
 $empty = Sequence::new();
-$length = $empty->len(); // 0
+$length = $empty->size(); // 0
 ```
 
 ### Is Empty

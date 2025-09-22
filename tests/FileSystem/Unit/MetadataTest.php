@@ -231,7 +231,7 @@ final class MetadataTest extends TestCase
         $this->assertTrue($result->isOk());
         $metadata = $result->unwrap();
         $this->assertTrue($metadata->isFile());
-        $this->assertEquals(12, $metadata->len()->toInt());
+        $this->assertEquals(12, $metadata->size()->toInt());
     }
 
     public function testMetadataFromPathObject(): void
@@ -242,6 +242,6 @@ final class MetadataTest extends TestCase
         $this->assertTrue($result->isOk());
         $metadata = $result->unwrap();
         $this->assertTrue($metadata->isFile());
-        $this->assertEquals(12, $metadata->len()->toInt());
+        $this->assertEquals(12, $metadata->size()->toInt());
     }
 }

@@ -128,7 +128,7 @@ $result = $entry->metadata();
 
 if ($result->isOk()) {
     $metadata = $result->unwrap();
-    echo "Size: " . $metadata->len()->toInt() . " bytes";
+    echo "Size: " . $metadata->size()->toInt() . " bytes";
     echo "Modified: " . date('Y-m-d', $metadata->modified()->timestamp()->toInt());
 } else {
     echo "Cannot access metadata: " . $result->unwrapErr()->getMessage();
@@ -258,7 +258,7 @@ $fileSize = $file->size()->unwrap()->toInt();
 
 for ($offset = 0; $offset < $fileSize; $offset += $chunkSize) {
     $chunk = $file->readRange($offset, $chunkSize)->unwrap();
-    echo "Read " . $chunk->len()->toInt() . " bytes from offset $offset\n";
+    echo "Read " . $chunk->size()->toInt() . " bytes from offset $offset\n";
     // Process each chunk
 }
 ```
@@ -319,7 +319,7 @@ $result = $file->bytes();
 
 if ($result->isOk()) {
     $bytes = $result->unwrap();
-    echo "File size: " . $bytes->len()->toInt() . " bytes";
+    echo "File size: " . $bytes->size()->toInt() . " bytes";
 
     // Check file signature/magic numbers
     $firstByte = $bytes->get(0)->unwrapOr(Integer::of(0));
@@ -330,7 +330,7 @@ if ($result->isOk()) {
     }
 
     // Count occurrences of a specific byte
-    $nullBytes = $bytes->filter(fn(Integer $byte) => $byte->eq(0))->len();
+    $nullBytes = $bytes->filter(fn(Integer $byte) => $byte->eq(0))->size();
     echo "File contains " . $nullBytes->toInt() . " null bytes";
 }
 
@@ -502,7 +502,7 @@ if ($result->isOk()) {
     }
 
     // Get file size
-    $size = $metadata->len();
+    $size = $metadata->size();
     echo "File size: $size bytes";
 
     // Check timestamps
@@ -740,7 +740,7 @@ if ($result->isOk()) {
     });
 
     // Count occurrences of a substring
-    $count = $content->matches('/bin/sh')->len();
+    $count = $content->matches('/bin/sh')->size();
     echo "Found " . $count->toInt() . " users with /bin/sh shell";
 }
 ```
@@ -758,7 +758,7 @@ $result = FileSystem::readBytes('/path/to/image.jpg');
 
 if ($result->isOk()) {
     $bytes = $result->unwrap();
-    echo "File size: " . $bytes->len()->toInt() . " bytes";
+    echo "File size: " . $bytes->size()->toInt() . " bytes";
 
     // Process binary data - for example, check file signature/magic numbers
     $firstByte = $bytes->get(0)->unwrapOr(Integer::of(0));
@@ -810,7 +810,7 @@ if ($result->isOk()) {
         ),
     );
 
-    echo "Found " . $logFiles->len()->toInt() . " log files";
+    echo "Found " . $logFiles->size()->toInt() . " log files";
 }
 ```
 
@@ -1110,7 +1110,7 @@ $result = FileSystem::metadata('/etc/hosts');
 
 if ($result->isOk()) {
     $metadata = $result->unwrap();
-    echo "File size: " . $metadata->len() . " bytes";
+    echo "File size: " . $metadata->size() . " bytes";
     echo "Last modified: " . date('Y-m-d H:i:s', $metadata->modified());
 } else {
     echo "Error: " . $result->unwrapErr()->getMessage();
@@ -1536,7 +1536,7 @@ Gets the size of the file.
 ```php
 $metadata = Metadata::of('/path/to/large-file.zip')->unwrap();
 
-$size = $metadata->len();
+$size = $metadata->size();
 echo "File size: " . $size->toInt() . " bytes";
 
 // Format size in human-readable format

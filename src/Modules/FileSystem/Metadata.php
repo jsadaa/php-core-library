@@ -163,7 +163,7 @@ final readonly class Metadata {
      *
      * @return Integer The size of the file in bytes
      */
-    public function len(): Integer
+    public function size(): Integer
     {
         return $this->size;
     }

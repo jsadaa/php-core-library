@@ -121,7 +121,7 @@ final class DirectoryEntryTest extends TestCase
 
         $this->assertTrue($metadata->isFile());
         $this->assertFalse($metadata->isDir());
-        $this->assertEquals(12, $metadata->len()->toInt());
+        $this->assertEquals(12, $metadata->size()->toInt());
 
         $path = Path::of($this->root->url() . '/emptyDir');
         $entry = DirectoryEntry::of($path);

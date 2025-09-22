@@ -71,7 +71,7 @@ final class FileSystemFunctionalTest extends TestCase
 
         $configDir = $projectRoot->join(Path::of('config'));
         $entries = FileSystem::readDir($configDir)->unwrap();
-        $this->assertEquals(1, $entries->len()->toInt());
+        $this->assertEquals(1, $entries->size()->toInt());
     }
 
     public function testLogRotationWorkflow(): void
@@ -180,10 +180,10 @@ final class FileSystemFunctionalTest extends TestCase
         // Transform data (filter adults and format output)
         $adults = [];
 
-        for ($i = 1; $i < $lines->len()->toInt(); $i++) {
+        for ($i = 1; $i < $lines->size()->toInt(); $i++) {
             $line = $lines->get($i)->unwrap();
 
-            if ($line->len()->toInt() === 0) continue;
+            if ($line->size()->toInt() === 0) continue;
 
             $fields = $line->split(',');
             $age = (int) $fields->get(3)->unwrap()->toString();
@@ -288,7 +288,7 @@ final class FileSystemFunctionalTest extends TestCase
         }
 
         $backupEntries = FileSystem::readDir($backupDir)->unwrap();
-        $this->assertEquals(2, $backupEntries->len()->toInt());
+        $this->assertEquals(2, $backupEntries->size()->toInt());
 
         $documentPath = $sourceDir->join(Path::of('document.txt'));
         FileSystem::write($documentPath, 'CORRUPTED DATA')->unwrap();
@@ -345,7 +345,7 @@ final class FileSystemFunctionalTest extends TestCase
         }
 
         $finalEntries = FileSystem::readDir($tempWorkDir)->unwrap();
-        $this->assertEquals(1, $finalEntries->len()->toInt());
+        $this->assertEquals(1, $finalEntries->size()->toInt());
     }
 
     public function testSymlinkManagement(): void
@@ -510,14 +510,14 @@ final class FileSystemFunctionalTest extends TestCase
         }
 
         $backupEntries = FileSystem::readDir($backupDir)->unwrap();
-        $this->assertEquals(10, $backupEntries->len()->toInt());
+        $this->assertEquals(10, $backupEntries->size()->toInt());
 
         foreach ($files as $filePath) {
             FileSystem::removeFile($filePath)->unwrap();
         }
 
         $remainingEntries = FileSystem::readDir($batchDir)->unwrap();
-        $this->assertEquals(1, $remainingEntries->len()->toInt());
+        $this->assertEquals(1, $remainingEntries->size()->toInt());
     }
 
     public function testFileSystemErrorHandling(): void

@@ -307,9 +307,9 @@ final readonly class Map
      * Return the length of the map
      *
      */
-    public function len(): Integer
+    public function size(): Integer
     {
-        return $this->values->len();
+        return $this->values->size();
     }
 
     /**

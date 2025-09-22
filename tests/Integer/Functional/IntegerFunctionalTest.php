@@ -123,7 +123,7 @@ final class IntegerFunctionalTest extends TestCase
         $this->assertSame(50, $sum->toInt());
 
         // Calculate mean (average)
-        $count = $values->len();
+        $count = $values->size();
         $meanResult = $sum->div($count);
         $this->assertTrue($meanResult->isOk());
         $this->assertSame(10, $meanResult->unwrap()->toInt());

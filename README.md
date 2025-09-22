@@ -159,7 +159,7 @@ $str = Str::of('Hello World');
 $empty = Str::new();
 
 // Character access and content checks
-$len = $str->len();                   // 11 (byte count for ASCII)
+$len = $str->size();                   // 11 (byte count for ASCII)
 $first = $str->get(0);                // Option::some('H')
 $contains = $str->contains('World');  // true
 $starts = $str->startsWith('Hello');  // true

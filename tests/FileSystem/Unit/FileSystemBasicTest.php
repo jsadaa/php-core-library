@@ -80,7 +80,7 @@ final class FileSystemBasicTest extends TestCase
         $metadata = $result->unwrap();
 
         $this->assertInstanceOf(Metadata::class, $metadata);
-        $this->assertEquals(12, $metadata->len()->toInt());
+        $this->assertEquals(12, $metadata->size()->toInt());
         $this->assertTrue($metadata->isFile());
         $this->assertFalse($metadata->isDir());
     }

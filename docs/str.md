@@ -64,16 +64,16 @@ Returns the length of the string in bytes (not characters).
 
 ```php
 $str = Str::of('Hello');
-$length = $str->len()->toInt(); // 5 (for ASCII characters, bytes equal characters)
+$length = $str->size()->toInt(); // 5 (for ASCII characters, bytes equal characters)
 
 $utf8Str = Str::of('été'); // Multi-byte characters
-$length = $utf8Str->len()->toInt(); // 4 (counts bytes, not characters)
+$length = $utf8Str->size()->toInt(); // 4 (counts bytes, not characters)
 ```
 
 **Notes:** For graphemes counting, use :
 
 ```php
-$len = Str::of('été')->chars()->len()->toInt();
+$len = Str::of('été')->chars()->size()->toInt();
 ```
 
 But note that it also depends of the normalization form used. see `Str::normalize()`.
@@ -318,8 +318,8 @@ $chars = $str->chars(); // Sequence ["😀", "😀", "😀"] (properly handles U
 **Note:** This method splits by Unicode code points, so characters in decomposed form will be split into multiple code points.
 
 ```php
-$nfc = Str::of('é')->normalize('NFC')->unwrap()->chars()->len()->toInt(); // 1 "é" in composed form
-$nfd = Str::of('é')->normalize('NFD')->unwrap()->chars()->len()->toInt(); // 2 "é" in decomposed form : "e" + "́"
+$nfc = Str::of('é')->normalize('NFC')->unwrap()->chars()->size()->toInt(); // 1 "é" in composed form
+$nfd = Str::of('é')->normalize('NFD')->unwrap()->chars()->size()->toInt(); // 2 "é" in decomposed form : "e" + "́"
 ```
 
 ### Lines

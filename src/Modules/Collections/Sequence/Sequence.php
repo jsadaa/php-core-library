@@ -138,7 +138,7 @@ final readonly class Sequence
      */
     public function eq(self $other): bool
     {
-        if ($this->len()->eq($other->len()) === false) {
+        if ($this->size()->eq($other->size()) === false) {
             return false;
         }
 
@@ -156,7 +156,7 @@ final readonly class Sequence
      *
      * @return Integer The length of the collection
      */
-    public function len(): Integer
+    public function size(): Integer
     {
         return Integer::of(\count($this->collection));
     }
@@ -172,7 +172,7 @@ final readonly class Sequence
     public function zip(self $other): self
     {
         $zipped = [];
-        $length = $this->len()->min($other->len());
+        $length = $this->size()->min($other->size());
 
         for ($i = 0; $i < $length->toInt(); $i++) {
             $zipped[] = self::of($this->collection[$i], $other->collection[$i]);
@@ -360,7 +360,7 @@ final readonly class Sequence
         }
 
         $windows = [];
-        $count = $this->len();
+        $count = $this->size();
 
         // If the collection is smaller than the window size, return an empty collection
         if ($count->lt($size)) {
@@ -512,7 +512,7 @@ final readonly class Sequence
     {
         $index = $index instanceof Integer ? $index : Integer::of($index);
 
-        if ($index->lt(0) || $index->ge($this->len()) || $this->isEmpty()) {
+        if ($index->lt(0) || $index->ge($this->size()) || $this->isEmpty()) {
             return new self($this->collection);
         }
 
@@ -620,13 +620,13 @@ final readonly class Sequence
             return new self(\array_fill(0, $size->toInt(), $value));
         }
 
-        if ($size->lt($this->len())) {
+        if ($size->lt($this->size())) {
             return new self(\array_slice($this->collection, 0, $size->toInt()));
         }
 
         $newCollection = \array_merge(
             $this->collection,
-            \array_fill(0, $size->sub($this->len())->toInt(), $value),
+            \array_fill(0, $size->sub($this->size())->toInt(), $value),
         );
 
         return new self($newCollection);
@@ -747,14 +747,14 @@ final readonly class Sequence
         $index1 = $index1 instanceof Integer ? $index1 : Integer::of($index1);
         $index2 = $index2 instanceof Integer ? $index2 : Integer::of($index2);
 
-        if ($index1->lt(0) || $index1->ge($this->len())) {
+        if ($index1->lt(0) || $index1->ge($this->size())) {
             /** @var Result<self<T>, IndexOutOfBounds> */
-            return Result::err(new IndexOutOfBounds($index1->toInt(), $this->len()->toInt()));
+            return Result::err(new IndexOutOfBounds($index1->toInt(), $this->size()->toInt()));
         }
 
-        if ($index2->lt(0) || $index2->ge($this->len())) {
+        if ($index2->lt(0) || $index2->ge($this->size())) {
             /** @var Result<self<T>, IndexOutOfBounds> */
-            return Result::err(new IndexOutOfBounds($index2->toInt(), $this->len()->toInt()));
+            return Result::err(new IndexOutOfBounds($index2->toInt(), $this->size()->toInt()));
         }
 
         $collection = $this->collection;

@@ -218,7 +218,7 @@ final class FileTest extends TestCase
         $bytes = $result->unwrap();
 
         $this->assertInstanceOf(Sequence::class, $bytes);
-        $this->assertEquals(6, $bytes->len()->toInt());
+        $this->assertEquals(6, $bytes->size()->toInt());
         $this->assertEquals(0x00, $bytes->get(0)->unwrap()->toInt());
         $this->assertEquals(0xFF, $bytes->get(4)->unwrap()->toInt());
     }
@@ -309,7 +309,7 @@ final class FileTest extends TestCase
         $metadata = $result->unwrap();
         $this->assertInstanceOf(Metadata::class, $metadata);
         $this->assertTrue($metadata->isFile());
-        $this->assertEquals(\strlen($this->testContent), $metadata->len()->toInt());
+        $this->assertEquals(\strlen($this->testContent), $metadata->size()->toInt());
     }
 
     public function testSetPermissions(): void

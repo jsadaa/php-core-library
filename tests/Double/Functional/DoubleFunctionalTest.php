@@ -155,7 +155,7 @@ final class DoubleFunctionalTest extends TestCase
             Double::of(0.0),
         );
 
-        $count = $values->len()->toInt();
+        $count = $values->size()->toInt();
         $mean = $sum->div(Double::of($count))->unwrap();
         $this->assertEqualsWithDelta(10.36, $mean->toFloat(), 0.01);
 

@@ -30,7 +30,7 @@ final class SequenceFunctionalExtendedTest extends TestCase
             return $requirements->all(static fn($req) => $req === true);
         });
 
-        $this->assertSame(2, $validSubmissions->len()->toInt());
+        $this->assertSame(2, $validSubmissions->size()->toInt());
         $this->assertSame('Jane Smith', $validSubmissions->get(0)->unwrapOr(null)['name']);
         $this->assertSame('Alice Brown', $validSubmissions->get(1)->unwrapOr(null)['name']);
 
@@ -56,7 +56,7 @@ final class SequenceFunctionalExtendedTest extends TestCase
             ['name' => 'Stock C', 'data' => $stockC],
         )->filter(static fn($stock) => $stock['data']->eq($expectedPattern));
 
-        $this->assertSame(2, $matchingStocks->len()->toInt());
+        $this->assertSame(2, $matchingStocks->size()->toInt());
 
         $matchingNames = $matchingStocks->map(static fn($stock) => $stock['name'])->toArray();
         $this->assertSame(['Stock A', 'Stock B'], $matchingNames);
@@ -92,7 +92,7 @@ final class SequenceFunctionalExtendedTest extends TestCase
                 return $record;
             });
 
-        $this->assertSame(5, $completeData->len()->toInt());
+        $this->assertSame(5, $completeData->size()->toInt());
 
         $firstRecord = $completeData->get(0)->unwrap();
         $this->assertSame(1625097600, $firstRecord['timestamp']);
@@ -101,7 +101,7 @@ final class SequenceFunctionalExtendedTest extends TestCase
 
         $shortTimestamps = $timestamps->take(3);
         $zippedShort = $shortTimestamps->zip($temperatures);
-        $this->assertSame(3, $zippedShort->len()->toInt());
+        $this->assertSame(3, $zippedShort->size()->toInt());
     }
 
     public function testDataProcessingWithBoundaryOperations(): void
@@ -119,21 +119,21 @@ final class SequenceFunctionalExtendedTest extends TestCase
         // Remove outliers by truncating first and last elements
         $cleanedData = $timeSeriesData
             ->skip(1)
-            ->truncate($timeSeriesData->len()->toInt() - 2);
+            ->truncate($timeSeriesData->size()->toInt() - 2);
 
-        $this->assertSame(7, $cleanedData->len()->toInt());
+        $this->assertSame(7, $cleanedData->size()->toInt());
         $this->assertSame(25.4, $cleanedData->first()->unwrap());
         $this->assertSame(26.5, $cleanedData->last()->unwrap());
 
         // Calculate statistics on cleaned data
         $sum = $cleanedData->fold(static fn($acc, $val) => $acc + $val, 0);
-        $average = $sum / $cleanedData->len()->toInt();
+        $average = $sum / $cleanedData->size()->toInt();
 
         $this->assertEqualsWithDelta(26.3, $average, 0.1);
 
         // Reset for next analysis
         $resetData = $cleanedData->clear();
-        $this->assertSame(0, $resetData->len()->toInt());
+        $this->assertSame(0, $resetData->size()->toInt());
         $this->assertTrue($resetData->isEmpty());
     }
 
@@ -152,21 +152,21 @@ final class SequenceFunctionalExtendedTest extends TestCase
         );
 
         $initialLogs = $logs->take(3);
-        $this->assertSame(3, $initialLogs->len()->toInt());
+        $this->assertSame(3, $initialLogs->size()->toInt());
         $this->assertSame('Application started', $initialLogs->get(0)->unwrap()['message']);
 
         $laterLogs = $logs->skip(5);
-        $this->assertSame(3, $laterLogs->len()->toInt());
+        $this->assertSame(3, $laterLogs->size()->toInt());
         $this->assertSame('Database connection established', $laterLogs->get(0)->unwrap()['message']);
 
         $beforeFirstError = $logs->takeWhile(static fn($log) => $log['severity'] !== 'ERROR');
-        $this->assertSame(2, $beforeFirstError->len()->toInt());
+        $this->assertSame(2, $beforeFirstError->size()->toInt());
 
         $preErrorLogs = $logs->takeWhile(static fn($log) => $log['severity'] !== 'ERROR');
-        $remainingLogs = $logs->skip($preErrorLogs->len()); // Skip to first error
+        $remainingLogs = $logs->skip($preErrorLogs->size()); // Skip to first error
         $postErrorLogs = $remainingLogs->skipWhile(static fn($log) => $log['severity'] === 'ERROR');
 
-        $this->assertSame(3, $postErrorLogs->len()->toInt());
+        $this->assertSame(3, $postErrorLogs->size()->toInt());
         $this->assertSame('Database connection established', $postErrorLogs->first()->unwrap()['message']);
     }
 
@@ -182,9 +182,9 @@ final class SequenceFunctionalExtendedTest extends TestCase
         $sortedData = $this->bubbleSortUsingSequence($data);
         $this->assertSame([1, 2, 3, 4, 5, 6, 7, 8], $sortedData->toArray());
 
-        $modifiedData = $data->swap(0, $data->len()->sub(1)->toInt())->unwrap(); // Swap first and last elements
+        $modifiedData = $data->swap(0, $data->size()->sub(1)->toInt())->unwrap(); // Swap first and last elements
         $this->assertSame(4, $modifiedData->get(0)->unwrap());
-        $this->assertSame(7, $modifiedData->get($modifiedData->len()->toInt() - 1)->unwrap());
+        $this->assertSame(7, $modifiedData->get($modifiedData->size()->toInt() - 1)->unwrap());
     }
 
     public function testIterationAndDisplayProcessing(): void
@@ -238,7 +238,7 @@ final class SequenceFunctionalExtendedTest extends TestCase
                 : Option::none();
         });
 
-        $this->assertSame(2, $validValues->len()->toInt());
+        $this->assertSame(2, $validValues->size()->toInt());
         $this->assertSame(1, $validValues->get(0)->unwrap()['id']);
         $this->assertSame(4, $validValues->get(1)->unwrap()['id']);
 
@@ -263,7 +263,7 @@ final class SequenceFunctionalExtendedTest extends TestCase
      */
     private function bubbleSortUsingSequence(Sequence $data): Sequence
     {
-        $len = $data->len()->toInt();
+        $len = $data->size()->toInt();
         $result = $data; // Clone of original data
 
         for ($i = 0; $i < $len; $i++) {

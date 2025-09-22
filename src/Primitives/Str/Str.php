@@ -89,11 +89,11 @@ final readonly class Str implements \Stringable
     /**
      * Returns the length of the string in bytes
      *
-     * This does not count the number of characters in the string. Use `chars()->len()` to count characters.
+     * This does not count the number of characters in the string. Use `chars()->size()` to count characters.
      *
      * @return Integer The number of bytes
      */
-    public function len(): Integer
+    public function size(): Integer
     {
         return Integer::of(\strlen($this->value));
     }
@@ -218,7 +218,7 @@ final readonly class Str implements \Stringable
             return self::new();
         }
 
-        if ($length->ge($this->chars()->len())) {
+        if ($length->ge($this->chars()->size())) {
             return new self($this->value);
         }
 
@@ -418,7 +418,7 @@ final readonly class Str implements \Stringable
         $targetLength = $targetLength->max(0);
         $padString = $padString instanceof self ? $padString->toString() : $padString;
 
-        $currentLength = $this->chars()->len();
+        $currentLength = $this->chars()->size();
 
         // If target length is less than or equal to current length, return as is
         if ($targetLength->le($currentLength) || $padString === '') {
@@ -452,7 +452,7 @@ final readonly class Str implements \Stringable
         $targetLength = $targetLength->max(0);
         $padString = $padString instanceof self ? $padString->toString() : $padString;
 
-        $currentLength = $this->chars()->len();
+        $currentLength = $this->chars()->size();
 
         // If target length is less than or equal to current length, return as is
         if ($targetLength->le($currentLength) || $padString === '') {
@@ -732,7 +732,7 @@ final readonly class Str implements \Stringable
         }
 
         // If the string is shorter than the width, no wrapping needed
-        if ($width->ge($this->chars()->len())) {
+        if ($width->ge($this->chars()->size())) {
             return new self($this->value);
         }
 
@@ -1175,7 +1175,7 @@ final readonly class Str implements \Stringable
     {
         $start = $start instanceof Integer ? $start : Integer::of($start);
         $length = $length instanceof Integer ? $length : Integer::of($length);
-        $size = $this->chars()->len();
+        $size = $this->chars()->size();
 
         if ($start->lt(0) || $start->ge($size)) {
             return Option::none();
@@ -1200,7 +1200,7 @@ final readonly class Str implements \Stringable
     {
         $index = $index instanceof Integer ? $index : Integer::of($index);
 
-        if ($index->lt(0) || $index->ge($this->chars()->len())) {
+        if ($index->lt(0) || $index->ge($this->chars()->size())) {
             return Option::none();
         }
 
@@ -1369,7 +1369,7 @@ final readonly class Str implements \Stringable
     {
         $result = '';
         $chars = $this->chars();
-        $count = $chars->len()->toInt();
+        $count = $chars->size()->toInt();
 
         $chars = $chars->map(static fn(Str $char) => $char->toString())->toArray();
 
