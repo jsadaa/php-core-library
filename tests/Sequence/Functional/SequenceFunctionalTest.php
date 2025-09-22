@@ -64,7 +64,7 @@ final class SequenceFunctionalTest extends TestCase
 
         $uniqueSkillCount = $users
             ->flatMap(static fn($user) => $user->skills)
-            ->dedup()
+            ->unique()
             ->len();
 
         $this->assertSame(10, $uniqueSkillCount->toInt());
@@ -89,7 +89,7 @@ final class SequenceFunctionalTest extends TestCase
 
         $userIds = $completedTransactions
             ->map(static fn($tx) => $tx->userId)
-            ->dedup();
+            ->unique();
 
         $userSummaries = $userIds
             ->map(static function($userId) use ($completedTransactions) {
@@ -248,7 +248,7 @@ final class SequenceFunctionalTest extends TestCase
         $allUniqueSkills = $departments
             ->flatMap(static fn($dept) => $dept['employees'])
             ->flatMap(static fn($emp) => $emp['skills'])
-            ->dedup()
+            ->unique()
             ->sort()
             ->toArray();
 

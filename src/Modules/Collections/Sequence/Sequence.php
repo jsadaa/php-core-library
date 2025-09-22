@@ -558,7 +558,7 @@ final readonly class Sequence
      *
      * @return self<T> A new Sequence with duplicate elements removed
      */
-    public function dedup(): self
+    public function unique(): self
     {
         if ($this->isEmpty()) {
             return new self();

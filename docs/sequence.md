@@ -248,13 +248,13 @@ $sortedByAge = $people->sortBy(fn($person) => $person["age"]);
 // Sequence [["name" => "Bob", "age" => 25], ["name" => "Alice", "age" => 30], ["name" => "Charlie", "age" => 35]]
 ```
 
-### Dedup (Remove Duplicates)
+### unique (Remove Duplicates)
 
 Returns a new Sequence with duplicate elements removed. For scalar types (integer, float, string, boolean), this uses a hash map approach. For objects, objects are compared by reference, so only identical object instances are considered duplicates.
 
 ```php
 $seq = Sequence::of(1, 2, 2, 3, 3, 3, 4);
-$unique = $seq->dedup(); // Sequence [1, 2, 3, 4]
+$unique = $seq->unique(); // Sequence [1, 2, 3, 4]
 ```
 
 ## Element Access

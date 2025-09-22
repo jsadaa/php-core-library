@@ -75,7 +75,7 @@ Sequence provides many more powerful operations for working with collections, in
 - Inspection: `all()`, `any()`, `contains()`, `isEmpty()`
 - Transformation: `map()`, `filter()`, `flatMap()`, `flatten()`
 - Combination: `append()`, `zip()`, `push()`
-- Advanced operations: `windows()`, `dedup()`, `sortBy()`
+- Advanced operations: `windows()`, `unique()`, `sortBy()`
 
 For complete documentation with examples, see [Sequence Documentation](./docs/sequence.md).
 

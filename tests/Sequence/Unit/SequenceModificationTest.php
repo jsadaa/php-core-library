@@ -111,10 +111,10 @@ final class SequenceModificationTest extends TestCase
         $this->assertSame([1, 2, 3], $newSequence->toArray());
     }
 
-    public function testDedupWithIntegers(): void
+    public function testUniqueWithIntegers(): void
     {
         $seq = Sequence::of(1, 2, 2, 3, 1, 4, 5, 3);
-        $dedupedSequence = $seq->dedup();
+        $dedupedSequence = $seq->unique();
 
         $this->assertSame([1, 2, 3, 4, 5], $dedupedSequence->toArray());
         $this->assertSame(
@@ -124,54 +124,54 @@ final class SequenceModificationTest extends TestCase
         );
     }
 
-    public function testDedupWithStrings(): void
+    public function testUniqueWithStrings(): void
     {
         $seq = Sequence::of('a', 'b', 'a', 'c', 'd', 'b', 'e');
-        $dedupedSequence = $seq->dedup();
+        $dedupedSequence = $seq->unique();
 
         $this->assertSame(['a', 'b', 'c', 'd', 'e'], $dedupedSequence->toArray());
     }
 
-    public function testDedupWithFloats(): void
+    public function testUniqueWithFloats(): void
     {
         $seq = Sequence::of(1.1, 2.2, 1.1, 3.3, 2.2, 4.4);
-        $dedupedSequence = $seq->dedup();
+        $dedupedSequence = $seq->unique();
 
         $this->assertSame([1.1, 2.2, 3.3, 4.4], $dedupedSequence->toArray());
     }
 
-    public function testDedupWithBooleans(): void
+    public function testUniqueWithBooleans(): void
     {
         $seq = Sequence::of(true, false, true, false, true);
-        $dedupedSequence = $seq->dedup();
+        $dedupedSequence = $seq->unique();
 
         $this->assertSame([true, false], $dedupedSequence->toArray());
     }
 
-    public function testDedupWithEmptySequence(): void
+    public function testUniqueWithEmptySequence(): void
     {
         $seq = Sequence::new();
-        $dedupedSequence = $seq->dedup();
+        $dedupedSequence = $seq->unique();
 
         $this->assertTrue($dedupedSequence->isEmpty());
     }
 
-    public function testDedupWithSingleItem(): void
+    public function testUniqueWithSingleItem(): void
     {
         $seq = Sequence::of('unique');
-        $dedupedSequence = $seq->dedup();
+        $dedupedSequence = $seq->unique();
 
         $this->assertSame(['unique'], $dedupedSequence->toArray());
     }
 
-    public function testDedupWithObjects(): void
+    public function testUniqueWithObjects(): void
     {
         $obj1 = new \stdClass();
         $obj2 = new \stdClass();
         $obj3 = new \stdClass();
 
         $seq = Sequence::of($obj1, $obj2, $obj1, $obj3);
-        $dedupedSequence = $seq->dedup();
+        $dedupedSequence = $seq->unique();
 
         $this->assertCount(3, $dedupedSequence->toArray());
 
@@ -180,10 +180,10 @@ final class SequenceModificationTest extends TestCase
         $this->assertSame($obj3, $dedupedSequence->toArray()[2]);
     }
 
-    public function testDedupWithNoDuplicates(): void
+    public function testUniqueWithNoDuplicates(): void
     {
         $seq = Sequence::of(1, 2, 3, 4, 5);
-        $dedupedSequence = $seq->dedup();
+        $dedupedSequence = $seq->unique();
 
         $this->assertSame([1, 2, 3, 4, 5], $dedupedSequence->toArray());
         $this->assertNotSame(
@@ -193,10 +193,10 @@ final class SequenceModificationTest extends TestCase
         );
     }
 
-    public function testDedupWithMixedNumericStrings(): void
+    public function testUniqueWithMixedNumericStrings(): void
     {
         $seq = Sequence::of('1', '2', '1', '3');
-        $dedupedSequence = $seq->dedup();
+        $dedupedSequence = $seq->unique();
 
         $this->assertSame(['1', '2', '3'], $dedupedSequence->toArray());
     }

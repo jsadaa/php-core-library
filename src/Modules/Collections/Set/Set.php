@@ -38,7 +38,7 @@ final readonly class Set
     public static function of(mixed ...$values): self
     {
         /** @var self<U> */
-        return new self(Sequence::of($values)->dedup());
+        return new self(Sequence::of($values)->unique());
     }
 
     /**
@@ -49,7 +49,7 @@ final readonly class Set
      */
     public function add(mixed $value): self
     {
-        return new self($this->values->add($value)->dedup());
+        return new self($this->values->add($value)->unique());
     }
 
     /**
@@ -183,7 +183,7 @@ final readonly class Set
      */
     public function map(callable $fn): self
     {
-        return new self($this->values->map($fn)->dedup());
+        return new self($this->values->map($fn)->unique());
     }
 
     /**
@@ -195,7 +195,7 @@ final readonly class Set
      */
     public function flatMap(callable $fn): self
     {
-        return new self($this->values->flatMap($fn)->dedup());
+        return new self($this->values->flatMap($fn)->unique());
     }
 
     /**
@@ -238,7 +238,7 @@ final readonly class Set
      */
     public function filterMap(callable $fn): self
     {
-        return new self($this->values->filterMap($fn)->dedup());
+        return new self($this->values->filterMap($fn)->unique());
     }
 
     /**
@@ -304,6 +304,6 @@ final readonly class Set
      */
     public static function ofArray(array $array): self
     {
-        return new self(Sequence::ofArray($array)->dedup());
+        return new self(Sequence::ofArray($array)->unique());
     }
 }
