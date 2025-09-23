@@ -8,6 +8,7 @@ use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\PermissionDenied;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
+use Jsadaa\PhpCoreLibrary\Primitives\Unit;
 
 /**
  * Represents the permissions of a file or directory.
@@ -138,7 +139,7 @@ final readonly class Permissions {
      * mode of this Permissions instance.
      *
      * @param string|Path $path The path to apply the permissions to
-     * @return Result<Path, PermissionDenied> A Result containing the path if successful,
+     * @return Result<Unit, PermissionDenied> A Result containing the path if successful,
      */
     public function apply(string | Path $path): Result
     {
@@ -147,7 +148,7 @@ final readonly class Permissions {
         // Set file permissions based on the mode
         /** @psalm-suppress ImpureFunctionCall */
         if (!@\chmod($path, $this->mode->toInt())) {
-            /** @var Result<Path, PermissionDenied> */
+            /** @var Result<Unit, PermissionDenied> */
             return Result::err(
                 new PermissionDenied(\sprintf(
                     'Failed to set permissions %d on %s',
@@ -157,7 +158,7 @@ final readonly class Permissions {
             );
         }
 
-        /** @var Result<Path, PermissionDenied> */
-        return Result::ok(Path::of($path));
+        /** @var Result<Unit, PermissionDenied> */
+        return Result::ok(Unit::new());
     }
 }

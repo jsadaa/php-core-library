@@ -9,6 +9,7 @@ use Jsadaa\PhpCoreLibrary\Modules\Json\Error\EncodingError;
 use Jsadaa\PhpCoreLibrary\Modules\Json\Error\ValidationError;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
+use Jsadaa\PhpCoreLibrary\Primitives\Unit;
 
 /**
  * Json module provides safe wrapper methods for encoding, decoding, and validating JSON data.
@@ -90,17 +91,17 @@ final readonly class Json
      * @param string|Str $json The JSON string to validate.
      * @param int $flags Flags to pass to json_validate.
      * @param int<1, 2147483647> $depth Maximum depth of the data structure.
-     * @return Result<null, ValidationError> The validation result
+     * @return Result<Unit, ValidationError> The validation result
      */
     public static function validate(string | Str $json, int $flags = 0, int $depth = 512): Result {
         try {
             \json_validate($json instanceof Str ? $json->toString() : $json, $depth | \JSON_THROW_ON_ERROR, $flags);
         } catch (\JsonException $e) {
-            /** @var Result<null, ValidationError> */
+            /** @var Result<Unit, ValidationError> */
             return Result::err(new ValidationError($e->getMessage()));
         }
 
-        /** @var Result<null, ValidationError> */
-        return Result::ok(null);
+        /** @var Result<Unit, ValidationError> */
+        return Result::ok(Unit::new());
     }
 }

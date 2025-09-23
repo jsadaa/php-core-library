@@ -616,7 +616,7 @@ final readonly class File {
         $path = $result->unwrap();
 
         /** @var Result<File, PermissionDenied> */
-        return Result::ok(new self($path));
+        return Result::ok(new self($this->path));
     }
 
     /**

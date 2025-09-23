@@ -221,9 +221,6 @@ final class PermissionsTest extends TestCase
 
         $result = $permissions->apply($path);
         $this->assertTrue($result->isOk());
-
-        $returnedPath = $result->unwrap();
-        $this->assertEquals($path->toString(), $returnedPath->toString());
     }
 
     public function testPermissionBitMasks(): void

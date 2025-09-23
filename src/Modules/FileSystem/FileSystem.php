@@ -26,6 +26,7 @@ use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
+use Jsadaa\PhpCoreLibrary\Primitives\Unit;
 
 /**
  * Provides static methods for file and directory operations.
@@ -221,7 +222,7 @@ final readonly class FileSystem {
      *
      * @param string|Path $path The path to the file to write
      * @param string|Str $contents The content to write to the file
-     * @return Result<null, CreateFailed|WriteFailed|PermissionDenied|InvalidFileType> A Result indicating success or an error
+     * @return Result<Unit, CreateFailed|WriteFailed|PermissionDenied|InvalidFileType> A Result indicating success or an error
      */
     public static function write(string | Path $path, string | Str $contents): Result
     {
@@ -230,7 +231,7 @@ final readonly class FileSystem {
         $fileResult = $path->exists() === false ? File::new($path) : File::from($path);
 
         if ($fileResult->isErr()) {
-            /** @var Result<null, CreateFailed|WriteFailed|PermissionDenied|InvalidFileType> */
+            /** @var Result<Unit, CreateFailed|WriteFailed|PermissionDenied|InvalidFileType> */
             return $fileResult;
         }
 
@@ -238,12 +239,12 @@ final readonly class FileSystem {
         $writeResult = $file->write($contents instanceof Str ? $contents->toString() : $contents);
 
         if ($writeResult->isErr()) {
-            /** @var Result<null, CreateFailed|WriteFailed|PermissionDenied|InvalidFileType> */
+            /** @var Result<Unit, CreateFailed|WriteFailed|PermissionDenied|InvalidFileType> */
             return $writeResult;
         }
 
-        /** @var Result<null, CreateFailed|WriteFailed|PermissionDenied|InvalidFileType> */
-        return Result::ok(null);
+        /** @var Result<Unit, CreateFailed|WriteFailed|PermissionDenied|InvalidFileType> */
+        return Result::ok(Unit::new());
     }
 
     /**
@@ -255,7 +256,7 @@ final readonly class FileSystem {
      *
      * @param string|Path $source The source file path
      * @param string|Path $destination The destination file path
-     * @return Result<null, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> A Result indicating success or an error
+     * @return Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> A Result indicating success or an error
      */
     public static function copyFile(string | Path $source, string | Path $destination): Result
     {
@@ -263,14 +264,14 @@ final readonly class FileSystem {
         $destPath = \is_string($destination) ? Path::of($destination) : $destination;
 
         if (!$sourcePath->exists()) {
-            /** @var Result<null, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
+            /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
             return Result::err(new FileNotFound(\sprintf('Source file does not exist: %s', $sourcePath->toString())));
         }
 
         $fileResult = File::from($sourcePath->toString());
 
         if ($fileResult->isErr()) {
-            /** @var Result<null, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
+            /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
             return $fileResult;
         }
 
@@ -278,14 +279,14 @@ final readonly class FileSystem {
         $contentResult = $sourceFile->read();
 
         if ($contentResult->isErr()) {
-            /** @var Result<null, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
+            /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
             return $contentResult;
         }
 
         $destFileResult = File::new($destPath->toString());
 
         if ($destFileResult->isErr()) {
-            /** @var Result<null, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
+            /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
             return $destFileResult;
         }
 
@@ -293,7 +294,7 @@ final readonly class FileSystem {
         $writeResult = $destFile->write($contentResult->unwrap());
 
         if ($writeResult->isErr()) {
-            /** @var Result<null, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
+            /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
             return $writeResult;
         }
 
@@ -301,12 +302,12 @@ final readonly class FileSystem {
         $result = $sourcePerm->apply($destPath);
 
         if ($result->isErr()) {
-            /** @var Result<null, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
+            /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
             return $result;
         }
 
-        /** @var Result<null, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
-        return Result::ok(null);
+        /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
+        return Result::ok(Unit::new());
     }
 
     /**
@@ -320,7 +321,7 @@ final readonly class FileSystem {
      *
      * @param string|Path $source The source path
      * @param string|Path $dest The destination path
-     * @return Result<null, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> A Result indicating success or an error
+     * @return Result<Unit, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> A Result indicating success or an error
      */
     public static function renameFile(string | Path $source, string | Path $dest): Result
     {
@@ -328,29 +329,29 @@ final readonly class FileSystem {
         $destPath = \is_string($dest) ? Path::of($dest) : $dest;
 
         if (!$sourcePath->exists()) {
-            /** @var Result<null, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> */
+            /** @var Result<Unit, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> */
             return Result::err(new FileNotFound(\sprintf('Source file does not exist: %s', $sourcePath->toString())));
         }
 
         if (!$sourcePath->isFile()) {
-            /** @var Result<null, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> */
+            /** @var Result<Unit, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> */
             return Result::err(new InvalidFileType(\sprintf('Source file is not a file: %s', $sourcePath->toString())));
         }
 
         if(!Permissions::of($sourcePath)->isReadable()) {
-            /** @var Result<null, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> */
+            /** @var Result<Unit, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf('Source file is not readable: %s', $sourcePath->toString())));
         }
 
         $result = @\rename($sourcePath->toString(), $destPath->toString());
 
         if ($result === false) {
-            /** @var Result<null, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> */
+            /** @var Result<Unit, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> */
             return Result::err(new RenameFailed(\sprintf('Failed to rename file: %s to %s', $sourcePath->toString(), $destPath->toString())));
         }
 
-        /** @var Result<null, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> */
-        return Result::ok(null);
+        /** @var Result<Unit, InvalidFileType|FileNotFound|RenameFailed|PermissionDenied> */
+        return Result::ok(Unit::new());
     }
 
     /**
@@ -365,27 +366,27 @@ final readonly class FileSystem {
      *
      * @param Path $sourcePath The source directory path
      * @param Path $destPath The destination directory path
-     * @return Result<null, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> A Result indicating success or an error
+     * @return Result<Unit, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> A Result indicating success or an error
      */
     public function renameDir(Path $sourcePath, Path $destPath): Result
     {
         if (!$sourcePath->exists()) {
-            /** @var Result<null, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
+            /** @var Result<Unit, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
             return Result::err(new DirectoryNotFound(\sprintf('Source directory does not exist: %s', $sourcePath->toString())));
         }
 
         if (!$sourcePath->isDir()) {
-            /** @var Result<null, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
+            /** @var Result<Unit, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
             return Result::err(new InvalidFileType(\sprintf('Source directory is not a directory: %s', $sourcePath->toString())));
         }
 
         if ($destPath->exists()) {
-            /** @var Result<null, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
+            /** @var Result<Unit, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
             return Result::err(new RenameFailed(\sprintf('Destination directory already exists: %s', $destPath->toString())));
         }
 
         if (!Permissions::of($sourcePath)->isReadable()) {
-            /** @var Result<null, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
+            /** @var Result<Unit, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
             return Result::err(new PermissionDenied(\sprintf('Source directory is not readable: %s', $sourcePath->toString())));
         }
 
@@ -411,7 +412,7 @@ final readonly class FileSystem {
             );
 
             if (!\is_resource($process)) {
-                /** @var Result<null, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
+                /** @var Result<Unit, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
                 return Result::err(new RenameFailed(\sprintf('Failed to rename directory: %s to %s', $sourcePath->toString(), $destPath->toString())));
             }
 
@@ -423,13 +424,13 @@ final readonly class FileSystem {
             $return_code = \proc_close($process);
 
             if ($return_code !== 0) {
-                /** @var Result<null, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
+                /** @var Result<Unit, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
                 return Result::err(new RenameFailed(\sprintf('Failed to rename directory: %s to %s (%s)', $sourcePath->toString(), $destPath->toString(), \is_string($stderr) ? $stderr : 'unknown error')));
             }
         }
 
-        /** @var Result<null, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
-        return Result::ok(null);
+        /** @var Result<Unit, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
+        return Result::ok(Unit::new());
     }
 
     /**
@@ -439,26 +440,26 @@ final readonly class FileSystem {
      * The directory must not already exist. This method does not create parent directories.
      *
      * @param string|Path $path The path for the new directory
-     * @return Result<null, CreateFailed|AlreadyExists> A Result indicating success or an error
+     * @return Result<Unit, CreateFailed|AlreadyExists> A Result indicating success or an error
      */
     public static function createDir(string | Path $path): Result
     {
         $pathObj = \is_string($path) ? Path::of($path) : $path;
 
         if ($pathObj->isDir()) {
-            /** @var Result<null, CreateFailed|AlreadyExists> */
+            /** @var Result<Unit, CreateFailed|AlreadyExists> */
             return Result::err(new AlreadyExists(\sprintf('Directory already exists: %s', $pathObj->toString())));
         }
 
         $result = @\mkdir($pathObj->toString(), 0777, false);
 
         if ($result === false) {
-            /** @var Result<null, CreateFailed|AlreadyExists> */
+            /** @var Result<Unit, CreateFailed|AlreadyExists> */
             return Result::err(new CreateFailed(\sprintf('Failed to create directory: %s', $pathObj->toString())));
         }
 
-        /** @var Result<null, CreateFailed|AlreadyExists> */
-        return Result::ok(null);
+        /** @var Result<Unit, CreateFailed|AlreadyExists> */
+        return Result::ok(Unit::new());
     }
 
     /**
@@ -471,7 +472,7 @@ final readonly class FileSystem {
      * might have been created already, resulting in a partial directory structure.
      *
      * @param string|Path $path The path for the new directory
-     * @return Result<null, CreateFailed> A Result indicating success or an error
+     * @return Result<Unit, CreateFailed> A Result indicating success or an error
      */
     public static function createDirAll(string | Path $path): Result
     {
@@ -486,13 +487,13 @@ final readonly class FileSystem {
 
         foreach ($results->iter() as $created) {
             if ($created->isErr()) {
-                /** @var Result<null, CreateFailed> */
+                /** @var Result<Unit, CreateFailed> */
                 return $created;
             }
         }
 
-        /** @var Result<null, CreateFailed> */
-        return Result::ok(null);
+        /** @var Result<Unit, CreateFailed> */
+        return Result::ok(Unit::new());
     }
 
     /**
@@ -502,44 +503,44 @@ final readonly class FileSystem {
      * Returns an error if the directory is not empty or cannot be removed.
      *
      * @param string|Path $path The directory to remove
-     * @return Result<null, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> A Result indicating success or an error
+     * @return Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> A Result indicating success or an error
      */
     public static function removeDir(string | Path $path): Result
     {
         $pathObj = \is_string($path) ? Path::of($path) : $path;
 
         if (!$pathObj->exists()) {
-            /** @var Result<null, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
+            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
             return Result::err(new DirectoryNotFound(\sprintf('Directory does not exist: %s', $pathObj->toString())));
         }
 
         if (!$pathObj->isDir()) {
-            /** @var Result<null, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
-            return Result::ok(null);
+            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
+            return Result::ok(Unit::new());
         }
 
         // Check if the directory is empty (including hidden files)
         $dirContent = \glob($pathObj->toString() . '/{*,.[!.]*,..?*}', \GLOB_BRACE | \GLOB_NOSORT);
 
         if ($dirContent === false) {
-            /** @var Result<null, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
+            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
             return Result::err(new RemoveFailed(\sprintf('Failed to check directory contents: %s', $pathObj->toString())));
         }
 
         if (!empty($dirContent)) {
-            /** @var Result<null, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
+            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
             return Result::err(new DirectoryNotEmpty(\sprintf('Directory is not empty: %s', $pathObj->toString())));
         }
 
         $result = @\rmdir($pathObj->toString());
 
         if ($result === false) {
-            /** @var Result<null, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
+            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
             return Result::err(new RemoveFailed(\sprintf('Failed to remove directory: %s', $pathObj->toString())));
         }
 
-        /** @var Result<null, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
-        return Result::ok(null);
+        /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
+        return Result::ok(Unit::new());
     }
 
     /**
@@ -555,26 +556,26 @@ final readonly class FileSystem {
      * The target directory must exist and be a directory.
      *
      * @param string|Path $path The directory to remove
-     * @return Result<null, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> A Result indicating success or an error
+     * @return Result<Unit, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> A Result indicating success or an error
      */
     public static function removeDirAll(string | Path $path): Result
     {
         $path = \is_string($path) ? Path::of($path) : $path;
 
         if (!$path->exists()) {
-            /** @var Result<null, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
+            /** @var Result<Unit, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
             return Result::err(new DirectoryNotFound(\sprintf('Directory does not exist: %s', $path->toString())));
         }
 
         if (!$path->isDir()) {
-            /** @var Result<null, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
+            /** @var Result<Unit, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
             return Result::err(new InvalidFileType(\sprintf('Path is not a directory: %s', $path->toString())));
         }
 
         $dir = @\opendir($path->toString());
 
         if ($dir === false) {
-            /** @var Result<null, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
+            /** @var Result<Unit, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
             return Result::err(new RemoveFailed(\sprintf('Failed to open directory: %s', $path->toString())));
         }
 
@@ -589,7 +590,7 @@ final readonly class FileSystem {
                     if ($subDirResult->isErr()) {
                         \closedir($dir);
 
-                        /** @var Result<null, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
+                        /** @var Result<Unit, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
                         return $subDirResult;
                     }
                 } else {
@@ -598,7 +599,7 @@ final readonly class FileSystem {
                     if ($result->isErr()) {
                         \closedir($dir);
 
-                        /** @var Result<null, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
+                        /** @var Result<Unit, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
                         return $result;
                     }
                 }
@@ -610,12 +611,12 @@ final readonly class FileSystem {
         $result = @\rmdir($path->toString());
 
         if ($result === false) {
-            /** @var Result<null, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
+            /** @var Result<Unit, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
             return Result::err(new RemoveFailed(\sprintf('Failed to remove directory: %s', $path->toString())));
         }
 
-        /** @var Result<null, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
-        return Result::ok(null);
+        /** @var Result<Unit, DirectoryNotFound|RemoveFailed|InvalidFileType|PermissionDenied> */
+        return Result::ok(Unit::new());
     }
 
     /**
@@ -624,36 +625,36 @@ final readonly class FileSystem {
      * The file must exist and be a file.
      *
      * @param string|Path $path The path to the file to remove
-     * @return Result<null, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound>
+     * @return Result<Unit, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound>
      */
     public static function removeFile(string | Path $path): Result
     {
         $path = $path instanceof Path ? $path : Path::of($path);
 
         if (!$path->exists()) {
-            /** @var Result<null, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound> */
+            /** @var Result<Unit, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound> */
             return Result::err(new FileNotFound(\sprintf('File does not exist: %s', $path)));
         }
 
         if (!$path->isFile()) {
-            /** @var Result<null, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound> */
+            /** @var Result<Unit, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound> */
             return Result::err(new InvalidFileType(\sprintf('Path is not a file: %s', $path)));
         }
 
         if (!\is_writable($path->toString())) {
-            /** @var Result<null, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound> */
+            /** @var Result<Unit, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound> */
             return Result::err(new PermissionDenied(\sprintf('Permission denied to remove file: %s', $path)));
         }
 
         $result = @\unlink($path->toString());
 
         if ($result === false) {
-            /** @var Result<null, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound> */
+            /** @var Result<Unit, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound> */
             return Result::err(new RemoveFailed(\sprintf('Failed to remove file: %s', $path)));
         }
 
-        /** @var Result<null, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound> */
-        return Result::ok(null);
+        /** @var Result<Unit, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound> */
+        return Result::ok(Unit::new());
     }
 
     /**
@@ -681,7 +682,7 @@ final readonly class FileSystem {
      *
      * @param string|Path $source The source file path
      * @param string|Path $dest The destination link path
-     * @return Result<null, FileNotFound|AlreadyExists|LinkFailed> A Result indicating success or an error
+     * @return Result<Unit, FileNotFound|AlreadyExists|LinkFailed> A Result indicating success or an error
      */
     public static function hardLink(string | Path $source, string | Path $dest): Result
     {
@@ -689,24 +690,24 @@ final readonly class FileSystem {
         $destPath = $dest instanceof Path ? $dest : Path::of($dest);
 
         if (!$sourcePath->exists()) {
-            /** @var Result<null, FileNotFound|AlreadyExists|LinkFailed> */
+            /** @var Result<Unit, FileNotFound|AlreadyExists|LinkFailed> */
             return Result::err(new FileNotFound(\sprintf('File not found: %s', $sourcePath->toString())));
         }
 
         if ($destPath->exists()) {
-            /** @var Result<null, FileNotFound|AlreadyExists|LinkFailed> */
+            /** @var Result<Unit, FileNotFound|AlreadyExists|LinkFailed> */
             return Result::err(new AlreadyExists(\sprintf('Destination file already exists: %s', $destPath->toString())));
         }
 
         $result = @\link($sourcePath->toString(), $destPath->toString());
 
         if ($result === false) {
-            /** @var Result<null, FileNotFound|AlreadyExists|LinkFailed> */
+            /** @var Result<Unit, FileNotFound|AlreadyExists|LinkFailed> */
             return Result::err(new LinkFailed(\sprintf('Failed to create hard link: %s to %s', $sourcePath, $destPath)));
         }
 
-        /** @var Result<null, FileNotFound|AlreadyExists|LinkFailed> */
-        return Result::ok(null);
+        /** @var Result<Unit, FileNotFound|AlreadyExists|LinkFailed> */
+        return Result::ok(Unit::new());
     }
 
     /**
@@ -720,7 +721,7 @@ final readonly class FileSystem {
      *
      * @param string|Path $source The target path that the link will point to
      * @param string|Path $dest The path where the symbolic link will be created
-     * @return Result<null, SymlinkFailed|FileNotFound|AlreadyExists> A Result indicating success or an error
+     * @return Result<Unit, SymlinkFailed|FileNotFound|AlreadyExists> A Result indicating success or an error
      */
     public static function symLink(string | Path $source, string | Path $dest): Result
     {
@@ -728,24 +729,24 @@ final readonly class FileSystem {
         $destPath = \is_string($dest) ? Path::of($dest) : $dest;
 
         if (!$sourcePath->exists()) {
-            /** @var Result<null, SymlinkFailed|FileNotFound|AlreadyExists> */
+            /** @var Result<Unit, SymlinkFailed|FileNotFound|AlreadyExists> */
             return Result::err(new FileNotFound(\sprintf('Source path "%s" does not exist', $sourcePath->toString())));
         }
 
         if ($destPath->exists()) {
-            /** @var Result<null, SymlinkFailed|FileNotFound|AlreadyExists> */
+            /** @var Result<Unit, SymlinkFailed|FileNotFound|AlreadyExists> */
             return Result::err(new AlreadyExists(\sprintf('Destination path "%s" already exists', $destPath->toString())));
         }
 
         $result = @\symlink($sourcePath->toString(), $destPath->toString());
 
         if ($result === false) {
-            /** @var Result<null, SymlinkFailed|FileNotFound|AlreadyExists> */
+            /** @var Result<Unit, SymlinkFailed|FileNotFound|AlreadyExists> */
             return Result::err(new SymlinkFailed(\sprintf('Failed to create soft link: %s to %s', $sourcePath->toString(), $destPath->toString())));
         }
 
-        /** @var Result<null, SymlinkFailed|FileNotFound|AlreadyExists> */
-        return Result::ok(null);
+        /** @var Result<Unit, SymlinkFailed|FileNotFound|AlreadyExists> */
+        return Result::ok(Unit::new());
     }
 
     /**
@@ -756,7 +757,7 @@ final readonly class FileSystem {
      *
      * @param string|Path $path The path to set permissions on
      * @param Permissions $permissions The permissions to apply
-     * @return Result<null, PermissionDenied> A Result indicating success or an error
+     * @return Result<Unit, PermissionDenied> A Result indicating success or an error
      */
     public static function setPermissions(string | Path $path, Permissions $permissions): Result
     {
@@ -765,11 +766,11 @@ final readonly class FileSystem {
         $result = $permissions->apply($pathObj);
 
         if ($result->isErr()) {
-            /** @var Result<null, PermissionDenied> */
+            /** @var Result<Unit, PermissionDenied> */
             return $result;
         }
 
-        /** @var Result<null, PermissionDenied> */
-        return Result::ok(null);
+        /** @var Result<Unit, PermissionDenied> */
+        return Result::ok(Unit::new());
     }
 }

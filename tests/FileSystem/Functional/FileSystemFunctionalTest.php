@@ -18,7 +18,7 @@ final class FileSystemFunctionalTest extends TestCase
     protected function setUp(): void
     {
         $this->tempDir = \sys_get_temp_dir() . '/php-core-library-functional-' . \uniqid();
-        FileSystem::createDirAll($this->tempDir)->unwrap();
+        FileSystem::createDirAll($this->tempDir);
     }
 
     protected function tearDown(): void
