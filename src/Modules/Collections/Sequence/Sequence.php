@@ -566,15 +566,14 @@ final readonly class Sequence
 
         // Determine type checking strategy based on first element
         $isObject = \is_object($this->collection[0]);
+        $isArray = \is_array($this->collection[0]);
 
         $uniqueElements = [];
         $seen = [];
 
         if ($isObject) {
-            // Optimize for objects - use object hash
             foreach ($this->collection as $item) {
                 if (!\is_object($item)) {
-                    // Skip non-objects to avoid type errors
                     $uniqueElements[] = $item;
 
                     continue;
@@ -586,10 +585,24 @@ final readonly class Sequence
                     $seen[$hash] = true;
                 }
             }
-        } else {
-            // Optimize for scalar types - direct array key usage is faster
+        } elseif ($isArray) {
             foreach ($this->collection as $item) {
-                // Cast to string to use as array key
+                if (!\is_array($item)) {
+                    $uniqueElements[] = $item;
+
+                    continue;
+                }
+                /** @psalm-suppress ImpureFunctionCall */
+                $key = \serialize($item);
+
+                if (!isset($seen[$key])) {
+                    $uniqueElements[] = $item;
+                    $seen[$key] = true;
+                }
+            }
+
+        } else {
+            foreach ($this->collection as $item) {
                 $key = (string)$item;
 
                 if (!isset($seen[$key])) {
