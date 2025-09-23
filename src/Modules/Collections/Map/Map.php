@@ -13,6 +13,8 @@ use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
  * A collection of key-value pairs where the keys are unique and the values can be of any type.
  * Type safety is enforced via static analysis only - no runtime type checking.
  *
+ * This type is not a real Hash Map, but a Sequence of Pairs for now, so expect performance issues.
+ *
  * @template K
  * @template V
  * @psalm-immutable
@@ -212,10 +214,14 @@ final readonly class Map
      */
     public function add(mixed $key, mixed $value): self
     {
-        return new self(
-            $this
-                ->values
-                ->add(Pair::of($key, $value)),
+        return new self (
+            match (true) {
+                $this->values->any(static fn(Pair $pair) => $pair->key() === $key) => $this
+                    ->values
+                    ->filter(static fn(Pair $pair) => $pair->key() !== $key)
+                    ->add(Pair::of($key, $value)),
+                default => $this->values->add(Pair::of($key, $value)),
+            },
         );
     }
 
