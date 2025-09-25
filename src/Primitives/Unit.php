@@ -6,7 +6,7 @@ namespace Jsadaa\PhpCoreLibrary\Primitives;
 
 /**
  * The Unit type represents a value that has no meaningful content.
- * It is used as a placeholder for a value that is not needed or relevant, like a Result returning null.
+ * It is used as a placeholder for a value that is not needed or relevant, like a success Result returning null.
  *
  * @psalm-immutable
  */
