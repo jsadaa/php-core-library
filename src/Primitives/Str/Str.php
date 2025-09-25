@@ -1063,6 +1063,17 @@ final readonly class Str implements \Stringable
     }
 
     /**
+     * Applies a function to the string and returns a new string
+     *
+     * @param callable(string): string $mapper A function that takes a string and returns a string
+     * @return self A new string with the function applied
+     */
+    public function map(callable $mapper): self
+    {
+        return self::of($mapper($this->value));
+    }
+
+    /**
      * Returns the string with Unicode normalization applied
      *
      * @param non-empty-string $form Normalization form (NFC, NFD, NFKC, NFKD)
