@@ -64,18 +64,6 @@ final readonly class DirectoryEntry
     }
 
     /**
-     * Return the file type of the DirectoryEntry
-     *
-     * Determines whether this entry represents a regular file, a directory, or a symbolic link.
-     *
-     * @return FileType A FileType instance representing the type of file
-     */
-    public function fileType(): FileType
-    {
-        return FileType::of($this->path);
-    }
-
-    /**
      * Get metadata for this directory entry
      *
      * Retrieves complete metadata including size, permissions, timestamps, and file type.

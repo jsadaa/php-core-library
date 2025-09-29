@@ -21,7 +21,6 @@ use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\RenameFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\SymlinkFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\WriteFailed;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
-use Jsadaa\PhpCoreLibrary\Modules\Path\Error\PathInvalid;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
@@ -37,20 +36,6 @@ use Jsadaa\PhpCoreLibrary\Primitives\Unit;
  *
  */
 final readonly class FileSystem {
-    /**
-     * Return the canonicalized form of a path
-     *
-     * Resolves all symbolic links, extra slashes, and references to '.' and '..'
-     * in the path to return its absolute, canonical form.
-     *
-     * @param string|Path $path The path to canonicalize
-     * @return Result<Path, PathInvalid> A Result containing the canonical path or an error
-     */
-    public static function canonicalize(string | Path $path): Result
-    {
-        return $path instanceof Path ? $path->canonicalize() : Path::of($path)->canonicalize();
-    }
-
     /**
      * Get metadata for a path
      *
@@ -70,28 +55,6 @@ final readonly class FileSystem {
         }
 
         /** @var Result<Metadata, FileNotFound|InvalidMetadata> */
-        return Metadata::of($pathObj);
-    }
-
-    /**
-     * Get metadata for a symlink
-     *
-     * Retrieves metadata for a symbolic link itself, not the target it points to.
-     * This is useful when you need information about the symlink rather than its target.
-     *
-     * @param string|Path $path The symlink path to get metadata for
-     * @return Result<Metadata, InvalidFileType|InvalidMetadata> A Result containing the metadata or an error
-     */
-    public static function symlinkMetadata(string | Path $path): Result
-    {
-        $pathObj = \is_string($path) ? Path::of($path) : $path;
-
-        if (!$pathObj->isSymLink()) {
-            /** @var Result<Metadata, InvalidFileType|InvalidMetadata> */
-            return Result::err(new InvalidFileType(\sprintf('Path is not a symlink: %s', $pathObj->toString())));
-        }
-
-        /** @var Result<Metadata, InvalidFileType|InvalidMetadata> */
         return Metadata::of($pathObj);
     }
 
@@ -655,21 +618,6 @@ final readonly class FileSystem {
 
         /** @var Result<Unit, RemoveFailed|PermissionDenied|InvalidFileType|FileNotFound> */
         return Result::ok(Unit::new());
-    }
-
-    /**
-     * Check if a path exists
-     *
-     * Determines if a file or directory exists at the specified path.
-     *
-     * @param string|Path $path The path to check
-     * @return bool True if the path exists, false otherwise
-     */
-    public static function exists(string | Path $path): bool
-    {
-        $path = \is_string($path) ? Path::of($path) : $path;
-
-        return $path->exists();
     }
 
     /**

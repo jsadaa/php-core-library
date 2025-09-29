@@ -14,6 +14,7 @@ use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\PermissionDenied;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\ReadFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\TimestampFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\WriteFailed;
+use Jsadaa\PhpCoreLibrary\Modules\FileSystem\File\Time;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
@@ -613,8 +614,6 @@ final readonly class File {
             return $result;
         }
 
-        $path = $result->unwrap();
-
         /** @var Result<File, PermissionDenied> */
         return Result::ok(new self($this->path));
     }
@@ -630,7 +629,7 @@ final readonly class File {
      */
     public function setModified(SystemTime $time): Result
     {
-        return $this->setTimes(FileTimes::new()->setModified($time));
+        return $this->setTimes(Time::new()->setModified($time));
     }
 
     /**
@@ -639,11 +638,11 @@ final readonly class File {
      * This method allows changing multiple timestamps at once, including access time,
      * modification time, and (on certain platforms) creation time.
      *
-     * @param FileTimes $times The timestamps to set
+     * @param Time $times The timestamps to set
      * @return Result<File, TimestampFailed> Result containing the File or an error message
      * @psalm-suppress ImpureFunctionCall
      */
-    public function setTimes(FileTimes $times): Result
+    public function setTimes(Time $times): Result
     {
         $pathStr = $this->path->toString();
 

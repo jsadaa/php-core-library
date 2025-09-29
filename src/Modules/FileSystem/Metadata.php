@@ -27,7 +27,6 @@ final readonly class Metadata {
     private function __construct(
         private Path $path,
         private Permissions $permissions,
-        private FileType $fileType,
         private Integer $size,
         private SystemTime $modified,
         private SystemTime $accessed,
@@ -84,7 +83,6 @@ final readonly class Metadata {
         return Result::ok(new self(
             $path,
             Permissions::of($path),
-            FileType::of($path),
             Integer::of($size),
             SystemTime::fromTimestamp($modified),
             SystemTime::fromTimestamp($accessed),
@@ -105,19 +103,6 @@ final readonly class Metadata {
     }
 
     /**
-     * Get the file type of this Metadata instance
-     *
-     * Returns a FileType object representing the type of the file or directory
-     * (regular file, directory, or symbolic link).
-     *
-     * @return FileType The file type
-     */
-    public function fileType(): FileType
-    {
-        return $this->fileType;
-    }
-
-    /**
      * Check if the file this Metadata instance represents is a directory
      *
      * Convenience method to quickly check if the path is a directory.
@@ -126,7 +111,7 @@ final readonly class Metadata {
      */
     public function isDir(): bool
     {
-        return $this->fileType->isDir();
+        return $this->path->isDir();
     }
 
     /**
@@ -138,7 +123,7 @@ final readonly class Metadata {
      */
     public function isFile(): bool
     {
-        return $this->fileType->isFile();
+        return $this->path->isFile();
     }
 
     /**
@@ -151,7 +136,7 @@ final readonly class Metadata {
      */
     public function isSymLink(): bool
     {
-        return $this->fileType->isSymLink();
+        return $this->path->isSymLink();
     }
 
     /**

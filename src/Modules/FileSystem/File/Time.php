@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Jsadaa\PhpCoreLibrary\Modules\FileSystem;
+namespace Jsadaa\PhpCoreLibrary\Modules\FileSystem\File;
 
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
@@ -20,7 +20,7 @@ use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
  *
  * @psalm-immutable
  */
-final readonly class FileTimes
+final readonly class Time
 {
     /**
      * @var Option<SystemTime> The access time to set

@@ -57,20 +57,6 @@ final class FileSystemBasicTest extends TestCase
         }
     }
 
-    public function testCanonicalizeValidPath(): void
-    {
-        \mkdir($this->tempDir . '/nestedDir', 0777, true);
-
-        $path = Path::of($this->tempDir . '/nestedDir/../testFile.txt');
-        $result = FileSystem::canonicalize($path);
-
-        $this->assertTrue($result->isOk(), 'Canonicalization should succeed');
-        $canonicalPath = $result->unwrap();
-
-        $this->assertStringNotContainsString('..', $canonicalPath->toString());
-        $this->assertEquals($this->tempDir . '/testFile.txt', $canonicalPath->toString());
-    }
-
     public function testMetadataForFile(): void
     {
         $path = Path::of($this->root->url() . '/testFile.txt');
@@ -112,29 +98,29 @@ final class FileSystemBasicTest extends TestCase
     public function testSymlinkMetadata(): void
     {
         $path = Path::of($this->tempDir . '/testLink');
-        $result = FileSystem::symlinkMetadata($path);
+        $result = FileSystem::metadata($path);
 
         $this->assertTrue($result->isOk());
         $metadata = $result->unwrap();
 
         $this->assertInstanceOf(Metadata::class, $metadata);
-        $this->assertTrue($metadata->fileType()->isSymLink());
-        $this->assertFalse($metadata->fileType()->isFile());
-        $this->assertFalse($metadata->fileType()->isDir());
+        $this->assertTrue($metadata->isSymLink());
+        $this->assertFalse($metadata->isFile());
+        $this->assertFalse($metadata->isDir());
     }
 
     public function testExistsForExistingPath(): void
     {
         $path = Path::of($this->root->url() . '/testFile.txt');
-        $this->assertTrue(FileSystem::exists($path));
+        $this->assertTrue($path->exists());
 
         $path = Path::of($this->root->url() . '/emptyDir');
-        $this->assertTrue(FileSystem::exists($path));
+        $this->assertTrue($path->exists());
     }
 
     public function testExistsForNonExistingPath(): void
     {
         $path = Path::of($this->root->url() . '/nonExistent.txt');
-        $this->assertFalse(FileSystem::exists($path));
+        $this->assertFalse($path->exists());
     }
 }

@@ -12,7 +12,7 @@ use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\InvalidFileType;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\PermissionDenied;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\ReadFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\File;
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\FileTimes;
+use Jsadaa\PhpCoreLibrary\Modules\FileSystem\File\Time;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Metadata;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Permissions;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
@@ -361,7 +361,7 @@ final class FileTest extends TestCase
             (new \DateTimeImmutable())->setTimestamp($accessTimestamp),
         )->unwrap();
 
-        $times = FileTimes::new()
+        $times = Time::new()
             ->setModified($modTime)
             ->setAccessed($accessTime);
 

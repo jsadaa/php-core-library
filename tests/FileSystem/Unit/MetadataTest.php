@@ -79,34 +79,6 @@ final class MetadataTest extends TestCase
         $this->assertEquals($path->toString(), $returnedPath->toString());
     }
 
-    public function testGetFileType(): void
-    {
-        $filePath = Path::of($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::of($filePath)->unwrap();
-        $fileType = $metadata->fileType();
-
-        $this->assertInstanceOf(FileType::class, $fileType);
-        $this->assertTrue($fileType->isFile());
-        $this->assertFalse($fileType->isDir());
-        $this->assertFalse($fileType->isSymLink());
-
-        $dirPath = Path::of($this->root->url() . '/emptyDir');
-        $metadata = Metadata::of($dirPath)->unwrap();
-        $fileType = $metadata->fileType();
-
-        $this->assertTrue($fileType->isDir());
-        $this->assertFalse($fileType->isFile());
-        $this->assertFalse($fileType->isSymLink());
-
-        $linkPath = Path::of($this->tempDir . '/testLink');
-        $metadata = Metadata::of($linkPath)->unwrap();
-        $fileType = $metadata->fileType();
-
-        $this->assertTrue($fileType->isSymLink());
-        $this->assertFalse($fileType->isFile());
-        $this->assertFalse($fileType->isDir());
-    }
-
     public function testIsSymLink(): void
     {
         $filePath = Path::of($this->root->url() . '/testFile.txt');

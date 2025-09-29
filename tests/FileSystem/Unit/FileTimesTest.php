@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\FileSystem\Unit;
 
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\FileTimes;
+use Jsadaa\PhpCoreLibrary\Modules\FileSystem\File\Time;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
 use PHPUnit\Framework\TestCase;
 
@@ -16,7 +16,7 @@ final class FileTimesTest extends TestCase
         $modificationTime = 1609545600; // 2021-01-02 00:00:00
         $creationTime = 1609372800; // 2020-12-31 00:00:00
 
-        $fileTimes = FileTimes::new()
+        $fileTimes = Time::new()
             ->setAccessed(SystemTime::fromDateTimeImmutable(
                 (new \DateTimeImmutable())->setTimestamp($accessTime),
             )->unwrap())
@@ -38,7 +38,7 @@ final class FileTimesTest extends TestCase
         $modificationTime = 1609545600; // 2021-01-02 00:00:00
         $creationTime = 1609372800; // 2020-12-31 00:00:00
 
-        $fileTimes = FileTimes::new()
+        $fileTimes = Time::new()
             ->setAccessed(SystemTime::fromDateTimeImmutable(
                 (new \DateTimeImmutable())->setTimestamp($accessTime),
             )->unwrap())
@@ -65,7 +65,7 @@ final class FileTimesTest extends TestCase
         $modificationTime = 1609545600; // 2021-01-02 00:00:00
         $creationTime = 1609372800; // 2020-12-31 00:00:00
 
-        $fileTimes = FileTimes::new()
+        $fileTimes = Time::new()
             ->setAccessed(SystemTime::fromDateTimeImmutable(
                 (new \DateTimeImmutable())->setTimestamp($accessTime),
             )->unwrap())
@@ -92,7 +92,7 @@ final class FileTimesTest extends TestCase
         $modificationTime = 1609545600; // 2021-01-02 00:00:00
         $creationTime = 1609372800; // 2020-12-31 00:00:00
 
-        $fileTimes = FileTimes::new()
+        $fileTimes = Time::new()
             ->setAccessed(SystemTime::fromDateTimeImmutable(
                 (new \DateTimeImmutable())->setTimestamp($accessTime),
             )->unwrap())
@@ -118,7 +118,7 @@ final class FileTimesTest extends TestCase
         $time1 = 1609459200;
         $time2 = 1609545600;
 
-        $fileTimes1 = FileTimes::new()
+        $fileTimes1 = Time::new()
             ->setAccessed(SystemTime::fromDateTimeImmutable(
                 (new \DateTimeImmutable())->setTimestamp($time1),
             )->unwrap())
@@ -129,7 +129,7 @@ final class FileTimesTest extends TestCase
                 (new \DateTimeImmutable())->setTimestamp($time1),
             )->unwrap());
 
-        $fileTimes2 = FileTimes::new()
+        $fileTimes2 = Time::new()
             ->setAccessed(SystemTime::fromDateTimeImmutable(
                 (new \DateTimeImmutable())->setTimestamp($time1),
             )->unwrap())
@@ -140,7 +140,7 @@ final class FileTimesTest extends TestCase
                 (new \DateTimeImmutable())->setTimestamp($time1),
             )->unwrap());
 
-        $fileTimes3 = FileTimes::new()
+        $fileTimes3 = Time::new()
             ->setAccessed(SystemTime::fromDateTimeImmutable(
                 (new \DateTimeImmutable())->setTimestamp($time2),
             )->unwrap())

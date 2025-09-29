@@ -23,7 +23,7 @@ final class FileSystemFunctionalTest extends TestCase
 
     protected function tearDown(): void
     {
-        if (FileSystem::exists($this->tempDir)) {
+        if (Path::of($this->tempDir)->exists()) {
             $result = FileSystem::removeDirAll($this->tempDir);
 
             if ($result->isErr()) {
@@ -63,8 +63,8 @@ final class FileSystemFunctionalTest extends TestCase
             $this->assertTrue($result->isOk(), "Failed to create config file: $filePath");
         }
 
-        $this->assertTrue(FileSystem::exists($projectRoot->join(Path::of('src/Controllers'))));
-        $this->assertTrue(FileSystem::exists($projectRoot->join(Path::of('config/app.php'))));
+        $this->assertTrue($projectRoot->join(Path::of('src/Controllers'))->exists());
+        $this->assertTrue($projectRoot->join(Path::of('config'))->exists());
 
         $appConfig = FileSystem::read($projectRoot->join(Path::of('config/app.php')))->unwrap();
         $this->assertStringContainsString('My App', $appConfig->toString());
@@ -89,7 +89,7 @@ final class FileSystemFunctionalTest extends TestCase
         ];
 
         foreach ($logEntries as $entry) {
-            $file = FileSystem::exists($currentLogFile)
+            $file = $currentLogFile->exists()
                 ? File::from($currentLogFile)->unwrap()
                 : File::new($currentLogFile)->unwrap();
 
@@ -113,8 +113,8 @@ final class FileSystemFunctionalTest extends TestCase
             File::new($currentLogFile)->unwrap();
 
             // Verify rotation
-            $this->assertTrue(FileSystem::exists($rotatedLogFile));
-            $this->assertTrue(FileSystem::exists($currentLogFile));
+            $this->assertTrue($rotatedLogFile->exists());
+            $this->assertTrue($currentLogFile->exists());
         }
     }
 
@@ -199,7 +199,7 @@ final class FileSystemFunctionalTest extends TestCase
         $outputContent = "Adults (30+):\n" . \implode("\n", $adults);
         FileSystem::write($outputFile, $outputContent)->unwrap();
 
-        $this->assertTrue(FileSystem::exists($outputFile));
+        $this->assertTrue($outputFile->exists());
 
         $result = FileSystem::read($outputFile)->unwrap();
         $this->assertStringContainsString('Jane Smith', $result->toString());
@@ -278,7 +278,7 @@ final class FileSystemFunctionalTest extends TestCase
         $sourceEntries = FileSystem::readDir($sourceDir)->unwrap();
 
         foreach ($sourceEntries->iter() as $entry) {
-            if ($entry->fileType()->isFile()) {
+            if ($entry->path()->isFile()) {
                 $fileName = $entry->fileName()->unwrap();
                 $sourcePath = $entry->path();
                 $backupPath = $backupDir->join(Path::of($fileName));
@@ -334,10 +334,10 @@ final class FileSystemFunctionalTest extends TestCase
 
         foreach ($tempFiles as $tempFile) {
             FileSystem::removeFile($tempFile)->unwrap();
-            $this->assertFalse(FileSystem::exists($tempFile));
+            $this->assertFalse($tempFile->exists());
         }
 
-        $this->assertTrue(FileSystem::exists($resultFile));
+        $this->assertTrue($resultFile->exists());
         $result = FileSystem::read($resultFile)->unwrap();
 
         for ($i = 1; $i <= 3; $i++) {
@@ -367,7 +367,7 @@ final class FileSystemFunctionalTest extends TestCase
             $this->markTestSkipped('Symlink creation failed - may not be supported on this system');
         }
 
-        $this->assertTrue(FileSystem::exists($projectConfig));
+        $this->assertTrue($projectConfig->exists());
         $contentResult = FileSystem::read($projectConfig);
 
         // If reading through symlink fails, skip remaining tests
@@ -378,7 +378,7 @@ final class FileSystemFunctionalTest extends TestCase
         $content = $contentResult->unwrap();
         $this->assertEquals('shared_setting=true', $content->toString());
 
-        $metadataResult = FileSystem::symlinkMetadata($projectConfig);
+        $metadataResult = FileSystem::metadata($projectConfig);
 
         if ($metadataResult->isOk()) {
             $metadata = $metadataResult->unwrap();
@@ -407,7 +407,7 @@ final class FileSystemFunctionalTest extends TestCase
 
         // After removing target, the symlink should be broken
         // Different systems handle this differently, so we just check it doesn't crash
-        $brokenLinkExists = FileSystem::exists($projectConfig);
+        $brokenLinkExists = $projectConfig->exists();
         $this->assertIsBool($brokenLinkExists);
     }
 
