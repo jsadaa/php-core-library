@@ -124,31 +124,19 @@ final readonly class Map
     /**
      * FlatMap the collection based on a mapper function
      *
+     * Applies the mapper function to each key-value pair, expecting it to return
+     * a Map, then merges all resulting maps into a single Map.
+     * If duplicate keys exist, the last value wins.
+     *
      * @template U
-     * @param callable(K, V): iterable<U> $mapper The mapper function
+     * @param callable(K, V): self<K, U> $mapper The mapper function that returns a Map
      * @return self<K, U>
      */
     public function flatMap(callable $mapper): self
     {
-        return new self(
-            $this
-                ->values
-                ->map(static fn(Pair $pair) => $mapper($pair->key(), $pair->value()))
-                ->flatten(),
-        );
-    }
-
-    /**
-     * Flatten the collection
-     *
-     * @return self<K, V>
-     */
-    public function flatten(): self
-    {
-        return new self(
-            $this
-                ->values
-                ->flatten(),
+        return $this->fold(
+            static fn(self $accumulated, $key, $value) => $accumulated->append($mapper($key, $value)),
+            self::new(),
         );
     }
 
