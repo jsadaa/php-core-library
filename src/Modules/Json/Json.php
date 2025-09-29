@@ -21,12 +21,12 @@ final readonly class Json
     /**
      * Encode a PHP value to JSON string.
      *
-     * @param mixed|Str $data The data to encode.
+     * @param mixed $data The data to encode.
      * @param int $flags Flags to pass to json_encode.
      * @param int<1, 2147483647> $depth Maximum depth of the data structure.
      * @return Result<string, EncodingError> The encoded JSON string or an error.
      */
-    public static function encode(mixed | Str $data, int $flags = 0, int $depth = 512): Result {
+    public static function encode(mixed $data, int $flags = 0, int $depth = 512): Result {
         try {
             $encoded = \json_encode($data instanceof Str ? $data->toString() : $data, $flags | \JSON_THROW_ON_ERROR, $depth);
         } catch (\JsonException $e) {
@@ -41,12 +41,12 @@ final readonly class Json
     /**
      * Encode a PHP value to JSON string wrapped in a Str
      *
-     * @param mixed|Str $data The data to encode.
+     * @param mixed $data The data to encode.
      * @param int $flags Flags to pass to json_encode.
      * @param int<1, 2147483647> $depth Maximum depth of the data structure.
      * @return Result<Str, EncodingError> The encoded JSON Str or an error.
      */
-    public static function encodeToStr(mixed | Str $data, int $flags = 0, int $depth = 512): Result {
+    public static function encodeToStr(mixed $data, int $flags = 0, int $depth = 512): Result {
         try {
             $encoded = \json_encode($data instanceof Str ? $data->toString() : $data, $flags | \JSON_THROW_ON_ERROR, $depth);
         } catch (\JsonException $e) {
