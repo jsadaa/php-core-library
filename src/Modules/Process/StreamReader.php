@@ -1,0 +1,156 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Jsadaa\PhpCoreLibrary\Modules\Process;
+
+use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
+use Jsadaa\PhpCoreLibrary\Modules\Time\Duration;
+use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
+use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
+use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
+
+/**
+ * Non-blocking stream reader with timeout support.
+ *
+ * @psalm-immutable
+ */
+final class StreamReader
+{
+    /** @var resource */
+    private $stream;
+    private Integer $bufferSize;
+
+    /**
+     * @param resource $stream
+     */
+    private function __construct($stream, Integer $bufferSize)
+    {
+        $this->stream = $stream;
+        $this->bufferSize = $bufferSize;
+    }
+
+    /**
+     * @psalm-pure
+     * @param resource $stream
+     */
+    public static function from($stream, int|Integer $bufferSize = 8192): self
+    {
+        return new self(
+            $stream,
+            is_int($bufferSize) ? Integer::of($bufferSize) : $bufferSize
+        );
+    }
+
+    /**
+     * Reads all available data without blocking.
+     *
+     * @return Result<Str, string>
+     */
+    public function readAvailable(): Result
+    {
+        stream_set_blocking($this->stream, false);
+
+        $data = fread($this->stream, $this->bufferSize->toInt());
+
+        if ($data === false) {
+            return Result::err("Failed to read from stream");
+        }
+
+        return Result::ok(Str::of($data));
+    }
+
+    /**
+     * Reads until EOF or timeout.
+     *
+     * @return Result<Str, string>
+     */
+    public function readAll(Duration $timeout): Result
+    {
+        $deadline = SystemTime::now()->add($timeout);
+        $result = Str::new();
+
+        stream_set_blocking($this->stream, false);
+
+        while (true) {
+            if (SystemTime::now()->ge($deadline)) {
+                return Result::err("Read timeout exceeded");
+            }
+
+            if (feof($this->stream)) {
+                break;
+            }
+
+            $data = fread($this->stream, $this->bufferSize->toInt());
+
+            if ($data === false) {
+                return Result::err("Failed to read from stream");
+            }
+
+            if ($data !== '') {
+                $result = $result->append($data);
+            } else {
+                // No data available, wait a bit
+                usleep(1000); // 1ms
+            }
+        }
+
+        return Result::ok($result);
+    }
+
+    /**
+     * Reads until a delimiter is found or timeout.
+     *
+     * @return Result<Str, string>
+     */
+    public function readUntil(string|Str $delimiter, Duration $timeout): Result
+    {
+        $delimiter = is_string($delimiter) ? $delimiter : $delimiter->toString();
+        $deadline = SystemTime::now()->add($timeout);
+        $result = Str::new();
+
+        stream_set_blocking($this->stream, false);
+
+        while (true) {
+            if (SystemTime::now()->ge($deadline)) {
+                return Result::err("Read timeout exceeded");
+            }
+
+            $char = fgetc($this->stream);
+
+            if ($char === false) {
+                if (feof($this->stream)) {
+                    break;
+                }
+                usleep(1000); // 1ms
+                continue;
+            }
+
+            $result = $result->append($char);
+
+            if (str_ends_with($result->toString(), $delimiter)) {
+                break;
+            }
+        }
+
+        return Result::ok($result);
+    }
+
+    /**
+     * Checks if the stream has reached EOF.
+     */
+    public function isEof(): bool
+    {
+        return feof($this->stream);
+    }
+
+    /**
+     * Closes the stream.
+     */
+    public function close(): void
+    {
+        if (is_resource($this->stream)) {
+            fclose($this->stream);
+        }
+    }
+}

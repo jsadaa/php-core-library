@@ -1,130 +1,177 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Duration;
-use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 
 /**
+ * High-level command execution with pipeline support.
+ * Acts as a convenient wrapper around ProcessBuilder.
+ *
  * @psalm-immutable
  */
-final readonly class Command {
-    private Str $name;
-    /** @var Sequence<Str> */
-    private Sequence $args;
-    private Path $cwd;
-    /** @var Map<Str, Str> */
-    private Map $env;
-    /** @var Sequence<Command> */
+final readonly class Command
+{
+    private ProcessBuilder $builder;
+    /** @var Sequence<ProcessBuilder> */
     private Sequence $pipeline;
     private Duration $timeout;
 
     /**
-     * @param Str $name
-     * @param Sequence<Str> $args
-     * @param Map<Str, Str> $env
-     * @param Sequence<Command> $pipeline
-     * @param Duration $timeout
+     * @param Sequence<ProcessBuilder> $pipeline
      */
-     private function __construct(Str $name, Sequence $args, Path $cwd, Map $env, Sequence $pipeline, Duration $timeout)
-     {
-         $this->name = $name;
-         $this->args = $args;
-         $this->cwd = $cwd;
-         $this->env = $env;
-         $this->pipeline = $pipeline;
-         $this->timeout = $timeout;
-     }
+    private function __construct(
+        ProcessBuilder $builder,
+        Sequence $pipeline,
+        Duration $timeout
+    ) {
+        $this->builder = $builder;
+        $this->pipeline = $pipeline;
+        $this->timeout = $timeout;
+    }
 
     /**
      * @psalm-pure
      */
-    public static function of(string | Str $name): self
+    public static function of(string|Str $name): self
     {
         return new self(
-            \is_string($name) ? Str::of($name) : $name,
-            Sequence::new(),
-            Path::of(\getcwd() ?: '/'),
-            Map::new(),
+            ProcessBuilder::command($name),
             Sequence::new(),
             Duration::fromSeconds(30),
         );
     }
 
-    public function withArg(string | Str $arg): self
+    public function withArg(string|Str $arg): self
     {
         return new self(
-            $this->name,
-            $this->args->add(\is_string($arg) ? Str::of($arg) : $arg),
-            $this->cwd,
-            $this->env,
+            $this->builder->arg($arg),
             $this->pipeline,
             $this->timeout,
         );
     }
 
-    public function atPath(string | Path $path): self
+    public function atPath(string|Path $path): self
     {
         return new self(
-            $this->name,
-            $this->args,
-            \is_string($path) ? Path::of($path) : $path,
-            $this->env,
+            $this->builder->workingDirectory($path),
             $this->pipeline,
             $this->timeout,
         );
     }
 
-    public function withEnv(string | Str $var, string | Str $value): self
+    public function withEnv(string|Str $var, string|Str $value): self
     {
         return new self(
-            $this->name,
-            $this->args,
-            $this->cwd,
-            $this->env->add(
-                \is_string($var) ? Str::of($var) : $var,
-                \is_string($value) ? Str::of($value) : $value,
-            ),
+            $this->builder->env($var, $value),
             $this->pipeline,
             $this->timeout,
         );
     }
 
-    public function withTimeout(int | Integer $timeout): self
+    public function withTimeout(int|Integer|Duration $timeout): self
     {
+        $duration = match (true) {
+            $timeout instanceof Duration => $timeout,
+            $timeout instanceof Integer => Duration::fromSeconds($timeout->toInt()),
+            default => Duration::fromSeconds($timeout),
+        };
+
         return new self(
-            $this->name,
-            $this->args,
-            $this->cwd,
-            $this->env,
+            $this->builder,
             $this->pipeline,
-            Duration::fromSeconds($timeout),
+            $duration,
         );
     }
 
     /**
-     * Pipe this command into another command
+     * Configures input/output streams.
      */
-    public function pipe(self $command): self
+    public function withStreams(ProcessStreams $streams): self
     {
         return new self(
-            $this->name,
-            $this->args,
-            $this->cwd,
-            $this->env,
-            $this->pipeline->add($command),
+            $this->builder->streams($streams),
+            $this->pipeline,
             $this->timeout,
         );
     }
 
+    /**
+     * Redirects stdin from a file.
+     */
+    public function fromFile(string|Path $path): self
+    {
+        return new self(
+            $this->builder->stdin(StreamDescriptor::file($path, 'r')),
+            $this->pipeline,
+            $this->timeout,
+        );
+    }
+
+    /**
+     * Redirects stdout to a file.
+     */
+    public function toFile(string|Path $path): self
+    {
+        return new self(
+            $this->builder->stdout(StreamDescriptor::file($path, 'w')),
+            $this->pipeline,
+            $this->timeout,
+        );
+    }
+
+    /**
+     * Redirects stderr to a file.
+     */
+    public function errorToFile(string|Path $path): self
+    {
+        return new self(
+            $this->builder->stderr(StreamDescriptor::file($path, 'w')),
+            $this->pipeline,
+            $this->timeout,
+        );
+    }
+
+    /**
+     * Suppresses all output (redirects to null).
+     */
+    public function quiet(): self
+    {
+        return new self(
+            $this->builder
+                ->stdout(StreamDescriptor::null())
+                ->stderr(StreamDescriptor::null()),
+            $this->pipeline,
+            $this->timeout,
+        );
+    }
+
+    /**
+     * Pipe this command into another command.
+     */
+    public function pipe(self|ProcessBuilder $command): self
+    {
+        $builder = $command instanceof self ? $command->builder : $command;
+
+        return new self(
+            $this->builder,
+            $this->pipeline->add($builder),
+            $this->timeout,
+        );
+    }
+
+    /**
+     * Executes the command and returns the output.
+     *
+     * @return Result<Output, Output|string>
+     */
     public function run(): Result
     {
         return $this->pipeline->isEmpty()
@@ -133,310 +180,158 @@ final readonly class Command {
     }
 
     /**
-     * Runs the command and returns the result.
-     *
-     * @return Result<Output, Output|\Exception>
+     * @return Result<Output, Output|string>
      */
-     private function runSingle(): Result
-     {
-         if ($this->name->isEmpty() || \preg_match('/[;&|`$()]/', $this->name->toString())) {
-             return Result::err('Invalid command name: contains dangerous characters');
-         }
+    private function runSingle(): Result
+    {
+        $processResult = $this->builder->spawn();
 
-         if (!$this->cwd->isDir()) {
-             return Result::err("Specified directory path does not exist: {$this->cwd->toString()}");
-         }
+        if ($processResult->isErr()) {
+            return Result::err($processResult->unwrapErr());
+        }
 
-         $pipes = [];
+        $process = $processResult->unwrap();
+        $outputResult = $process->output($this->timeout);
+        $process->close();
 
-         $process = \proc_open(
-             $this->buildCommand()->toString(),
-             $this->standardDescriptors(),
-             $pipes,
-             $this->cwd->toString(),
-             $this->buildEnvironment($this),
-             $this->options(),
-         );
+        if ($outputResult->isErr()) {
+            return Result::err($outputResult->unwrapErr());
+        }
 
-         if (!\is_resource($process)) {
-             return Result::err('Failed to start process');
-         }
+        $output = $outputResult->unwrap();
 
-         \fclose($pipes[0]); // Close stdin
+        return $output->isSuccess()
+            ? Result::ok($output)
+            : Result::err($output);
+    }
 
-         $stream = $this->read($pipes[1], $pipes[2]);
-
-         if ($stream->isErr()) {
-             \proc_terminate($process, \SIGKILL);
-             $this->cleanupStreams([$pipes[1], $pipes[2]]);
-             \proc_close($process);
-
-             return $stream;
-         }
-
-         [$stdout, $stderr] = $stream->unwrap();
-         $this->cleanupStreams([$pipes[1], $pipes[2]]);
-
-         $status = Status::of($process);
-         \proc_close($process);
-
-         $output = Output::of($stdout, $stderr, $status);
-
-         return $output->isSuccess() ? Result::ok($output) : Result::err($output);
-     }
-
+    /**
+     * @return Result<Output, Output|string>
+     */
     private function runPipeline(): Result
     {
-        $commands = Sequence::of($this)->append($this->pipeline);
+        // Build all builders in the pipeline
+        /** @var Sequence<ProcessBuilder> $builders */
+        $builders = Sequence::of($this->builder)->append($this->pipeline);
 
-        foreach ($commands->iter() as $cmd) {
-            if ($cmd->name->isEmpty() || \preg_match('/[;&|`$()]/', $cmd->name->toString())) {
-                return Result::err('Invalid command name: contains dangerous characters');
-            }
-        }
+        /** @var Sequence<Process> $processes */
+        $processes = Sequence::new();
 
-        $pipeline = $this->pipelineProcesses($commands);
+        foreach ($builders->iter() as $index => $builder) {
+            // Connect pipes between processes
+            if ($index > 0) {
+                $prevProcess = $processes->get(Integer::of($index - 1))->unwrap();
+                $stdoutResult = $prevProcess->stdout();
 
-        if ($pipeline->isErr()) {
-            return $pipeline;
-        }
-
-        [$processes, $pipes] = $pipeline->unwrap();
-        $lastIndex = $commands->size()->sub(1)->toInt();
-
-        $stream = $this->read($pipes[$lastIndex][1], $pipes[$lastIndex][2]);
-
-        if ($stream->isErr()) {
-            $this->cleanupProcesses($processes, $pipes);
-
-            return $stream;
-        }
-
-        $this->wait($processes);
-
-        [$stdout, $stderr] = $stream->unwrap();
-        $finalStatus = Status::of($processes[$lastIndex]);
-
-        $this->cleanupProcesses($processes, $pipes);
-
-        $output = Output::of($stdout, $stderr, $finalStatus);
-
-        return $output->isSuccess() ? Result::ok($output) : Result::err($output);
-    }
-
-    private function standardDescriptors(): array
-    {
-        return [
-            0 => ['pipe', 'r'], // stdin
-            1 => ['pipe', 'w'], // stdout
-            2 => ['pipe', 'w'], // stderr
-        ];
-    }
-
-    private function options(): array
-    {
-        return [
-            'suppress_errors' => true,
-            'bypass_shell' => false,
-        ];
-    }
-
-    private function isTimedOut(SystemTime $startTime): bool
-    {
-        $elapsed = SystemTime::now()->durationSince($startTime);
-
-        return $elapsed->isErr() || $elapsed->unwrap()->ge($this->timeout);
-    }
-
-    private function read($stdoutPipe, $stderrPipe): Result
-    {
-        \stream_set_blocking($stdoutPipe, false);
-        \stream_set_blocking($stderrPipe, false);
-
-        $stdout = Str::new();
-        $stderr = Str::new();
-
-        $startTime = SystemTime::now();
-
-        while (true) {
-            if ($this->isTimedOut($startTime)) {
-                return Result::err('Command execution timed out');
-            }
-
-            $read = [$stdoutPipe, $stderrPipe];
-            $write = null;
-            $except = null;
-
-            $result = \stream_select($read, $write, $except, 1);
-
-            if ($result === false) {
-                break;
-            }
-
-            $hasData = false;
-
-            foreach ($read as $stream) {
-                $data = \fread($stream, 8192);
-
-                if ($data !== false && $data !== '') {
-                    $hasData = true;
-
-                    if ($stream === $stdoutPipe) {
-                        $stdout = $stdout->append($data);  // Concaténation string native
-                    } else {
-                        $stderr = $stderr->append($data);  // Concaténation string native
-                    }
+                if ($stdoutResult->isSome()) {
+                    $builder = $builder->stdin(
+                        StreamDescriptor::resource($stdoutResult->unwrap())
+                    );
                 }
             }
 
-            if (!$hasData) {
-                break;
-            }
-        }
+            // For intermediate processes, ensure stdout is piped
+            if ($index < $builders->size()->sub(1)->toInt()) {
+                // Only set to pipe if not already configured
+                // This respects user configuration like toFile()
+                $currentStreams = $builder->getStreams();
+                $stdoutDesc = $currentStreams->get(FileDescriptor::stdout());
 
-        // Read remaining data
-        $stdout = $stdout->append(\stream_get_contents($stdoutPipe) ?: '');
-        $stderr = $stderr->append(\stream_get_contents($stderrPipe) ?: '');
-
-        return Result::ok([$stdout, $stderr]);
-    }
-
-    private function pipelineProcesses(Sequence $commands): Result
-    {
-        $processes = [];
-        $pipes = [];
-
-        foreach ($commands->iter() as $index => $cmd) {
-            $processes[$index] = \proc_open(
-                $cmd->buildCommand()->toString(),
-                $this->pipelineDescriptors($index, $pipes),
-                $pipes[$index],
-                $cmd->cwd->toString(),
-                $this->buildEnvironment($cmd),
-                $this->options(),
-            );
-
-            if (!\is_resource($processes[$index])) {
-                $this->cleanupProcesses($processes, $pipes);
-
-                return Result::err("Failed to start process {$index} in pipeline");
-            }
-
-            if ($index === 0) {
-                \fclose($pipes[$index][0]); // Close stdin of first command
-            }
-        }
-
-        return Result::ok([$processes, $pipes]);
-    }
-
-    private function pipelineDescriptors(int $index, array $pipes): array
-    {
-        return $index === 0
-            ? $this->standardDescriptors()
-            : [
-                0 => $pipes[$index - 1][1],  // stdin from previous stdout
-                1 => ['pipe', 'w'],          // stdout
-                2 => ['pipe', 'w'],          // stderr
-            ];
-    }
-
-    private function wait(array $processes): void
-    {
-        $startTime = SystemTime::now();
-
-        while (true) {
-            if ($this->isTimedOut($startTime)) {
-                foreach ($processes as $process) {
-                    \proc_terminate($process, \SIGKILL);
-                }
-                break;
-            }
-
-            $allFinished = true;
-
-            foreach ($processes as $process) {
-                $status = Status::of($process);
-
-                if ($status->isRunning()) {
-                    $allFinished = false;
-                    break;
+                if ($stdoutDesc->isNone() || $stdoutDesc->unwrap()->isPipe()) {
+                    $builder = $builder->stdout(StreamDescriptor::pipe('w'));
                 }
             }
 
-            if ($allFinished) {
-                break;
+            $processResult = $builder->spawn();
+
+            if ($processResult->isErr()) {
+                // Clean up any already started processes
+                $this->cleanupProcesses($processes);
+                return Result::err($processResult->unwrapErr());
             }
 
-            \usleep(100000); // Sleep 100ms
+            $processes = $processes->add($processResult->unwrap());
         }
+
+        // Wait for all processes to complete and get output from the last one
+        $lastProcess = $processes->last()->unwrap();
+
+        // Close stdin of first process if it's still open
+        $firstProcess = $processes->first()->unwrap();
+        $stdinResult = $firstProcess->stdin();
+        if ($stdinResult->isSome()) {
+            fclose($stdinResult->unwrap());
+        }
+
+        $outputResult = $lastProcess->output($this->timeout);
+
+        // Clean up all processes
+        $this->cleanupProcesses($processes);
+
+        if ($outputResult->isErr()) {
+            return Result::err($outputResult->unwrapErr());
+        }
+
+        $output = $outputResult->unwrap();
+
+        return $output->isSuccess()
+            ? Result::ok($output)
+            : Result::err($output);
     }
 
-    private function cleanupStreams(array $streams): void
+    /**
+     * @param Sequence<Process> $processes
+     */
+    private function cleanupProcesses(Sequence $processes): void
     {
-        foreach ($streams as $stream) {
-            if (\is_resource($stream)) {
-                \fclose($stream);
+        foreach ($processes->iter() as $process) {
+            if ($process->isRunning()) {
+                $process->kill(SIGKILL);
             }
-        }
-    }
-
-    private function cleanupProcesses(array $processes, array $pipes): void
-    {
-        foreach ($pipes as $pipeSet) {
-            foreach ($pipeSet as $pipe) {
-                if (\is_resource($pipe)) {
-                    \fclose($pipe);
-                }
-            }
-        }
-
-        foreach ($processes as $process) {
-            if (\is_resource($process)) {
-                \proc_close($process);
-            }
+            $process->close();
         }
     }
 
     /**
-     * Builds the command string.
+     * Spawns the command without waiting for it to complete.
      *
+     * @return Result<Process, string>
      */
-     private function buildCommand(): Str
+    public function spawn(): Result
     {
-        $command = $this->name->map(static fn(string $name) => \escapeshellcmd($name));
-
-        if (!$this->args->isEmpty()) {
-            $command = $this
-                ->args
-                ->map(
-                    // If the argument contains environment variable syntax,
-                    // wrap in double quotes instead of using escapeshellarg
-                    static fn(Str $arg) => match (true) {
-                        // Use double quotes to allow variable expansion
-                        // but escape dangerous characters except $
-                        \preg_match(
-                            '/\$[A-Z_][A-Z0-9_]*/i',
-                            $arg->toString(),
-                        ) !== false => Str::of('"' . \str_replace(['\\', '"', '`'], ['\\\\', '\\"', '\\`'], $arg->toString()) . '"'),
-                        // Normal argument - escape normally
-                        default => $arg->map(static fn($a) => \escapeshellarg($a)),
-                    },
-                )
-                ->fold(
-                    static fn(Str $command, Str $arg) => $command->append($arg->prepend(' ')),
-                    $command,
-                );
+        if (!$this->pipeline->isEmpty()) {
+            return Result::err("Cannot spawn a pipeline command. Use run() instead.");
         }
 
-        return $command;
+        return $this->builder->spawn();
     }
 
-    private function buildEnvironment(self $cmd): array
+    /**
+     * Executes the command and returns only stdout as a string.
+     *
+     * @return Result<Str, string>
+     */
+    public function output(): Result
     {
-        return $cmd->env->fold(
-            static fn(array $carry, Str $var, Str $value) => [...$carry, $var->toString() => $value->toString()],
-            $_ENV,
-        );
+        $result = $this->run();
+
+        if ($result->isErr()) {
+            $error = $result->unwrapErr();
+            return Result::err(
+                $error instanceof Output
+                ? $error->stderr()->toString()
+                : (string) $error
+            );
+        }
+
+        return Result::ok($result->unwrap()->stdout());
+    }
+
+    /**
+     * Gets the underlying ProcessBuilder for advanced configuration.
+     */
+    public function builder(): ProcessBuilder
+    {
+        return $this->builder;
     }
 }
