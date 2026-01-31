@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\FileSystem;
 
@@ -33,7 +33,7 @@ final readonly class DirectoryEntry
      * @return self A new DirectoryEntry instance
      * @psalm-pure
      */
-    public static function of(string | Path $path): self
+    public static function of(string|Path $path): self
     {
         return new self($path instanceof Path ? $path : Path::of($path));
     }
@@ -61,6 +61,16 @@ final readonly class DirectoryEntry
     public function fileName(): Option
     {
         return $this->path->fileName();
+    }
+
+    /**
+     * Get the file type of this entry
+     *
+     * @return FileType The file type
+     */
+    public function fileType(): FileType
+    {
+        return FileType::of($this->path);
     }
 
     /**
