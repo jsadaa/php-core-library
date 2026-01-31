@@ -1,9 +1,10 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\Str\Unit;
 
+use Jsadaa\PhpCoreLibrary\Primitives\Char\Char;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 use PHPUnit\Framework\TestCase;
@@ -135,7 +136,7 @@ final class StrAccessTest extends TestCase
         $chars = $str->chars();
 
         $this->assertSame(5, $chars->size()->toInt());
-        $this->assertSame(['H', 'e', 'l', 'l', 'o'], $chars->map(static fn(Str $char) => $char->toString())->toArray());
+        $this->assertSame(['H', 'e', 'l', 'l', 'o'], $chars->map(static fn(Char $char) => $char->toString())->toArray());
     }
 
     public function testCharsWithUtf8(): void
@@ -144,7 +145,7 @@ final class StrAccessTest extends TestCase
         $chars = $str->chars();
 
         $this->assertSame(5, $chars->size()->toInt());
-        $this->assertEquals(['H', 'é', 'l', 'l', 'ö'], $chars->map(static fn(Str $char) => $char->toString())->toArray());
+        $this->assertEquals(['H', 'é', 'l', 'l', 'ö'], $chars->map(static fn(Char $char) => $char->toString())->toArray());
     }
 
     public function testCharsWithEmoji(): void
@@ -153,7 +154,7 @@ final class StrAccessTest extends TestCase
         $chars = $str->chars();
 
         $this->assertSame(6, $chars->size()->toInt());
-        $this->assertEquals(['H', 'e', 'l', 'l', 'o', '😀'], $chars->map(static fn(Str $char) => $char->toString())->toArray());
+        $this->assertEquals(['H', 'e', 'l', 'l', 'o', '😀'], $chars->map(static fn(Char $char) => $char->toString())->toArray());
     }
 
     public function testCharsOnEmptyString(): void
