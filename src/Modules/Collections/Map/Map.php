@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Map;
 
@@ -77,7 +77,7 @@ final readonly class Map
      */
     public function containsKey(mixed $key): bool
     {
-        return $this->values->any(static fn(Pair $pair) => $pair->key() === $key);
+        return $this->values->any(static fn(Pair $pair) => $pair->key() == $key);
     }
 
     /**
@@ -189,7 +189,7 @@ final readonly class Map
     {
         return $this
             ->values
-            ->find(static fn(Pair $pair) => $pair->key() === $key)
+            ->find(static fn(Pair $pair) => $pair->key() == $key)
             ->map(static fn(Pair $pair) => $pair->value());
     }
 
@@ -202,11 +202,11 @@ final readonly class Map
      */
     public function add(mixed $key, mixed $value): self
     {
-        return new self (
+        return new self(
             match (true) {
-                $this->values->any(static fn(Pair $pair) => $pair->key() === $key) => $this
+                $this->values->any(static fn(Pair $pair) => $pair->key() == $key) => $this
                     ->values
-                    ->filter(static fn(Pair $pair) => $pair->key() !== $key)
+                    ->filter(static fn(Pair $pair) => $pair->key() != $key)
                     ->add(Pair::of($key, $value)),
                 default => $this->values->add(Pair::of($key, $value)),
             },
@@ -224,7 +224,7 @@ final readonly class Map
         return new self(
             $this
                 ->values
-                ->filter(static fn(Pair $pair) => $pair->key() !== $key),
+                ->filter(static fn(Pair $pair) => $pair->key() != $key),
         );
     }
 
@@ -284,6 +284,8 @@ final readonly class Map
 
     /**
      * Append all key-value pairs from another map to this map
+     *
+     * TODO : Check if the appended map have duplicate keys with the current instance
      *
      * @param self<K, V> $other The map to append
      * @return self<K, V>
