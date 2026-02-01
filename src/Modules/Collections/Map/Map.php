@@ -21,15 +21,20 @@ use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
  */
 final readonly class Map
 {
-    /** @var Sequence<Pair<K, V>> */
-    private Sequence $values;
+    /** @var array<string, array{K, V}> */
+    private array $scalars;
+
+    /** @var \SplObjectStorage<object, V> */
+    private \SplObjectStorage $objects;
 
     /**
-     * @param Sequence<Pair<K, V>> $values
+     * @param array<string, array{K, V}> $scalars
+     * @param \SplObjectStorage<object, V> $objects
      */
-    private function __construct(Sequence $values)
+    private function __construct(array $scalars, \SplObjectStorage $objects)
     {
-        $this->values = $values;
+        $this->scalars = $scalars;
+        $this->objects = $objects;
     }
 
     /**
@@ -44,7 +49,37 @@ final readonly class Map
      */
     public static function of(mixed $key, mixed $value): self
     {
-        return new self(Sequence::of(Pair::of($key, $value)));
+        return self::new()->add($key, $value);
+    }
+
+    /**
+     * Create a new map from a list of keys, assigning the same value to each.
+     * Efficient O(N) construction.
+     *
+     * @template A
+     * @template B
+     * @param iterable<A> $keys
+     * @param B $value
+     * @return self<A, B>
+     */
+    public static function fromKeys(iterable $keys, mixed $value): self
+    {
+        $scalars = [];
+        $objects = new \SplObjectStorage();
+        $dummy = new self([], $objects); // Helper to access encodeKey if needed? No, purely internal or object context?
+        // Static context, can't call private encodeKey if it's instance method.
+        // Make encodeKey static or duplicate logic.
+        // Prefer static helper.
+
+        foreach ($keys as $key) {
+            if (\is_object($key)) {
+                $objects->attach($key, $value);
+            } else {
+                $scalars[self::staticEncodeKey($key)] = [$key, $value];
+            }
+        }
+
+        return new self($scalars, $objects);
     }
 
     /**
@@ -57,7 +92,7 @@ final readonly class Map
      */
     public static function new(): self
     {
-        return new self(Sequence::new());
+        return new self([], new \SplObjectStorage());
     }
 
     /**
@@ -67,7 +102,7 @@ final readonly class Map
      */
     public function clear(): self
     {
-        return new self(Sequence::new());
+        return self::new();
     }
 
     /**
@@ -77,7 +112,11 @@ final readonly class Map
      */
     public function containsKey(mixed $key): bool
     {
-        return $this->values->any(static fn(Pair $pair) => $pair->key() == $key);
+        if (\is_object($key)) {
+            return $this->objects->contains($key);
+        }
+
+        return \array_key_exists($this->encodeKey($key), $this->scalars);
     }
 
     /**
@@ -87,7 +126,19 @@ final readonly class Map
      */
     public function containsValue(mixed $value): bool
     {
-        return $this->values->any(static fn(Pair $pair) => $pair->value() === $value);
+        foreach ($this->scalars as $pair) {
+            if ($pair[1] === $value) {
+                return true;
+            }
+        }
+
+        foreach ($this->objects as $object) {
+            if ($this->objects[$object] === $value) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -98,11 +149,25 @@ final readonly class Map
      */
     public function filter(callable $predicate): self
     {
-        return new self(
-            $this
-                ->values
-                ->filter(static fn(Pair $pair) => $predicate($pair->key(), $pair->value())),
-        );
+        /** @var array<string, array{K, V}> $newScalars */
+        $newScalars = [];
+        $newObjects = new \SplObjectStorage();
+
+        foreach ($this->scalars as $hash => $pair) {
+            if ($predicate($pair[0], $pair[1])) {
+                $newScalars[$hash] = $pair;
+            }
+        }
+
+        foreach ($this->objects as $object) {
+            $value = $this->objects[$object];
+            /** @var K $object */
+            if ($predicate($object, $value)) {
+                $newObjects->attach($object, $value);
+            }
+        }
+
+        return new self($newScalars, $newObjects);
     }
 
     /**
@@ -114,19 +179,24 @@ final readonly class Map
      */
     public function map(callable $mapper): self
     {
-        return new self(
-            $this
-                ->values
-                ->map(static fn(Pair $pair) => Pair::of($pair->key(), $mapper($pair->key(), $pair->value()))),
-        );
+        /** @var array<string, array{K, U}> $newScalars */
+        $newScalars = [];
+        $newObjects = new \SplObjectStorage();
+
+        foreach ($this->scalars as $hash => $pair) {
+            $newScalars[$hash] = [$pair[0], $mapper($pair[0], $pair[1])];
+        }
+
+        foreach ($this->objects as $object) {
+            /** @var K $object */
+            $newObjects->attach($object, $mapper($object, $this->objects[$object]));
+        }
+
+        return new self($newScalars, $newObjects);
     }
 
     /**
      * FlatMap the collection based on a mapper function
-     *
-     * Applies the mapper function to each key-value pair, expecting it to return
-     * a Map, then merges all resulting maps into a single Map.
-     * If duplicate keys exist, the last value wins.
      *
      * @template U
      * @param callable(K, V): self<K, U> $mapper The mapper function that returns a Map
@@ -153,9 +223,14 @@ final readonly class Map
      */
     public function forEach(callable $callback): void
     {
-        $this
-            ->values
-            ->forEach(static fn(Pair $pair) => $callback($pair->key(), $pair->value()));
+        foreach ($this->scalars as $pair) {
+            $callback($pair[0], $pair[1]);
+        }
+
+        foreach ($this->objects as $object) {
+            /** @var K $object */
+            $callback($object, $this->objects[$object]);
+        }
     }
 
     /**
@@ -169,20 +244,18 @@ final readonly class Map
      */
     public function fold(callable $callback, mixed $initial): mixed
     {
-        /**
-         * @psalm-suppress ImpureFunctionCall
-         * @psalm-suppress MixedArgument
-         */
-        return $this
-            ->values
-            ->fold(
-                static fn($carry, $pair) => $callback(
-                    $carry,
-                    $pair->key(),
-                    $pair->value(),
-                ),
-                $initial,
-            );
+        $carry = $initial;
+
+        foreach ($this->scalars as $pair) {
+            $carry = $callback($carry, $pair[0], $pair[1]);
+        }
+
+        foreach ($this->objects as $object) {
+            /** @var K $object */
+            $carry = $callback($carry, $object, $this->objects[$object]);
+        }
+
+        return $carry;
     }
 
     /**
@@ -193,10 +266,19 @@ final readonly class Map
      */
     public function get(mixed $key): Option
     {
-        return $this
-            ->values
-            ->find(static fn(Pair $pair) => $pair->key() == $key)
-            ->map(static fn(Pair $pair) => $pair->value());
+        if (\is_object($key)) {
+            if ($this->objects->contains($key)) {
+                return Option::some($this->objects[$key]);
+            }
+            return Option::none();
+        }
+
+        $hash = $this->encodeKey($key);
+        if (isset($this->scalars[$hash])) {
+            return Option::some($this->scalars[$hash][1]);
+        }
+
+        return Option::none();
     }
 
     /**
@@ -208,15 +290,15 @@ final readonly class Map
      */
     public function add(mixed $key, mixed $value): self
     {
-        return new self(
-            match (true) {
-                $this->values->any(static fn(Pair $pair) => $pair->key() == $key) => $this
-                    ->values
-                    ->filter(static fn(Pair $pair) => $pair->key() != $key)
-                    ->add(Pair::of($key, $value)),
-                default => $this->values->add(Pair::of($key, $value)),
-            },
-        );
+        if (\is_object($key)) {
+            $newObjects = clone $this->objects;
+            $newObjects->attach($key, $value);
+            return new self($this->scalars, $newObjects);
+        }
+
+        $newScalars = $this->scalars;
+        $newScalars[$this->encodeKey($key)] = [$key, $value];
+        return new self($newScalars, $this->objects);
     }
 
     /**
@@ -227,11 +309,23 @@ final readonly class Map
      */
     public function remove(mixed $key): self
     {
-        return new self(
-            $this
-                ->values
-                ->filter(static fn(Pair $pair) => $pair->key() != $key),
-        );
+        if (\is_object($key)) {
+            if (!$this->objects->contains($key)) {
+                return $this;
+            }
+            $newObjects = clone $this->objects;
+            $newObjects->detach($key);
+            return new self($this->scalars, $newObjects);
+        }
+
+        $hash = $this->encodeKey($key);
+        if (!isset($this->scalars[$hash])) {
+            return $this;
+        }
+
+        $newScalars = $this->scalars;
+        unset($newScalars[$hash]);
+        return new self($newScalars, $this->objects);
     }
 
     /**
@@ -240,7 +334,7 @@ final readonly class Map
      */
     public function isEmpty(): bool
     {
-        return $this->values->isEmpty();
+        return empty($this->scalars) && $this->objects->count() === 0;
     }
 
     /**
@@ -250,7 +344,18 @@ final readonly class Map
      */
     public function keys(): Set
     {
-        return $this->values->map(static fn(Pair $pair) => $pair->key())->toSet();
+        // For efficiency, we should probably construct Set directly from keys,
+        // but Set logic relies on Sequence. For now, delegate to Set::of logic.
+        // Or refactor Set later.
+        $keys = [];
+        foreach ($this->scalars as $pair) {
+            $keys[] = $pair[0];
+        }
+        foreach ($this->objects as $object) {
+            $keys[] = $object;
+        }
+
+        return Set::ofArray($keys);
     }
 
     /**
@@ -260,7 +365,15 @@ final readonly class Map
      */
     public function values(): Sequence
     {
-        return $this->values->map(static fn(Pair $pair) => $pair->value());
+        $values = [];
+        foreach ($this->scalars as $pair) {
+            $values[] = $pair[1];
+        }
+        foreach ($this->objects as $object) {
+            $values[] = $this->objects[$object];
+        }
+
+        return Sequence::ofArray($values);
     }
 
     /**
@@ -270,11 +383,33 @@ final readonly class Map
      */
     public function eq(self $other): bool
     {
-        if (!$this->keys()->eq($other->keys())) {
+        if ($this->size()->toInt() !== $other->size()->toInt()) {
             return false;
         }
 
-        return $this->values()->eq($other->values());
+        // Check if all scalar keys exist and match values strict
+        foreach ($this->scalars as $hash => $pair) {
+            if (!$other->containsKey($pair[0])) {
+                return false;
+            }
+            // Strict value check
+            if ($other->get($pair[0])->unwrap() !== $pair[1]) {
+                return false;
+            }
+        }
+
+        // Check objects
+        foreach ($this->objects as $object) {
+            if (!$other->containsKey($object)) {
+                return false;
+            }
+            // Strict value check
+            if ($other->get($object)->unwrap() !== $this->objects[$object]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -285,24 +420,46 @@ final readonly class Map
      */
     public function find(callable $predicate): Option
     {
-        return $this->values->find(static fn(Pair $pair) => $predicate($pair->key(), $pair->value()));
+        foreach ($this->scalars as $pair) {
+            if ($predicate($pair[0], $pair[1])) {
+                return Option::some(Pair::of($pair[0], $pair[1]));
+            }
+        }
+
+        foreach ($this->objects as $object) {
+            $value = $this->objects[$object];
+            /** @var K $object */
+            if ($predicate($object, $value)) {
+                return Option::some(Pair::of($object, $value));
+            }
+        }
+
+        return Option::none();
     }
 
     /**
      * Append all key-value pairs from another map to this map
-     *
-     * TODO : Check if the appended map have duplicate keys with the current instance
      *
      * @param self<K, V> $other The map to append
      * @return self<K, V>
      */
     public function append(self $other): self
     {
-        return new self(
-            $this
-                ->values
-                ->append($other->values),
-        );
+        $newScalars = $this->scalars;
+        foreach ($other->scalars as $hash => $pair) {
+            $newScalars[$hash] = $pair;
+        }
+
+        if ($this->objects->count() === 0 && $other->objects->count() > 0) {
+            $newObjects = clone $other->objects;
+        } elseif ($other->objects->count() === 0) {
+            $newObjects = clone $this->objects;
+        } else {
+            $newObjects = clone $this->objects;
+            $newObjects->addAll($other->objects);
+        }
+
+        return new self($newScalars, $newObjects);
     }
 
     /**
@@ -311,7 +468,7 @@ final readonly class Map
      */
     public function size(): Integer
     {
-        return $this->values->size();
+        return Integer::of(\count($this->scalars) + $this->objects->count());
     }
 
     /**
@@ -321,6 +478,32 @@ final readonly class Map
      */
     public function toArray(): array
     {
-        return $this->values->map(static fn(Pair $pair) => [$pair->key(), $pair->value()])->toArray();
+        $result = [];
+        foreach ($this->scalars as $pair) {
+            $result[] = [$pair[0], $pair[1]];
+        }
+        foreach ($this->objects as $object) {
+            $result[] = [$object, $this->objects[$object]];
+        }
+        return $result;
+    }
+
+    private function encodeKey(mixed $key): string
+    {
+        return self::staticEncodeKey($key);
+    }
+
+    private static function staticEncodeKey(mixed $key): string
+    {
+        return match (true) {
+            \is_string($key) => 's:' . $key,
+            \is_int($key) => 'i:' . $key,
+            \is_null($key) => 'n:',
+            \is_bool($key) => 'b:' . ($key ? '1' : '0'),
+            \is_float($key) => 'f:' . $key,
+            \is_array($key) => 'a:' . \md5(\serialize($key)), // Robust array hashing
+            \is_resource($key) => 'r:' . \get_resource_id($key),
+            default => 'u:' . \serialize($key),
+        };
     }
 }

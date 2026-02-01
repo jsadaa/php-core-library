@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Set;
 
@@ -16,15 +16,15 @@ use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
  */
 final readonly class Set
 {
-    /** @var Sequence<T> */
-    private Sequence $values;
+    /** @var \Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map<T, bool> */
+    private \Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map $map;
 
     /**
-     * @param Sequence<T> $values
+     * @param \Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map<T, bool> $map
      */
-    private function __construct(Sequence $values)
+    private function __construct(\Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map $map)
     {
-        $this->values = $values;
+        $this->map = $map;
     }
 
     /**
@@ -37,8 +37,7 @@ final readonly class Set
      */
     public static function of(mixed ...$values): self
     {
-        /** @var self<U> */
-        return new self(Sequence::of($values)->unique());
+        return new self(\Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map::fromKeys($values, true));
     }
 
     /**
@@ -49,7 +48,7 @@ final readonly class Set
      */
     public function add(mixed $value): self
     {
-        return new self($this->values->add($value)->unique());
+        return new self($this->map->add($value, true));
     }
 
     /**
@@ -59,7 +58,7 @@ final readonly class Set
      */
     public function clear(): self
     {
-        return new self(Sequence::new());
+        return new self(\Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map::new());
     }
 
     /**
@@ -69,7 +68,7 @@ final readonly class Set
      */
     public function contains(mixed $value): bool
     {
-        return $this->values->contains($value);
+        return $this->map->containsKey($value);
     }
 
     /**
@@ -80,7 +79,7 @@ final readonly class Set
      */
     public function difference(self $other): self
     {
-        return new self($this->values->filter(static fn($value) => !$other->contains($value)));
+        return $this->filter(static fn($value) => !$other->contains($value));
     }
 
     /**
@@ -91,7 +90,7 @@ final readonly class Set
      */
     public function intersection(self $other): self
     {
-        return new self($this->values->filter(static fn($value) => $other->contains($value)));
+        return $this->filter(static fn($value) => $other->contains($value));
     }
 
     /**
@@ -110,7 +109,7 @@ final readonly class Set
      */
     public function isEmpty(): bool
     {
-        return $this->values->isEmpty();
+        return $this->map->isEmpty();
     }
 
     /**
@@ -120,7 +119,11 @@ final readonly class Set
      */
     public function eq(self $other): bool
     {
-        return $this->values->eq($other->values);
+        if ($this->size()->toInt() !== $other->size()->toInt()) {
+            return false;
+        }
+        // Check if all keys in this set exist in other set
+        return $this->all(static fn($value) => $other->contains($value));
     }
 
     /**
@@ -130,7 +133,7 @@ final readonly class Set
      */
     public function isSubset(self $other): bool
     {
-        return $this->intersection($other)->eq($this);
+        return $this->all(static fn($value) => $other->contains($value));
     }
 
     /**
@@ -140,7 +143,7 @@ final readonly class Set
      */
     public function isSuperset(self $other): bool
     {
-        return $this->intersection($other)->eq($other);
+        return $other->isSubset($this);
     }
 
     /**
@@ -149,7 +152,7 @@ final readonly class Set
      */
     public function size(): Integer
     {
-        return $this->values->size();
+        return $this->map->size();
     }
 
     /**
@@ -160,7 +163,7 @@ final readonly class Set
      */
     public function remove(mixed $value): self
     {
-        return new self($this->values->filter(static fn($v) => $v !== $value));
+        return new self($this->map->remove($value));
     }
 
     /**
@@ -171,7 +174,13 @@ final readonly class Set
      */
     public function append(self $other): self
     {
-        return new self($this->values->append($other->values));
+        // Map merge of keys
+        // We can expose underlying map via accessor if internal? 
+        // No, use efficient construction via keys.
+        // Actually, strictly speaking append is Union.
+        // Just merge maps.
+        // Accessing private map of other? private members are accessible by same class instances.
+        return new self($this->map->append($other->map));
     }
 
     /**
@@ -183,7 +192,10 @@ final readonly class Set
      */
     public function map(callable $fn): self
     {
-        return new self($this->values->map($fn)->unique());
+        // Extract values, map them, create new set
+        $newValues = [];
+        $this->forEach(static fn($val) => $newValues[] = $fn($val));
+        return self::of(...$newValues);
     }
 
     /**
@@ -195,7 +207,13 @@ final readonly class Set
      */
     public function flatMap(callable $fn): self
     {
-        return new self($this->values->flatMap($fn)->unique());
+        $newValues = [];
+        $this->forEach(function ($val) use (&$newValues, $fn) {
+            foreach ($fn($val) as $item) {
+                $newValues[] = $item;
+            }
+        });
+        return self::of(...$newValues);
     }
 
     /**
@@ -206,7 +224,7 @@ final readonly class Set
      */
     public function filter(callable $fn): self
     {
-        return new self($this->values->filter($fn));
+        return new self($this->map->filter(static fn($key, $_) => $fn($key)));
     }
 
     /**
@@ -216,7 +234,8 @@ final readonly class Set
      */
     public function any(callable $fn): bool
     {
-        return $this->values->any($fn);
+        // Map::find/any takes (key, value)
+        return $this->map->find(static fn($key, $_) => $fn($key))->isSome();
     }
 
     /**
@@ -226,7 +245,9 @@ final readonly class Set
      */
     public function all(callable $fn): bool
     {
-        return $this->values->all($fn);
+        // If find ANY that does NOT match, return false.
+        $foundMismatch = $this->map->find(static fn($key, $_) => !$fn($key))->isSome();
+        return !$foundMismatch;
     }
 
     /**
@@ -238,7 +259,14 @@ final readonly class Set
      */
     public function filterMap(callable $fn): self
     {
-        return new self($this->values->filterMap($fn)->unique());
+        $newValues = [];
+        $this->forEach(function ($val) use (&$newValues, $fn) {
+            $opt = $fn($val);
+            if ($opt->isSome()) {
+                $newValues[] = $opt->unwrap();
+            }
+        });
+        return self::of(...$newValues);
     }
 
     /**
@@ -251,7 +279,10 @@ final readonly class Set
      */
     public function fold(callable $fn, mixed $initial): mixed
     {
-        return $this->values->fold($fn, $initial);
+        return $this->map->fold(
+            static fn($acc, $key, $_) => $fn($acc, $key),
+            $initial
+        );
     }
 
     /**
@@ -261,7 +292,8 @@ final readonly class Set
      */
     public function flatten(): self
     {
-        return new self($this->values->flatten());
+        // Assuming T is iterable?
+        return $this->flatMap(static fn($x) => $x);
     }
 
     /**
@@ -271,7 +303,7 @@ final readonly class Set
      */
     public function forEach(callable $fn): void
     {
-        $this->values->forEach($fn);
+        $this->map->forEach(static fn($key, $_) => $fn($key));
     }
 
     /**
@@ -281,7 +313,11 @@ final readonly class Set
      */
     public function toArray(): array
     {
-        return $this->values->toArray();
+        $result = [];
+        $this->forEach(function ($val) use (&$result) {
+            $result[] = $val;
+        });
+        return $result;
     }
 
     /**
@@ -291,7 +327,7 @@ final readonly class Set
      */
     public function toSequence(): Sequence
     {
-        return $this->values;
+        return Sequence::ofArray($this->toArray());
     }
 
     /**
@@ -304,6 +340,6 @@ final readonly class Set
      */
     public static function ofArray(array $array): self
     {
-        return new self(Sequence::ofArray($array)->unique());
+        return new self(\Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map::fromKeys($array, true));
     }
 }
