@@ -7,6 +7,7 @@ namespace Jsadaa\PhpCoreLibrary\Tests\Process\Unit;
 use Jsadaa\PhpCoreLibrary\Modules\Process\Command;
 use Jsadaa\PhpCoreLibrary\Modules\Process\Process;
 use Jsadaa\PhpCoreLibrary\Modules\Process\ProcessBuilder;
+use Jsadaa\PhpCoreLibrary\Modules\Time\Duration;
 use PHPUnit\Framework\TestCase;
 
 class ProcessTest extends TestCase
@@ -21,7 +22,7 @@ class ProcessTest extends TestCase
         $this->assertTrue($process->isOk());
         $this->assertInstanceOf(Process::class, $process->unwrap());
 
-        $output = $process->unwrap()->output();
+        $output = $process->unwrap()->output(Duration::fromSeconds(5));
         $this->assertTrue($output->isOk());
         $this->assertEquals("hello\n", $output->unwrap()->stdout()->toString());
     }

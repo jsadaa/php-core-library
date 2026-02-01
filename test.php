@@ -99,6 +99,7 @@ if ($result->isOk()) {
     echo $result->unwrap()->stdout()->toString();
 }
 
+/*
 // Example 8: Inheriting parent process streams
 $result = ProcessBuilder::command('vim')
     ->arg('test.txt')
@@ -110,6 +111,7 @@ if ($result->isOk()) {
     $process->wait(null); // Wait indefinitely
     $process->close();
 }
+*/
 
 // Example 8: Interactive process with StreamWriter
 $processResult = ProcessBuilder::command('bc')

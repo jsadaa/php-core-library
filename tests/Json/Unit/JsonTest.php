@@ -10,12 +10,12 @@ use Jsadaa\PhpCoreLibrary\Modules\Json\Error\EncodingError;
 use Jsadaa\PhpCoreLibrary\Modules\Json\Error\ValidationError;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Err;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
-use Jsadaa\PhpCoreLibrary\Tests\BaseTestCase;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for the Json module.
  */
-final class JsonTest extends BaseTestCase
+final class JsonTest extends TestCase
 {
 
     public function testEncode(): void
@@ -23,7 +23,7 @@ final class JsonTest extends BaseTestCase
         $data = ['foo' => 'bar', 'baz' => 123];
         $result = Json::encode($data);
 
-        $this->assertTrue($result->isSuccess());
+        $this->assertTrue($result->isOk());
         $this->assertJsonStringEqualsJsonString('{"foo":"bar","baz":123}', $result->unwrap());
     }
 
@@ -31,7 +31,7 @@ final class JsonTest extends BaseTestCase
     {
         $result = Json::encodeToStr(['test' => true]);
 
-        $this->assertTrue($result->isSuccess());
+        $this->assertTrue($result->isOk());
         $this->assertInstanceOf(Str::class, $result->unwrap());
         $this->assertEquals('{"test":true}', $result->unwrap()->toString());
     }
@@ -52,7 +52,7 @@ final class JsonTest extends BaseTestCase
         $json = '{"foo":"bar","baz":123}';
         $result = Json::decode($json);
 
-        $this->assertTrue($result->isSuccess());
+        $this->assertTrue($result->isOk());
         $this->assertEquals(['foo' => 'bar', 'baz' => 123], $result->unwrap());
     }
 
@@ -61,7 +61,7 @@ final class JsonTest extends BaseTestCase
         $json = Str::of('{"foo":"bar"}');
         $result = Json::decode($json);
 
-        $this->assertTrue($result->isSuccess());
+        $this->assertTrue($result->isOk());
         $this->assertEquals(['foo' => 'bar'], $result->unwrap());
     }
 
@@ -76,7 +76,7 @@ final class JsonTest extends BaseTestCase
 
     public function testValidate(): void
     {
-        $this->assertTrue(Json::validate('{"foo":"bar"}')->isSuccess());
+        $this->assertTrue(Json::validate('{"foo":"bar"}')->isOk());
         $this->assertTrue(Json::validate('{invalid}')->isErr());
         $this->assertInstanceOf(ValidationError::class, Json::validate('{invalid}')->unwrapErr());
     }
