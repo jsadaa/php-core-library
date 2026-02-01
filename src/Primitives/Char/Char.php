@@ -6,6 +6,9 @@ namespace Jsadaa\PhpCoreLibrary\Primitives\Char;
 
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 
+/**
+ * @psalm-immutable
+ */
 final readonly class Char
 {
     private string $value;
@@ -19,6 +22,9 @@ final readonly class Char
         $this->value = $value;
     }
 
+    /**
+     * @psalm-pure
+     */
     public static function of(string $value): self
     {
         return new self($value);

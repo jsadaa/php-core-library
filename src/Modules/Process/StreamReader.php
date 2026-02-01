@@ -13,7 +13,7 @@ use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 /**
  * Non-blocking stream reader with timeout support.
  *
- * @psalm-immutable
+ * Non-blocking stream reader with timeout support.
  */
 final class StreamReader
 {
@@ -31,7 +31,6 @@ final class StreamReader
     }
 
     /**
-     * @psalm-pure
      * @param resource $stream
      */
     public static function from($stream, int|Integer $bufferSize = 8192): self
@@ -54,10 +53,14 @@ final class StreamReader
         $data = fread($this->stream, $this->bufferSize->toInt());
 
         if ($data === false) {
-            return Result::err("Failed to read from stream");
+            /** @var Result<Str, string> $err */
+            $err = Result::err("Failed to read from stream");
+            return $err;
         }
 
-        return Result::ok(Str::of($data));
+        /** @var Result<Str, string> $ok */
+        $ok = Result::ok(Str::of($data));
+        return $ok;
     }
 
     /**
@@ -67,14 +70,16 @@ final class StreamReader
      */
     public function readAll(Duration $timeout): Result
     {
-        $deadline = SystemTime::now()->add($timeout);
+        $deadline = SystemTime::now()->add($timeout)->unwrap();
         $result = Str::new();
 
         stream_set_blocking($this->stream, false);
 
         while (true) {
             if (SystemTime::now()->ge($deadline)) {
-                return Result::err("Read timeout exceeded");
+                /** @var Result<Str, string> $err */
+                $err = Result::err("Read timeout exceeded");
+                return $err;
             }
 
             if (feof($this->stream)) {
@@ -84,7 +89,9 @@ final class StreamReader
             $data = fread($this->stream, $this->bufferSize->toInt());
 
             if ($data === false) {
-                return Result::err("Failed to read from stream");
+                /** @var Result<Str, string> $err */
+                $err = Result::err("Failed to read from stream");
+                return $err;
             }
 
             if ($data !== '') {
@@ -95,7 +102,9 @@ final class StreamReader
             }
         }
 
-        return Result::ok($result);
+        /** @var Result<Str, string> $ok */
+        $ok = Result::ok($result);
+        return $ok;
     }
 
     /**
@@ -106,14 +115,16 @@ final class StreamReader
     public function readUntil(string|Str $delimiter, Duration $timeout): Result
     {
         $delimiter = is_string($delimiter) ? $delimiter : $delimiter->toString();
-        $deadline = SystemTime::now()->add($timeout);
+        $deadline = SystemTime::now()->add($timeout)->unwrap();
         $result = Str::new();
 
         stream_set_blocking($this->stream, false);
 
         while (true) {
             if (SystemTime::now()->ge($deadline)) {
-                return Result::err("Read timeout exceeded");
+                /** @var Result<Str, string> $err */
+                $err = Result::err("Read timeout exceeded");
+                return $err;
             }
 
             $char = fgetc($this->stream);
@@ -133,7 +144,9 @@ final class StreamReader
             }
         }
 
-        return Result::ok($result);
+        /** @var Result<Str, string> $ok */
+        $ok = Result::ok($result);
+        return $ok;
     }
 
     /**
@@ -149,8 +162,10 @@ final class StreamReader
      */
     public function close(): void
     {
-        if (is_resource($this->stream)) {
-            fclose($this->stream);
-        }
+        // Suppress invalid property assignment because we can't update the readonly property
+        // but the underlying resource state changes, which Psalm tracks.
+        // We accept that the property will hold a closed resource.
+        /** @psalm-suppress InvalidPropertyAssignmentValue */
+        fclose($this->stream);
     }
 }

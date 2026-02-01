@@ -74,7 +74,7 @@ final readonly class Json
      */
     public static function decode(string | Str $json, int $flags = 0, int $depth = 512): Result {
         try {
-            /** @var mixed */
+            /** @var mixed $decoded */
             $decoded = \json_decode($json instanceof Str ? $json->toString() : $json, true, $depth, $flags | \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             /** @var Result<mixed, DecodingError> */
@@ -94,14 +94,9 @@ final readonly class Json
      * @return Result<Unit, ValidationError> The validation result
      */
     public static function validate(string | Str $json, int $flags = 0, int $depth = 512): Result {
-        try {
-            \json_validate($json instanceof Str ? $json->toString() : $json, $depth | \JSON_THROW_ON_ERROR, $flags);
-        } catch (\JsonException $e) {
-            /** @var Result<Unit, ValidationError> */
-            return Result::err(new ValidationError($e->getMessage()));
-        }
-
         /** @var Result<Unit, ValidationError> */
-        return Result::ok(Unit::new());
+        return \json_validate($json instanceof Str ? $json->toString() : $json, $depth, $flags)
+            ? Result::ok(Unit::new())
+            : Result::err(new ValidationError(\json_last_error_msg()));
     }
 }

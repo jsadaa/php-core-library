@@ -310,7 +310,7 @@ final readonly class Str implements \Stringable
     public function chars(): Sequence
     {
         if ($this->isEmpty()) {
-            /** @var Sequence<Str> */
+            /** @var Sequence<Char> */
             return Sequence::new();
         }
 
@@ -1075,6 +1075,7 @@ final readonly class Str implements \Stringable
      */
     public function map(callable $mapper): self
     {
+        /** @psalm-suppress ImpureFunctionCall */
         return self::of($mapper($this->value));
     }
 

@@ -113,8 +113,15 @@ final readonly class ProcessStreams
         return $this
             ->descriptors
             ->fold(
-                function (array $carry, FileDescriptor $fd, StreamDescriptor $descriptor) {
-                    $carry[$fd->toInt()] = $descriptor->toDescriptor();
+                /**
+                 * @param array<int, array<int, string>|resource> $carry
+                 * @return array<int, array<int, string>|resource>
+                 */
+                function (array $carry, FileDescriptor $fd, StreamDescriptor $descriptor): array {
+                    $val = $descriptor->toDescriptor();
+                    if ($val !== null) {
+                        $carry[$fd->toInt()] = $val;
+                    }
                     return $carry;
                 },
                 []

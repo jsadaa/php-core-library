@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Result;
 
@@ -9,8 +9,8 @@ use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 /**
  * Represents a result that can either be successful or an error.
  *
- * @template T The type of the success value
- * @template E The type of the error value
+ * @template-covariant T The type of the success value
+ * @template-covariant E The type of the error value
  * @psalm-immutable
  *
  */
@@ -19,12 +19,12 @@ final readonly class Result
     /**
      * @var Ok<T>|Err<E>
      */
-    private Ok | Err $value;
+    private Ok|Err $value;
 
     /**
      * @param Ok<T>|Err<E> $value
      */
-    private function __construct(Ok | Err $value)
+    private function __construct(Ok|Err $value)
     {
         $this->value = $value;
     }

@@ -116,7 +116,7 @@ final class StreamDescriptor
     /**
      * Converts to PHP's proc_open descriptor format.
      *
-     * @return array{string, string}|array{string, string, string}|resource
+     * @return array{string, string}|array{string, string, string}|resource|null
      */
     public function toDescriptor()
     {

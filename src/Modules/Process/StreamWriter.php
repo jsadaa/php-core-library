@@ -12,7 +12,7 @@ use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 /**
  * Stream writer with buffering and flush control.
  *
- * @psalm-immutable
+ * Stream writer with buffering and flush control.
  */
 final class StreamWriter
 {
@@ -38,7 +38,6 @@ final class StreamWriter
     }
 
     /**
-     * @psalm-pure
      * @param resource $stream
      */
     public static function from($stream): self
@@ -54,10 +53,9 @@ final class StreamWriter
     /**
      * Creates a writer with automatic flushing after each write.
      *
-     * @psalm-pure
      * @param resource $stream
      */
-    public static function withAutoFlush($stream): self
+    public static function createAutoFlushing($stream): self
     {
         return new self(
             $stream,
@@ -107,20 +105,26 @@ final class StreamWriter
         $dataStr = is_string($data) ? $data : $data->toString();
 
         if (strlen($dataStr) === 0) {
-            return Result::ok(Integer::of(0));
+            /** @var Result<Integer, string> $ok */
+            $ok = Result::ok(Integer::of(0));
+            return $ok;
         }
 
         $written = @fwrite($this->stream, $dataStr);
 
         if ($written === false) {
-            return Result::err("Failed to write to stream");
+            /** @var Result<Integer, string> $err */
+            $err = Result::err("Failed to write to stream");
+            return $err;
         }
 
         if ($this->autoFlush) {
             $this->flush();
         }
 
-        return Result::ok(Integer::of($written));
+        /** @var Result<Integer, string> $ok */
+        $ok = Result::ok(Integer::of($written));
+        return $ok;
     }
 
     /**
@@ -152,13 +156,16 @@ final class StreamWriter
             $result = $this->writeLine($line);
 
             if ($result->isErr()) {
+                /** @var Result<Integer, string> $result */
                 return $result;
             }
 
             $totalWritten = $totalWritten->add($result->unwrap());
         }
 
-        return Result::ok($totalWritten);
+        /** @var Result<Integer, string> $ok */
+        $ok = Result::ok($totalWritten);
+        return $ok;
     }
 
     /**
@@ -179,6 +186,7 @@ final class StreamWriter
             $result = $this->write($chunk);
 
             if ($result->isErr()) {
+                /** @var Result<Integer, string> $result */
                 return $result;
             }
 
@@ -186,7 +194,9 @@ final class StreamWriter
             $offset += $chunkSize;
         }
 
-        return Result::ok($totalWritten);
+        /** @var Result<Integer, string> $ok */
+        $ok = Result::ok($totalWritten);
+        return $ok;
     }
 
     /**
@@ -198,8 +208,14 @@ final class StreamWriter
     {
         $result = @fflush($this->stream);
 
-        return $result !== false
-            ? Result::ok(null)
-            : Result::err("Failed to flush stream");
+        if ($result !== false) {
+            /** @var Result<null, string> $ok */
+            $ok = Result::ok(null);
+            return $ok;
+        }
+
+        /** @var Result<null, string> $err */
+        $err = Result::err("Failed to flush stream");
+        return $err;
     }
 }

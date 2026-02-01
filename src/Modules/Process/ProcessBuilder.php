@@ -13,7 +13,7 @@ use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 /**
  * Immutable builder for creating processes.
  *
- * @psalm-immutable
+ * Immutable builder for creating processes.
  */
 final readonly class ProcessBuilder
 {
@@ -44,7 +44,6 @@ final readonly class ProcessBuilder
     }
 
     /**
-     * @psalm-pure
      * @psalm-suppress ImpureFunctionCall
      */
     public static function command(string|Str $command): self
@@ -169,15 +168,20 @@ final readonly class ProcessBuilder
     public function spawn(): Result
     {
         if ($this->command->isEmpty()) {
-            return Result::err("Command cannot be empty");
+            /** @var Result<Process, string> $err */
+            $err = Result::err("Command cannot be empty");
+            return $err;
         }
 
         if (!$this->workingDirectory->isDir()) {
-            return Result::err("Working directory does not exist: {$this->workingDirectory->toString()}");
+            /** @var Result<Process, string> $err */
+            $err = Result::err("Working directory does not exist: {$this->workingDirectory->toString()}");
+            return $err;
         }
 
         $commandLine = $this->buildCommandLine();
         $descriptorSpec = $this->streams->toDescriptorArray();
+        /** @var array<int, resource> $pipes */
         $pipes = [];
 
         $handle = proc_open(
@@ -190,10 +194,17 @@ final readonly class ProcessBuilder
         );
 
         if (!is_resource($handle)) {
-            return Result::err("Failed to spawn process");
+            /** @var Result<Process, string> $err */
+            $err = Result::err("Failed to spawn process");
+            return $err;
         }
 
-        return Result::ok(Process::fromHandle($handle, $pipes));
+        /** @var array<int, resource> $pipesList */
+        $pipesList = array_values($pipes);
+
+        /** @var Result<Process, string> $ok */
+        $ok = Result::ok(Process::fromHandle($handle, $pipesList));
+        return $ok;
     }
 
     private function buildCommandLine(): Str

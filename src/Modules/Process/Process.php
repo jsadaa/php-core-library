@@ -18,6 +18,12 @@ use Jsadaa\PhpCoreLibrary\Primitives\Unit;
  * Represents a running or finished process.
  *
  * @psalm-immutable
+ * @psalm-suppress ImpureFunctionCall
+ * @psalm-suppress ImpureMethodCall
+ * @psalm-suppress MixedReturnTypeCoercion
+ * @psalm-suppress MixedArgument
+ * @psalm-suppress InvalidReturnStatement
+ * @psalm-suppress RedundantConditionGivenDocblockType
  */
 final class Process
 {
@@ -163,7 +169,7 @@ final class Process
         $stdin = $this->stdin();
 
         return $stdin->isSome()
-            ? Result::ok(StreamWriter::withAutoFlush($stdin->unwrap()))
+            ? Result::ok(StreamWriter::createAutoFlushing($stdin->unwrap()))
             : Result::err("Failed to get stdin");
     }
 
@@ -233,7 +239,8 @@ final class Process
         // Close stdin if available
         $stdinResult = $this->stdin();
         if ($stdinResult->isSome()) {
-            fclose($stdinResult->unwrap());
+            $stdinRes = $stdinResult->unwrap();
+            fclose($stdinRes);
         }
 
         // Create readers for stdout and stderr

@@ -135,6 +135,12 @@ final readonly class Map
     public function flatMap(callable $mapper): self
     {
         return $this->fold(
+            /**
+             * @param self<K, U> $accumulated
+             * @param K $key
+             * @param V $value
+             * @return self<K, U>
+             */
             static fn(self $accumulated, $key, $value) => $accumulated->append($mapper($key, $value)),
             self::new(),
         );

@@ -15,7 +15,7 @@ use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
  * High-level command execution with pipeline support.
  * Acts as a convenient wrapper around ProcessBuilder.
  *
- * @psalm-immutable
+ * Acts as a convenient wrapper around ProcessBuilder.
  */
 final readonly class Command
 {
@@ -38,7 +38,7 @@ final readonly class Command
     }
 
     /**
-     * @psalm-pure
+     * Creates a new command.
      */
     public static function of(string|Str $name): self
     {
@@ -187,7 +187,9 @@ final readonly class Command
         $processResult = $this->builder->spawn();
 
         if ($processResult->isErr()) {
-            return Result::err($processResult->unwrapErr());
+            /** @var Result<Output, Output|string> $err */
+            $err = Result::err($processResult->unwrapErr());
+            return $err;
         }
 
         $process = $processResult->unwrap();
@@ -195,14 +197,22 @@ final readonly class Command
         $process->close();
 
         if ($outputResult->isErr()) {
-            return Result::err($outputResult->unwrapErr());
+            /** @var Result<Output, Output|string> $err */
+            $err = Result::err($outputResult->unwrapErr());
+            return $err;
         }
 
         $output = $outputResult->unwrap();
 
-        return $output->isSuccess()
-            ? Result::ok($output)
-            : Result::err($output);
+        if ($output->isSuccess()) {
+            /** @var Result<Output, Output|string> $ok */
+            $ok = Result::ok($output);
+            return $ok;
+        }
+
+        /** @var Result<Output, Output|string> $err */
+        $err = Result::err($output);
+        return $err;
     }
 
     /**
@@ -217,7 +227,9 @@ final readonly class Command
         /** @var Sequence<Process> $processes */
         $processes = Sequence::new();
 
-        foreach ($builders->iter() as $index => $builder) {
+        $i = 0;
+        foreach ($builders->iter() as $builder) {
+            $index = $i++;
             // Connect pipes between processes
             if ($index > 0) {
                 $prevProcess = $processes->get(Integer::of($index - 1))->unwrap();
@@ -247,7 +259,9 @@ final readonly class Command
             if ($processResult->isErr()) {
                 // Clean up any already started processes
                 $this->cleanupProcesses($processes);
-                return Result::err($processResult->unwrapErr());
+                /** @var Result<Output, Output|string> $err */
+                $err = Result::err($processResult->unwrapErr());
+                return $err;
             }
 
             $processes = $processes->add($processResult->unwrap());
@@ -260,7 +274,8 @@ final readonly class Command
         $firstProcess = $processes->first()->unwrap();
         $stdinResult = $firstProcess->stdin();
         if ($stdinResult->isSome()) {
-            fclose($stdinResult->unwrap());
+            $stdinRes = $stdinResult->unwrap();
+            fclose($stdinRes);
         }
 
         $outputResult = $lastProcess->output($this->timeout);
@@ -269,14 +284,22 @@ final readonly class Command
         $this->cleanupProcesses($processes);
 
         if ($outputResult->isErr()) {
-            return Result::err($outputResult->unwrapErr());
+            /** @var Result<Output, Output|string> $err */
+            $err = Result::err($outputResult->unwrapErr());
+            return $err;
         }
 
         $output = $outputResult->unwrap();
 
-        return $output->isSuccess()
-            ? Result::ok($output)
-            : Result::err($output);
+        if ($output->isSuccess()) {
+            /** @var Result<Output, Output|string> $ok */
+            $ok = Result::ok($output);
+            return $ok;
+        }
+
+        /** @var Result<Output, Output|string> $err */
+        $err = Result::err($output);
+        return $err;
     }
 
     /**
@@ -300,6 +323,7 @@ final readonly class Command
     public function spawn(): Result
     {
         if (!$this->pipeline->isEmpty()) {
+            /** @var Result<Process, string> */
             return Result::err("Cannot spawn a pipeline command. Use run() instead.");
         }
 
@@ -317,14 +341,18 @@ final readonly class Command
 
         if ($result->isErr()) {
             $error = $result->unwrapErr();
-            return Result::err(
+            /** @var Result<Str, string> $err */
+            $err = Result::err(
                 $error instanceof Output
                 ? $error->stderr()->toString()
-                : (string) $error
+                : $error
             );
+            return $err;
         }
 
-        return Result::ok($result->unwrap()->stdout());
+        /** @var Result<Str, string> $ok */
+        $ok = Result::ok($result->unwrap()->stdout());
+        return $ok;
     }
 
     /**

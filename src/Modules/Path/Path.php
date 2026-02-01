@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Path;
 
@@ -14,7 +14,8 @@ use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 /**
  * @psalm-immutable
  */
-final readonly class Path {
+final readonly class Path
+{
     private string $path;
 
     private function __construct(string $path)
@@ -41,7 +42,7 @@ final readonly class Path {
      * @return self A new Path instance
      * @psalm-pure
      */
-    public static function of(string | Str $path): self
+    public static function of(string|Str $path): self
     {
         return new self($path instanceof Str ? $path->toString() : $path);
     }
@@ -210,8 +211,7 @@ final readonly class Path {
             return $ancestors->add($parent);
         }
 
-        while ($parent->isSome())
-        {
+        while ($parent->isSome()) {
             $ancestors = $ancestors->add($parent);
             $parent = $parent->unwrap()->parent();
         }
