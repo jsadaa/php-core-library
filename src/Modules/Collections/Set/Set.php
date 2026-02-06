@@ -213,7 +213,7 @@ final readonly class Set
             /**
              * @param T $val
              */
-            static function (mixed $val) use (&$newValues, $fn): void {
+            static function(mixed $val) use (&$newValues, $fn): void {
                 foreach ($fn($val) as $item) {
                     $newValues[] = $item;
                 }
@@ -286,7 +286,7 @@ final readonly class Set
             /**
              * @param T $val
              */
-            static function (mixed $val) use (&$newValues, $fn): void {
+            static function(mixed $val) use (&$newValues, $fn): void {
                 $opt = $fn($val);
 
                 if ($opt->isSome()) {
@@ -346,7 +346,7 @@ final readonly class Set
             /**
              * @param T $key
              */
-            static function (mixed $key, bool $_) use ($fn): void {
+            static function(mixed $key, bool $_) use ($fn): void {
                 $fn($key);
             },
         );
@@ -365,7 +365,7 @@ final readonly class Set
             /**
              * @param T $val
              */
-            static function (mixed $val) use (&$result): void {
+            static function(mixed $val) use (&$result): void {
                 $result[] = $val;
             },
         );
