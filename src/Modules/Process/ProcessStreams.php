@@ -10,15 +10,17 @@ use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 /**
  * Immutable collection of process stream descriptors.
  *
+ * Uses int keys (file descriptor numbers) for Map compatibility.
+ *
  * @psalm-immutable
  */
 final readonly class ProcessStreams
 {
-    /** @var Map<FileDescriptor, StreamDescriptor> */
+    /** @var Map<int, StreamDescriptor> */
     private Map $descriptors;
 
     /**
-     * @param Map<FileDescriptor, StreamDescriptor> $descriptors
+     * @param Map<int, StreamDescriptor> $descriptors
      */
     private function __construct(Map $descriptors)
     {
@@ -32,10 +34,12 @@ final readonly class ProcessStreams
      */
     public static function defaults(): self
     {
+        /** @var Map<int, StreamDescriptor> $map */
+        $map = Map::of(0, StreamDescriptor::pipe('r'));
+
         return new self(
-            Map::of(FileDescriptor::stdin(), StreamDescriptor::pipe('r'))
-                ->add(FileDescriptor::stdout(), StreamDescriptor::pipe('w'))
-                ->add(FileDescriptor::stderr(), StreamDescriptor::pipe('w')),
+            $map->add(1, StreamDescriptor::pipe('w'))
+                ->add(2, StreamDescriptor::pipe('w')),
         );
     }
 
@@ -46,10 +50,12 @@ final readonly class ProcessStreams
      */
     public static function inherit(): self
     {
+        /** @var Map<int, StreamDescriptor> $map */
+        $map = Map::of(0, StreamDescriptor::inherit());
+
         return new self(
-            Map::of(FileDescriptor::stdin(), StreamDescriptor::inherit())
-                ->add(FileDescriptor::stdout(), StreamDescriptor::inherit())
-                ->add(FileDescriptor::stderr(), StreamDescriptor::inherit()),
+            $map->add(1, StreamDescriptor::inherit())
+                ->add(2, StreamDescriptor::inherit()),
         );
     }
 
@@ -60,38 +66,40 @@ final readonly class ProcessStreams
      */
     public static function null(): self
     {
+        /** @var Map<int, StreamDescriptor> $map */
+        $map = Map::of(0, StreamDescriptor::null());
+
         return new self(
-            Map::of(FileDescriptor::stdin(), StreamDescriptor::null())
-                ->add(FileDescriptor::stdout(), StreamDescriptor::null())
-                ->add(FileDescriptor::stderr(), StreamDescriptor::null()),
+            $map->add(1, StreamDescriptor::null())
+                ->add(2, StreamDescriptor::null()),
         );
     }
 
     public function withStdin(StreamDescriptor $descriptor): self
     {
         return new self(
-            $this->descriptors->add(FileDescriptor::stdin(), $descriptor),
+            $this->descriptors->add(0, $descriptor),
         );
     }
 
     public function withStdout(StreamDescriptor $descriptor): self
     {
         return new self(
-            $this->descriptors->add(FileDescriptor::stdout(), $descriptor),
+            $this->descriptors->add(1, $descriptor),
         );
     }
 
     public function withStderr(StreamDescriptor $descriptor): self
     {
         return new self(
-            $this->descriptors->add(FileDescriptor::stderr(), $descriptor),
+            $this->descriptors->add(2, $descriptor),
         );
     }
 
     public function withDescriptor(FileDescriptor $fd, StreamDescriptor $descriptor): self
     {
         return new self(
-            $this->descriptors->add($fd, $descriptor),
+            $this->descriptors->add($fd->toInt(), $descriptor),
         );
     }
 
@@ -100,7 +108,7 @@ final readonly class ProcessStreams
      */
     public function get(FileDescriptor $fd): Option
     {
-        return $this->descriptors->get($fd);
+        return $this->descriptors->get($fd->toInt());
     }
 
     /**
@@ -110,6 +118,7 @@ final readonly class ProcessStreams
      */
     public function toDescriptorArray(): array
     {
+        /** @psalm-suppress ImpureFunctionCall */
         return $this
             ->descriptors
             ->fold(
@@ -117,29 +126,16 @@ final readonly class ProcessStreams
                  * @param array<int, array<int, string>|resource> $carry
                  * @return array<int, array<int, string>|resource>
                  */
-                static function(array $carry, FileDescriptor $fd, StreamDescriptor $descriptor): array {
+                static function(array $carry, int $fd, StreamDescriptor $descriptor): array {
                     $val = $descriptor->toDescriptor();
 
                     if ($val !== null) {
-                        $carry[$fd->toInt()] = $val;
+                        $carry[$fd] = $val;
                     }
 
                     return $carry;
                 },
                 [],
             );
-    }
-
-    /**
-     * Creates a pipeline connection from this process's stdout to another's stdin.
-     */
-    public function pipeTo(self $target): self
-    {
-        $stdout = $this->descriptors->get(FileDescriptor::stdout());
-
-        return match (true) {
-            $stdout->isSome() && $stdout->unwrap()->isPipe() => $target->withStdin($stdout->unwrap()),
-            default => $target,
-        };
     }
 }

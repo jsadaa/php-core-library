@@ -41,7 +41,6 @@ final readonly class Status {
     }
 
     /**
-     * @psalm-pure
      * @param resource $resource
      */
     public static function of(

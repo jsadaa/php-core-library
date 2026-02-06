@@ -6,8 +6,15 @@ namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\InvalidCommand;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\InvalidWorkingDirectory;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\PipelineSpawnFailed;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\ProcessSpawnFailed;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\ProcessTimeout;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\StreamReadFailed;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Duration;
+use Jsadaa\PhpCoreLibrary\Modules\Time\Error\TimeOverflow;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 
@@ -15,7 +22,7 @@ use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
  * High-level command execution with pipeline support.
  * Acts as a convenient wrapper around ProcessBuilder.
  *
- * Acts as a convenient wrapper around ProcessBuilder.
+ * @psalm-immutable
  */
 final readonly class Command
 {
@@ -39,6 +46,8 @@ final readonly class Command
 
     /**
      * Creates a new command.
+     *
+     * @psalm-suppress ImpureFunctionCall
      */
     public static function of(string | Str $name): self
     {
@@ -170,7 +179,10 @@ final readonly class Command
     /**
      * Executes the command and returns the output.
      *
-     * @return Result<Output, Output|string>
+     * @psalm-suppress ImpureFunctionCall
+     * @psalm-suppress ImpureMethodCall
+     *
+     * @return Result<Output, Output|InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|ProcessTimeout|StreamReadFailed|TimeOverflow>
      */
     public function run(): Result
     {
@@ -182,22 +194,29 @@ final readonly class Command
     /**
      * Spawns the command without waiting for it to complete.
      *
-     * @return Result<Process, string>
+     * @psalm-suppress ImpureFunctionCall
+     * @psalm-suppress ImpureMethodCall
+     *
+     * @return Result<Process, InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|PipelineSpawnFailed>
      */
     public function spawn(): Result
     {
         if (!$this->pipeline->isEmpty()) {
-            /** @var Result<Process, string> */
-            return Result::err('Cannot spawn a pipeline command. Use run() instead.');
+            /** @var Result<Process, InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|PipelineSpawnFailed> */
+            return Result::err(new PipelineSpawnFailed());
         }
 
+        /** @var Result<Process, InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|PipelineSpawnFailed> */
         return $this->builder->spawn();
     }
 
     /**
      * Executes the command and returns only stdout as a string.
      *
-     * @return Result<Str, string>
+     * @psalm-suppress ImpureFunctionCall
+     * @psalm-suppress ImpureMethodCall
+     *
+     * @return Result<Str, Str>
      */
     public function output(): Result
     {
@@ -205,20 +224,17 @@ final readonly class Command
 
         if ($result->isErr()) {
             $error = $result->unwrapErr();
-            /** @var Result<Str, string> $err */
-            $err = Result::err(
-                $error instanceof Output
-                ? $error->stderr()->toString()
-                : $error,
-            );
 
-            return $err;
+            /** @var Result<Str, Str> */
+            return Result::err(
+                $error instanceof Output
+                ? Str::of($error->stderr()->toString())
+                : Str::of($error->getMessage()),
+            );
         }
 
-        /** @var Result<Str, string> $ok */
-        $ok = Result::ok($result->unwrap()->stdout());
-
-        return $ok;
+        /** @var Result<Str, Str> */
+        return Result::ok($result->unwrap()->stdout());
     }
 
     /**
@@ -230,17 +246,18 @@ final readonly class Command
     }
 
     /**
-     * @return Result<Output, Output|string>
+     * @psalm-suppress ImpureMethodCall
+     * @psalm-suppress ImpureFunctionCall
+     *
+     * @return Result<Output, Output|InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|ProcessTimeout|StreamReadFailed|TimeOverflow>
      */
     private function runSingle(): Result
     {
         $processResult = $this->builder->spawn();
 
         if ($processResult->isErr()) {
-            /** @var Result<Output, Output|string> $err */
-            $err = Result::err($processResult->unwrapErr());
-
-            return $err;
+            /** @var Result<Output, Output|InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|ProcessTimeout|StreamReadFailed|TimeOverflow> */
+            return Result::err($processResult->unwrapErr());
         }
 
         $process = $processResult->unwrap();
@@ -248,33 +265,30 @@ final readonly class Command
         $process->close();
 
         if ($outputResult->isErr()) {
-            /** @var Result<Output, Output|string> $err */
-            $err = Result::err($outputResult->unwrapErr());
-
-            return $err;
+            /** @var Result<Output, Output|InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|ProcessTimeout|StreamReadFailed|TimeOverflow> */
+            return Result::err($outputResult->unwrapErr());
         }
 
         $output = $outputResult->unwrap();
 
         if ($output->isSuccess()) {
-            /** @var Result<Output, Output|string> $ok */
-            $ok = Result::ok($output);
-
-            return $ok;
+            /** @var Result<Output, Output|InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|ProcessTimeout|StreamReadFailed|TimeOverflow> */
+            return Result::ok($output);
         }
 
-        /** @var Result<Output, Output|string> $err */
-        $err = Result::err($output);
-
-        return $err;
+        /** @var Result<Output, Output|InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|ProcessTimeout|StreamReadFailed|TimeOverflow> */
+        return Result::err($output);
     }
 
     /**
-     * @return Result<Output, Output|string>
+     * @psalm-suppress ImpureMethodCall
+     * @psalm-suppress ImpureFunctionCall
+     * @psalm-suppress InvalidPassByReference
+     *
+     * @return Result<Output, Output|InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|ProcessTimeout|StreamReadFailed|TimeOverflow>
      */
     private function runPipeline(): Result
     {
-        // Build all builders in the pipeline
         /** @var Sequence<ProcessBuilder> $builders */
         $builders = Sequence::of($this->builder)->append($this->pipeline);
 
@@ -286,7 +300,6 @@ final readonly class Command
         foreach ($builders->iter() as $builder) {
             $index = $i++;
 
-            // Connect pipes between processes
             if ($index > 0) {
                 $prevProcess = $processes->get(Integer::of($index - 1))->unwrap();
                 $stdoutResult = $prevProcess->stdout();
@@ -298,10 +311,7 @@ final readonly class Command
                 }
             }
 
-            // For intermediate processes, ensure stdout is piped
             if ($index < $builders->size()->sub(1)->toInt()) {
-                // Only set to pipe if not already configured
-                // This respects user configuration like toFile()
                 $currentStreams = $builder->getStreams();
                 $stdoutDesc = $currentStreams->get(FileDescriptor::stdout());
 
@@ -313,57 +323,48 @@ final readonly class Command
             $processResult = $builder->spawn();
 
             if ($processResult->isErr()) {
-                // Clean up any already started processes
                 $this->cleanupProcesses($processes);
-                /** @var Result<Output, Output|string> $err */
-                $err = Result::err($processResult->unwrapErr());
 
-                return $err;
+                /** @var Result<Output, Output|InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|ProcessTimeout|StreamReadFailed|TimeOverflow> */
+                return Result::err($processResult->unwrapErr());
             }
 
             $processes = $processes->add($processResult->unwrap());
         }
 
-        // Wait for all processes to complete and get output from the last one
         $lastProcess = $processes->last()->unwrap();
 
-        // Close stdin of first process if it's still open
         $firstProcess = $processes->first()->unwrap();
         $stdinResult = $firstProcess->stdin();
 
         if ($stdinResult->isSome()) {
-            $stdinRes = $stdinResult->unwrap();
-            \fclose($stdinRes);
+            $stdinStream = $stdinResult->unwrap();
+            \fclose($stdinStream);
         }
 
         $outputResult = $lastProcess->output($this->timeout);
 
-        // Clean up all processes
         $this->cleanupProcesses($processes);
 
         if ($outputResult->isErr()) {
-            /** @var Result<Output, Output|string> $err */
-            $err = Result::err($outputResult->unwrapErr());
-
-            return $err;
+            /** @var Result<Output, Output|InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|ProcessTimeout|StreamReadFailed|TimeOverflow> */
+            return Result::err($outputResult->unwrapErr());
         }
 
         $output = $outputResult->unwrap();
 
         if ($output->isSuccess()) {
-            /** @var Result<Output, Output|string> $ok */
-            $ok = Result::ok($output);
-
-            return $ok;
+            /** @var Result<Output, Output|InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|ProcessTimeout|StreamReadFailed|TimeOverflow> */
+            return Result::ok($output);
         }
 
-        /** @var Result<Output, Output|string> $err */
-        $err = Result::err($output);
-
-        return $err;
+        /** @var Result<Output, Output|InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed|ProcessTimeout|StreamReadFailed|TimeOverflow> */
+        return Result::err($output);
     }
 
     /**
+     * @psalm-suppress ImpureMethodCall
+     *
      * @param Sequence<Process> $processes
      */
     private function cleanupProcesses(Sequence $processes): void

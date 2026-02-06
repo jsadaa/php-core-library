@@ -4,8 +4,11 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\InvalidPid;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\ProcessSignalFailed;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\ProcessTimeout;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\StreamReadFailed;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Duration;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Error\TimeOverflow;
@@ -17,29 +20,24 @@ use Jsadaa\PhpCoreLibrary\Primitives\Unit;
 /**
  * Represents a running or finished process.
  *
- * @psalm-immutable
- * @psalm-suppress ImpureFunctionCall
- * @psalm-suppress ImpureMethodCall
- * @psalm-suppress MixedReturnTypeCoercion
- * @psalm-suppress MixedArgument
- * @psalm-suppress InvalidReturnStatement
- * @psalm-suppress RedundantConditionGivenDocblockType
+ * This class wraps mutable OS resources (process handle, pipes) and is
+ * intentionally NOT marked @psalm-immutable.
  */
 final class Process
 {
     /** @var resource */
     private $handle;
-    /** @var Map<FileDescriptor, resource> */
-    private Map $pipes;
+    /** @var array<int, resource> */
+    private array $pipes;
     private SystemTime $startTime;
 
     /**
      * @param resource $handle
-     * @param Map<FileDescriptor, resource> $pipes
+     * @param array<int, resource> $pipes
      */
     private function __construct(
         $handle,
-        Map $pipes,
+        array $pipes,
         SystemTime $startTime,
     ) {
         $this->handle = $handle;
@@ -53,17 +51,7 @@ final class Process
      */
     public static function fromHandle($handle, array $pipes): self
     {
-        /** @var Map<FileDescriptor, resource> $pipeMap */
-        $pipeMap = Map::new();
-
-        foreach ($pipes as $fd => $pipe) {
-            $pipeMap = $pipeMap->add(
-                FileDescriptor::custom($fd),
-                $pipe,
-            );
-        }
-
-        return new self($handle, $pipeMap, SystemTime::now());
+        return new self($handle, $pipes, SystemTime::now());
     }
 
     public function status(): Status
@@ -77,21 +65,25 @@ final class Process
     }
 
     /**
-     * @return Result<Integer, string>
+     * @return Result<Integer, InvalidPid>
      */
     public function pid(): Result
     {
         $pid = $this->status()->pid();
 
-        return $pid->gt(0)
-            ? Result::ok($pid)
-            : Result::err('Process has no valid PID');
+        if ($pid->gt(0)) {
+            /** @var Result<Integer, InvalidPid> */
+            return Result::ok($pid);
+        }
+
+        /** @var Result<Integer, InvalidPid> */
+        return Result::err(new InvalidPid());
     }
 
     /**
      * Waits for the process to finish with optional timeout.
      *
-     * @return Result<Status, string|TimeOverflow>
+     * @return Result<Status, ProcessTimeout|TimeOverflow>
      */
     public function wait(?Duration $timeout = null): Result
     {
@@ -100,6 +92,7 @@ final class Process
             : null;
 
         if ($deadline !== null && $deadline->isErr()) {
+            /** @var Result<Status, ProcessTimeout|TimeOverflow> */
             return $deadline;
         }
 
@@ -108,32 +101,39 @@ final class Process
                 $now = SystemTime::now();
 
                 if ($now->ge($deadline->unwrap())) {
-                    return Result::err('Process wait timed out');
+                    /** @var Result<Status, ProcessTimeout|TimeOverflow> */
+                    return Result::err(new ProcessTimeout('Process wait timed out'));
                 }
             }
 
             \usleep(10000); // 10ms
         }
 
+        /** @var Result<Status, ProcessTimeout|TimeOverflow> */
         return Result::ok($this->status());
     }
 
     /**
      * Kills the process with the specified signal.
      *
-     * @return Result<Unit, string>
+     * @return Result<Unit, ProcessSignalFailed>
      */
     public function kill(int $signal = \SIGTERM): Result
     {
         if (!$this->isRunning()) {
+            /** @var Result<Unit, ProcessSignalFailed> */
             return Result::ok(Unit::new());
         }
 
         $result = \proc_terminate($this->handle, $signal);
 
-        return $result
-            ? Result::ok(Unit::new())
-            : Result::err('Failed to send signal to process');
+        if ($result) {
+            /** @var Result<Unit, ProcessSignalFailed> */
+            return Result::ok(Unit::new());
+        }
+
+        /** @var Result<Unit, ProcessSignalFailed> */
+        return Result::err(new ProcessSignalFailed());
     }
 
     /**
@@ -141,7 +141,7 @@ final class Process
      */
     public function stdin(): Option
     {
-        return $this->pipes->get(FileDescriptor::stdin());
+        return $this->getPipe(0);
     }
 
     /**
@@ -149,7 +149,7 @@ final class Process
      */
     public function stdout(): Option
     {
-        return $this->pipes->get(FileDescriptor::stdout());
+        return $this->getPipe(1);
     }
 
     /**
@@ -157,162 +157,208 @@ final class Process
      */
     public function stderr(): Option
     {
-        return $this->pipes->get(FileDescriptor::stderr());
+        return $this->getPipe(2);
     }
 
     /**
      * Gets a writer for stdin.
      *
-     * @return Result<StreamWriter, string>
+     * @return Result<StreamWriter, StreamReadFailed>
      */
     public function stdinWriter(): Result
     {
         $stdin = $this->stdin();
 
-        return $stdin->isSome()
-            ? Result::ok(StreamWriter::createAutoFlushing($stdin->unwrap()))
-            : Result::err('Failed to get stdin');
+        if ($stdin->isSome()) {
+            /** @var Result<StreamWriter, StreamReadFailed> */
+            return Result::ok(StreamWriter::createAutoFlushing($stdin->unwrap()));
+        }
+
+        /** @var Result<StreamWriter, StreamReadFailed> */
+        return Result::err(new StreamReadFailed('Failed to get stdin'));
     }
 
     /**
      * Writes data to the process's stdin using StreamWriter.
      *
-     * @return Result<Integer, string>
+     * @return Result<Integer, StreamReadFailed|Error\StreamWriteFailed>
      */
     public function writeStdin(string | Str $data): Result
     {
         $writer = $this->stdinWriter();
 
-        return $writer->isOk()
-            ? $writer->unwrap()->write($data)
-            : Result::err($writer->unwrapErr());
+        if ($writer->isErr()) {
+            /** @var Result<Integer, StreamReadFailed|Error\StreamWriteFailed> */
+            return Result::err($writer->unwrapErr());
+        }
+
+        /** @var Result<Integer, StreamReadFailed|Error\StreamWriteFailed> */
+        return $writer->unwrap()->write($data);
     }
 
     /**
      * Reads all available data from stdout.
      *
-     * @return Result<Str, string>
+     * @return Result<Str, StreamReadFailed>
      */
     public function readStdout(): Result
     {
         $stdout = $this->stdout();
 
         if ($stdout->isNone()) {
-            return Result::err('Failed to get stdout');
+            /** @var Result<Str, StreamReadFailed> */
+            return Result::err(new StreamReadFailed('Failed to get stdout'));
         }
 
         \stream_set_blocking($stdout->unwrap(), false);
         $data = \stream_get_contents($stdout->unwrap());
 
-        return $data !== false
-            ? Result::ok(Str::of($data))
-            : Result::err('Failed to read from stdout');
+        if ($data !== false) {
+            /** @var Result<Str, StreamReadFailed> */
+            return Result::ok(Str::of($data));
+        }
+
+        /** @var Result<Str, StreamReadFailed> */
+        return Result::err(new StreamReadFailed());
     }
 
     /**
      * Reads all available data from stderr.
      *
-     * @return Result<Str, string>
+     * @return Result<Str, StreamReadFailed>
      */
     public function readStderr(): Result
     {
         $stderr = $this->stderr();
 
         if ($stderr->isNone()) {
-            return Result::err('Failed to get stderr');
+            /** @var Result<Str, StreamReadFailed> */
+            return Result::err(new StreamReadFailed('Failed to get stderr'));
         }
 
         \stream_set_blocking($stderr->unwrap(), false);
         $data = \stream_get_contents($stderr->unwrap());
 
-        return $data !== false
-            ? Result::ok(Str::of($data))
-            : Result::err('Failed to read from stderr');
+        if ($data !== false) {
+            /** @var Result<Str, StreamReadFailed> */
+            return Result::ok(Str::of($data));
+        }
+
+        /** @var Result<Str, StreamReadFailed> */
+        return Result::err(new StreamReadFailed());
     }
 
     /**
-     * Collects all output from the process.
+     * Collects all output from the process using stream_select for efficiency.
      *
-     * @return Result<Output, string|TimeOverflow>
+     * @return Result<Output, ProcessTimeout|StreamReadFailed|TimeOverflow>
      */
     public function output(Duration $timeout): Result
     {
-        // Close stdin if available
         $stdinResult = $this->stdin();
 
         if ($stdinResult->isSome()) {
-            $stdinRes = $stdinResult->unwrap();
-            \fclose($stdinRes);
+            $stdinStream = $stdinResult->unwrap();
+            \fclose($stdinStream);
         }
 
-        // Create readers for stdout and stderr
         $stdoutResult = $this->stdout();
         $stderrResult = $this->stderr();
 
         if ($stdoutResult->isNone()) {
-            return Result::err('Failed to read from stdout');
+            /** @var Result<Output, ProcessTimeout|StreamReadFailed|TimeOverflow> */
+            return Result::err(new StreamReadFailed('Failed to get stdout'));
         }
 
         if ($stderrResult->isNone()) {
-            return Result::err('Failed to read from stderr');
+            /** @var Result<Output, ProcessTimeout|StreamReadFailed|TimeOverflow> */
+            return Result::err(new StreamReadFailed('Failed to get stderr'));
         }
 
-        $stdoutReader = StreamReader::from($stdoutResult->unwrap());
-        $stderrReader = StreamReader::from($stderrResult->unwrap());
+        $stdoutStream = $stdoutResult->unwrap();
+        $stderrStream = $stderrResult->unwrap();
+
+        \stream_set_blocking($stdoutStream, false);
+        \stream_set_blocking($stderrStream, false);
 
         $deadline = SystemTime::now()->add($timeout);
 
         if ($deadline->isErr()) {
+            /** @var Result<Output, ProcessTimeout|StreamReadFailed|TimeOverflow> */
             return $deadline;
         }
 
-        $stdout = Str::new();
-        $stderr = Str::new();
+        $stdout = '';
+        $stderr = '';
 
         while (true) {
             if (SystemTime::now()->ge($deadline->unwrap())) {
                 $this->kill(\SIGKILL);
 
-                return Result::err('Process execution timed out');
+                /** @var Result<Output, ProcessTimeout|StreamReadFailed|TimeOverflow> */
+                return Result::err(new ProcessTimeout());
             }
 
-            // Read available data from both streams
-            $stdoutData = $stdoutReader->readAvailable();
+            $read = [];
 
-            if ($stdoutData->isOk() && !$stdoutData->unwrap()->isEmpty()) {
-                $stdout = $stdout->append($stdoutData->unwrap());
+            if (!\feof($stdoutStream)) {
+                $read[] = $stdoutStream;
             }
 
-            $stderrData = $stderrReader->readAvailable();
-
-            if ($stderrData->isOk() && !$stderrData->unwrap()->isEmpty()) {
-                $stderr = $stderr->append($stderrData->unwrap());
+            if (!\feof($stderrStream)) {
+                $read[] = $stderrStream;
             }
 
-            if (!$this->isRunning()) {
-                // Process finished, read any remaining data
-                $finalStdout = $stdoutReader->readAvailable();
-
-                if ($finalStdout->isOk()) {
-                    $stdout = $stdout->append($finalStdout->unwrap());
-                }
-
-                $finalStderr = $stderrReader->readAvailable();
-
-                if ($finalStderr->isOk()) {
-                    $stderr = $stderr->append($finalStderr->unwrap());
-                }
-
+            if ($read === [] && !$this->isRunning()) {
                 break;
             }
 
-            \usleep(10000); // 10ms
+            if ($read !== []) {
+                $write = null;
+                $except = null;
+                $changed = @\stream_select($read, $write, $except, 0, 50000); // 50ms
+
+                if ($changed !== false && $changed > 0) {
+                    foreach ($read as $stream) {
+                        $data = \fread($stream, 8192);
+
+                        if ($data !== false && $data !== '') {
+                            if ($stream === $stdoutStream) {
+                                $stdout .= $data;
+                            } else {
+                                $stderr .= $data;
+                            }
+                        }
+                    }
+                }
+            } else {
+                \usleep(10000); // 10ms - process still running but streams at EOF
+            }
         }
 
-        $stdoutReader->close();
-        $stderrReader->close();
+        // Final read for any remaining data
+        $remaining = \stream_get_contents($stdoutStream);
 
-        return Result::ok(Output::of($stdout, $stderr, $this->status()));
+        if ($remaining !== false) {
+            $stdout .= $remaining;
+        }
+
+        \fclose($stdoutStream);
+
+        $remaining = \stream_get_contents($stderrStream);
+
+        if ($remaining !== false) {
+            $stderr .= $remaining;
+        }
+
+        \fclose($stderrStream);
+
+        /** @var Result<Output, ProcessTimeout|StreamReadFailed|TimeOverflow> */
+        return Result::ok(Output::of(
+            Str::of($stdout),
+            Str::of($stderr),
+            $this->status(),
+        ));
     }
 
     /**
@@ -320,16 +366,30 @@ final class Process
      */
     public function close(): void
     {
-        $this->pipes->forEach(
-            static function($_, $resource) {
-                if (\is_resource($resource)) {
-                    \fclose($resource);
-                }
-            },
-        );
+        foreach ($this->pipes as $pipe) {
+            /** @psalm-suppress RedundantConditionGivenDocblockType */
+            if (\is_resource($pipe)) {
+                \fclose($pipe);
+            }
+        }
 
+        /** @psalm-suppress RedundantConditionGivenDocblockType */
         if (\is_resource($this->handle)) {
             \proc_close($this->handle);
         }
+    }
+
+    /**
+     * @return Option<resource>
+     */
+    private function getPipe(int $fd): Option
+    {
+        if (isset($this->pipes[$fd])) {
+            /** @var Option<resource> */
+            return Option::some($this->pipes[$fd]);
+        }
+
+        /** @var Option<resource> */
+        return Option::none();
     }
 }

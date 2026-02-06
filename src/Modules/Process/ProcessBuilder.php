@@ -7,13 +7,16 @@ namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\InvalidCommand;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\InvalidWorkingDirectory;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\ProcessSpawnFailed;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 
 /**
  * Immutable builder for creating processes.
  *
- * Immutable builder for creating processes.
+ * @psalm-immutable
  */
 final readonly class ProcessBuilder
 {
@@ -24,6 +27,7 @@ final readonly class ProcessBuilder
     /** @var Map<Str, Str> */
     private Map $environment;
     private ProcessStreams $streams;
+    private bool $inheritEnv;
 
     /**
      * @param Sequence<Str> $args
@@ -35,12 +39,14 @@ final readonly class ProcessBuilder
         Path $workingDirectory,
         Map $environment,
         ProcessStreams $streams,
+        bool $inheritEnv,
     ) {
         $this->command = $command;
         $this->args = $args;
         $this->workingDirectory = $workingDirectory;
         $this->environment = $environment;
         $this->streams = $streams;
+        $this->inheritEnv = $inheritEnv;
     }
 
     /**
@@ -54,6 +60,7 @@ final readonly class ProcessBuilder
             Path::of(\getcwd() ?: '/'),
             Map::new(),
             ProcessStreams::defaults(),
+            true,
         );
     }
 
@@ -65,6 +72,7 @@ final readonly class ProcessBuilder
             $this->workingDirectory,
             $this->environment,
             $this->streams,
+            $this->inheritEnv,
         );
     }
 
@@ -73,6 +81,7 @@ final readonly class ProcessBuilder
      */
     public function args($args): self
     {
+        /** @psalm-suppress ImpureFunctionCall */
         $sequence = $args instanceof Sequence
             ? $args
             : Sequence::of(...\array_map(static fn($a) => Str::of($a), $args));
@@ -83,6 +92,7 @@ final readonly class ProcessBuilder
             $this->workingDirectory,
             $this->environment,
             $this->streams,
+            $this->inheritEnv,
         );
     }
 
@@ -94,6 +104,7 @@ final readonly class ProcessBuilder
             \is_string($path) ? Path::of($path) : $path,
             $this->environment,
             $this->streams,
+            $this->inheritEnv,
         );
     }
 
@@ -108,6 +119,31 @@ final readonly class ProcessBuilder
                 \is_string($value) ? Str::of($value) : $value,
             ),
             $this->streams,
+            $this->inheritEnv,
+        );
+    }
+
+    public function inheritEnv(bool $inherit = true): self
+    {
+        return new self(
+            $this->command,
+            $this->args,
+            $this->workingDirectory,
+            $this->environment,
+            $this->streams,
+            $inherit,
+        );
+    }
+
+    public function clearEnv(): self
+    {
+        return new self(
+            $this->command,
+            $this->args,
+            $this->workingDirectory,
+            Map::new(),
+            $this->streams,
+            false,
         );
     }
 
@@ -119,6 +155,7 @@ final readonly class ProcessBuilder
             $this->workingDirectory,
             $this->environment,
             $this->streams->withStdin($descriptor),
+            $this->inheritEnv,
         );
     }
 
@@ -130,6 +167,7 @@ final readonly class ProcessBuilder
             $this->workingDirectory,
             $this->environment,
             $this->streams->withStdout($descriptor),
+            $this->inheritEnv,
         );
     }
 
@@ -141,6 +179,7 @@ final readonly class ProcessBuilder
             $this->workingDirectory,
             $this->environment,
             $this->streams->withStderr($descriptor),
+            $this->inheritEnv,
         );
     }
 
@@ -152,6 +191,7 @@ final readonly class ProcessBuilder
             $this->workingDirectory,
             $this->environment,
             $streams,
+            $this->inheritEnv,
         );
     }
 
@@ -163,74 +203,100 @@ final readonly class ProcessBuilder
     /**
      * Spawns the process.
      *
-     * @return Result<Process, string>
+     * @psalm-suppress ImpureFunctionCall
+     * @psalm-suppress ImpureMethodCall
+     *
+     * @return Result<Process, InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed>
      */
     public function spawn(): Result
     {
         if ($this->command->isEmpty()) {
-            /** @var Result<Process, string> $err */
-            $err = Result::err('Command cannot be empty');
-
-            return $err;
+            /** @var Result<Process, InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed> */
+            return Result::err(new InvalidCommand());
         }
 
         if (!$this->workingDirectory->isDir()) {
-            /** @var Result<Process, string> $err */
-            $err = Result::err("Working directory does not exist: {$this->workingDirectory->toString()}");
-
-            return $err;
+            /** @var Result<Process, InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed> */
+            return Result::err(new InvalidWorkingDirectory($this->workingDirectory->toString()));
         }
 
-        $commandLine = $this->buildCommandLine();
+        $commandArray = $this->buildCommandArray();
         $descriptorSpec = $this->streams->toDescriptorArray();
         /** @var array<int, resource> $pipes */
         $pipes = [];
 
         $handle = \proc_open(
-            $commandLine->toString(),
+            $commandArray,
             $descriptorSpec,
             $pipes,
             $this->workingDirectory->toString(),
             $this->buildEnvironmentArray(),
-            ['suppress_errors' => true, 'bypass_shell' => false],
+            ['suppress_errors' => true, 'bypass_shell' => true],
         );
 
         if (!\is_resource($handle)) {
-            /** @var Result<Process, string> $err */
-            $err = Result::err('Failed to spawn process');
-
-            return $err;
+            /** @var Result<Process, InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed> */
+            return Result::err(new ProcessSpawnFailed());
         }
 
-        /** @var array<int, resource> $pipesList */
-        $pipesList = \array_values($pipes);
+        /** @var array<int, resource> $typedPipes */
+        $typedPipes = $pipes;
 
-        /** @var Result<Process, string> $ok */
-        $ok = Result::ok(Process::fromHandle($handle, $pipesList));
-
-        return $ok;
+        /** @var Result<Process, InvalidCommand|InvalidWorkingDirectory|ProcessSpawnFailed> */
+        return Result::ok(Process::fromHandle($handle, $typedPipes));
     }
 
-    private function buildCommandLine(): Str
+    /**
+     * Builds the command as an array for proc_open (bypass_shell mode).
+     *
+     * @return array<int, string>
+     */
+    private function buildCommandArray(): array
     {
-        $escaped = $this->command->map(static fn($c) => \escapeshellcmd($c));
-
-        return $this->args->fold(
-            static fn(Str $cmd, Str $arg) => $cmd->append(
-                $arg->map(static fn($a) => ' ' . \escapeshellarg($a)),
-            ),
-            $escaped,
+        /** @psalm-suppress ImpureFunctionCall */
+        $args = $this->args->fold(
+            /**
+             * @param array<int, string> $carry
+             * @return array<int, string>
+             */
+            static fn(array $carry, Str $arg): array => [...$carry, $arg->toString()],
+            [],
         );
+
+        return [$this->command->toString(), ...$args];
     }
 
-    private function buildEnvironmentArray(): array
+    /**
+     * @return array<string, string>|null
+     */
+    private function buildEnvironmentArray(): ?array
     {
-        return $this->environment->fold(
-            static fn(array $env, Str $key, Str $value) => \array_merge(
+        if (!$this->inheritEnv && $this->environment->isEmpty()) {
+            return [];
+        }
+
+        if ($this->inheritEnv && $this->environment->isEmpty()) {
+            return null;
+        }
+
+        /** @psalm-suppress ImpureFunctionCall */
+        $custom = $this->environment->fold(
+            /**
+             * @param array<string, string> $env
+             * @return array<string, string>
+             */
+            static fn(array $env, Str $key, Str $value): array => \array_merge(
                 $env,
                 [$key->toString() => $value->toString()],
             ),
-            $_ENV,
+            [],
         );
+
+        if (!$this->inheritEnv) {
+            return $custom;
+        }
+
+        /** @psalm-suppress ImpureFunctionCall */
+        return \array_merge($_ENV, $custom);
     }
 }

@@ -4,15 +4,16 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\ProcessTimeout;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\StreamReadFailed;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Duration;
+use Jsadaa\PhpCoreLibrary\Modules\Time\Error\TimeOverflow;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 
 /**
- * Non-blocking stream reader with timeout support.
- *
  * Non-blocking stream reader with timeout support.
  */
 final class StreamReader
@@ -44,7 +45,7 @@ final class StreamReader
     /**
      * Reads all available data without blocking.
      *
-     * @return Result<Str, string>
+     * @return Result<Str, StreamReadFailed>
      */
     public function readAvailable(): Result
     {
@@ -53,108 +54,114 @@ final class StreamReader
         $data = \fread($this->stream, $this->bufferSize->toInt());
 
         if ($data === false) {
-            /** @var Result<Str, string> $err */
-            $err = Result::err('Failed to read from stream');
-
-            return $err;
+            /** @var Result<Str, StreamReadFailed> */
+            return Result::err(new StreamReadFailed());
         }
 
-        /** @var Result<Str, string> $ok */
-        $ok = Result::ok(Str::of($data));
-
-        return $ok;
+        /** @var Result<Str, StreamReadFailed> */
+        return Result::ok(Str::of($data));
     }
 
     /**
-     * Reads until EOF or timeout.
+     * Reads until EOF or timeout using stream_select for efficiency.
      *
-     * @return Result<Str, string>
+     * @return Result<Str, StreamReadFailed|ProcessTimeout|TimeOverflow>
      */
     public function readAll(Duration $timeout): Result
     {
-        $deadline = SystemTime::now()->add($timeout)->unwrap();
-        $result = Str::new();
+        $deadline = SystemTime::now()->add($timeout);
+
+        if ($deadline->isErr()) {
+            /** @var Result<Str, StreamReadFailed|ProcessTimeout|TimeOverflow> */
+            return $deadline;
+        }
+
+        $result = '';
 
         \stream_set_blocking($this->stream, false);
 
         while (true) {
-            if (SystemTime::now()->ge($deadline)) {
-                /** @var Result<Str, string> $err */
-                $err = Result::err('Read timeout exceeded');
-
-                return $err;
+            if (SystemTime::now()->ge($deadline->unwrap())) {
+                /** @var Result<Str, StreamReadFailed|ProcessTimeout|TimeOverflow> */
+                return Result::err(new ProcessTimeout('Read timeout exceeded'));
             }
 
             if (\feof($this->stream)) {
                 break;
             }
 
-            $data = \fread($this->stream, $this->bufferSize->toInt());
+            $read = [$this->stream];
+            $write = null;
+            $except = null;
+            $changed = @\stream_select($read, $write, $except, 0, 50000); // 50ms
 
-            if ($data === false) {
-                /** @var Result<Str, string> $err */
-                $err = Result::err('Failed to read from stream');
+            if ($changed !== false && $changed > 0) {
+                $data = \fread($this->stream, $this->bufferSize->toInt());
 
-                return $err;
-            }
+                if ($data === false) {
+                    /** @var Result<Str, StreamReadFailed|ProcessTimeout|TimeOverflow> */
+                    return Result::err(new StreamReadFailed());
+                }
 
-            if ($data !== '') {
-                $result = $result->append($data);
-            } else {
-                // No data available, wait a bit
-                \usleep(1000); // 1ms
+                $result .= $data;
             }
         }
 
-        /** @var Result<Str, string> $ok */
-        $ok = Result::ok($result);
-
-        return $ok;
+        /** @var Result<Str, StreamReadFailed|ProcessTimeout|TimeOverflow> */
+        return Result::ok(Str::of($result));
     }
 
     /**
      * Reads until a delimiter is found or timeout.
      *
-     * @return Result<Str, string>
+     * @return Result<Str, StreamReadFailed|ProcessTimeout|TimeOverflow>
      */
     public function readUntil(string | Str $delimiter, Duration $timeout): Result
     {
         $delimiter = \is_string($delimiter) ? $delimiter : $delimiter->toString();
-        $deadline = SystemTime::now()->add($timeout)->unwrap();
-        $result = Str::new();
+        $deadline = SystemTime::now()->add($timeout);
+
+        if ($deadline->isErr()) {
+            /** @var Result<Str, StreamReadFailed|ProcessTimeout|TimeOverflow> */
+            return $deadline;
+        }
+
+        $result = '';
 
         \stream_set_blocking($this->stream, false);
 
         while (true) {
-            if (SystemTime::now()->ge($deadline)) {
-                /** @var Result<Str, string> $err */
-                $err = Result::err('Read timeout exceeded');
-
-                return $err;
+            if (SystemTime::now()->ge($deadline->unwrap())) {
+                /** @var Result<Str, StreamReadFailed|ProcessTimeout|TimeOverflow> */
+                return Result::err(new ProcessTimeout('Read timeout exceeded'));
             }
 
-            $char = \fgetc($this->stream);
+            $read = [$this->stream];
+            $write = null;
+            $except = null;
+            $changed = @\stream_select($read, $write, $except, 0, 50000); // 50ms
 
-            if ($char === false) {
-                if (\feof($this->stream)) {
+            if ($changed !== false && $changed > 0) {
+                $char = \fgetc($this->stream);
+
+                if ($char === false) {
+                    if (\feof($this->stream)) {
+                        break;
+                    }
+
+                    continue;
+                }
+
+                $result .= $char;
+
+                if (\str_ends_with($result, $delimiter)) {
                     break;
                 }
-                \usleep(1000); // 1ms
-
-                continue;
-            }
-
-            $result = $result->append($char);
-
-            if (\str_ends_with($result->toString(), $delimiter)) {
-                break;
             }
         }
 
-        /** @var Result<Str, string> $ok */
-        $ok = Result::ok($result);
-
-        return $ok;
+        /** @var Result<Str, StreamReadFailed|ProcessTimeout|TimeOverflow> */
+        return Result::ok(Str::of($result));
     }
 
     /**
@@ -170,10 +177,12 @@ final class StreamReader
      */
     public function close(): void
     {
-        // Suppress invalid property assignment because we can't update the readonly property
-        // but the underlying resource state changes, which Psalm tracks.
-        // We accept that the property will hold a closed resource.
-        /** @psalm-suppress InvalidPropertyAssignmentValue */
-        \fclose($this->stream);
+        /**
+         * @psalm-suppress RedundantConditionGivenDocblockType
+         * @psalm-suppress InvalidPropertyAssignmentValue
+         */
+        if (\is_resource($this->stream)) {
+            \fclose($this->stream);
+        }
     }
 }

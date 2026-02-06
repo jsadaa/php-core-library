@@ -15,11 +15,11 @@ use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
  */
 final class StreamDescriptor
 {
-    private StreamType $type;
+    private readonly StreamType $type;
     /** @var Option<Str> */
-    private Option $mode;
+    private readonly Option $mode;
     /** @var Option<Path> */
-    private Option $path;
+    private readonly Option $path;
     /** @var ?resource */
     private $resource;
 
@@ -71,7 +71,6 @@ final class StreamDescriptor
     /**
      * Creates a descriptor from an existing resource.
      *
-     * @psalm-pure
      * @param resource $resource
      */
     public static function resource($resource): self
@@ -133,7 +132,7 @@ final class StreamDescriptor
             StreamType::RESOURCE => $this->resource,
             StreamType::INHERIT => match (\PHP_OS_FAMILY) {
                     'Windows' => ['pipe', 'r'],
-                    default => \STDIN,  // Will be overridden for stdout/stderr
+                    default => \STDIN,
                 },
             StreamType::NULL => match (\PHP_OS_FAMILY) {
                     'Windows' => ['file', 'NUL', 'r'],

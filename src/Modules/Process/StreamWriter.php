@@ -5,13 +5,13 @@ declare(strict_types = 1);
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\StreamFlushFailed;
+use Jsadaa\PhpCoreLibrary\Modules\Process\Error\StreamWriteFailed;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 
 /**
- * Stream writer with buffering and flush control.
- *
  * Stream writer with buffering and flush control.
  */
 final class StreamWriter
@@ -98,42 +98,36 @@ final class StreamWriter
     /**
      * Writes data to the stream.
      *
-     * @return Result<Integer, string>
+     * @return Result<Integer, StreamWriteFailed>
      */
     public function write(string | Str $data): Result
     {
         $dataStr = \is_string($data) ? $data : $data->toString();
 
         if (\strlen($dataStr) === 0) {
-            /** @var Result<Integer, string> $ok */
-            $ok = Result::ok(Integer::of(0));
-
-            return $ok;
+            /** @var Result<Integer, StreamWriteFailed> */
+            return Result::ok(Integer::of(0));
         }
 
         $written = @\fwrite($this->stream, $dataStr);
 
         if ($written === false) {
-            /** @var Result<Integer, string> $err */
-            $err = Result::err('Failed to write to stream');
-
-            return $err;
+            /** @var Result<Integer, StreamWriteFailed> */
+            return Result::err(new StreamWriteFailed());
         }
 
         if ($this->autoFlush) {
             $this->flush();
         }
 
-        /** @var Result<Integer, string> $ok */
-        $ok = Result::ok(Integer::of($written));
-
-        return $ok;
+        /** @var Result<Integer, StreamWriteFailed> */
+        return Result::ok(Integer::of($written));
     }
 
     /**
      * Writes a line to the stream (appends line ending).
      *
-     * @return Result<Integer, string>
+     * @return Result<Integer, StreamWriteFailed>
      */
     public function writeLine(string | Str $line): Result
     {
@@ -146,7 +140,7 @@ final class StreamWriter
      * Writes multiple lines to the stream.
      *
      * @param Sequence<Str>|array<string> $lines
-     * @return Result<Integer, string>
+     * @return Result<Integer, StreamWriteFailed>
      */
     public function writeLines($lines): Result
     {
@@ -160,23 +154,21 @@ final class StreamWriter
             $result = $this->writeLine($line);
 
             if ($result->isErr()) {
-                /** @var Result<Integer, string> $result */
+                /** @var Result<Integer, StreamWriteFailed> */
                 return $result;
             }
 
             $totalWritten = $totalWritten->add($result->unwrap());
         }
 
-        /** @var Result<Integer, string> $ok */
-        $ok = Result::ok($totalWritten);
-
-        return $ok;
+        /** @var Result<Integer, StreamWriteFailed> */
+        return Result::ok($totalWritten);
     }
 
     /**
      * Writes data in chunks to avoid memory issues with large data.
      *
-     * @return Result<Integer, string>
+     * @return Result<Integer, StreamWriteFailed>
      */
     public function writeChunked(string | Str $data): Result
     {
@@ -191,7 +183,7 @@ final class StreamWriter
             $result = $this->write($chunk);
 
             if ($result->isErr()) {
-                /** @var Result<Integer, string> $result */
+                /** @var Result<Integer, StreamWriteFailed> */
                 return $result;
             }
 
@@ -199,31 +191,25 @@ final class StreamWriter
             $offset += $chunkSize;
         }
 
-        /** @var Result<Integer, string> $ok */
-        $ok = Result::ok($totalWritten);
-
-        return $ok;
+        /** @var Result<Integer, StreamWriteFailed> */
+        return Result::ok($totalWritten);
     }
 
     /**
      * Flushes the stream buffer.
      *
-     * @return Result<null, string>
+     * @return Result<null, StreamFlushFailed>
      */
     public function flush(): Result
     {
         $result = @\fflush($this->stream);
 
         if ($result !== false) {
-            /** @var Result<null, string> $ok */
-            $ok = Result::ok(null);
-
-            return $ok;
+            /** @var Result<null, StreamFlushFailed> */
+            return Result::ok(null);
         }
 
-        /** @var Result<null, string> $err */
-        $err = Result::err('Failed to flush stream');
-
-        return $err;
+        /** @var Result<null, StreamFlushFailed> */
+        return Result::err(new StreamFlushFailed());
     }
 }
