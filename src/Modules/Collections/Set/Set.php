@@ -1,9 +1,10 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Set;
 
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
@@ -16,13 +17,13 @@ use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
  */
 final readonly class Set
 {
-    /** @var \Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map<T, bool> */
-    private \Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map $map;
+    /** @var Map<T, bool> */
+    private Map $map;
 
     /**
-     * @param \Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map<T, bool> $map
+     * @param Map<T, bool> $map
      */
-    private function __construct(\Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map $map)
+    private function __construct(Map $map)
     {
         $this->map = $map;
     }
@@ -37,7 +38,7 @@ final readonly class Set
      */
     public static function of(mixed ...$values): self
     {
-        return new self(\Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map::fromKeys($values, true));
+        return new self(Map::fromKeys($values, true));
     }
 
     /**
@@ -58,7 +59,7 @@ final readonly class Set
      */
     public function clear(): self
     {
-        return new self(\Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map::new());
+        return new self(Map::new());
     }
 
     /**
@@ -122,6 +123,7 @@ final readonly class Set
         if ($this->size()->toInt() !== $other->size()->toInt()) {
             return false;
         }
+
         // Check if all keys in this set exist in other set
         return $this->all(static fn($value) => $other->contains($value));
     }
@@ -174,12 +176,6 @@ final readonly class Set
      */
     public function append(self $other): self
     {
-        // Map merge of keys
-        // We can expose underlying map via accessor if internal? 
-        // No, use efficient construction via keys.
-        // Actually, strictly speaking append is Union.
-        // Just merge maps.
-        // Accessing private map of other? private members are accessible by same class instances.
         return new self($this->map->append($other->map));
     }
 
@@ -192,9 +188,13 @@ final readonly class Set
      */
     public function map(callable $fn): self
     {
-        // Extract values, map them, create new set
+        /** @var list<U> $newValues */
         $newValues = [];
-        $this->forEach(static fn($val) => $newValues[] = $fn($val));
+        $this->forEach(
+            /** @param T $val */
+            static fn(mixed $val) => $newValues[] = $fn($val),
+        );
+
         return self::of(...$newValues);
     }
 
@@ -207,12 +207,19 @@ final readonly class Set
      */
     public function flatMap(callable $fn): self
     {
+        /** @var list<U> $newValues */
         $newValues = [];
-        $this->forEach(function ($val) use (&$newValues, $fn) {
-            foreach ($fn($val) as $item) {
-                $newValues[] = $item;
-            }
-        });
+        $this->forEach(
+            /**
+             * @param T $val
+             */
+            static function (mixed $val) use (&$newValues, $fn): void {
+                foreach ($fn($val) as $item) {
+                    $newValues[] = $item;
+                }
+            },
+        );
+
         return self::of(...$newValues);
     }
 
@@ -224,7 +231,12 @@ final readonly class Set
      */
     public function filter(callable $fn): self
     {
-        return new self($this->map->filter(static fn($key, $_) => $fn($key)));
+        return new self($this->map->filter(
+            /**
+             * @param T $key
+             */
+            static fn(mixed $key, bool $_): bool => $fn($key),
+        ));
     }
 
     /**
@@ -234,8 +246,12 @@ final readonly class Set
      */
     public function any(callable $fn): bool
     {
-        // Map::find/any takes (key, value)
-        return $this->map->find(static fn($key, $_) => $fn($key))->isSome();
+        return $this->map->find(
+            /**
+             * @param T $key
+             */
+            static fn(mixed $key, bool $_): bool => $fn($key),
+        )->isSome();
     }
 
     /**
@@ -245,8 +261,13 @@ final readonly class Set
      */
     public function all(callable $fn): bool
     {
-        // If find ANY that does NOT match, return false.
-        $foundMismatch = $this->map->find(static fn($key, $_) => !$fn($key))->isSome();
+        $foundMismatch = $this->map->find(
+            /**
+             * @param T $key
+             */
+            static fn(mixed $key, bool $_): bool => !$fn($key),
+        )->isSome();
+
         return !$foundMismatch;
     }
 
@@ -259,13 +280,21 @@ final readonly class Set
      */
     public function filterMap(callable $fn): self
     {
+        /** @var list<U> $newValues */
         $newValues = [];
-        $this->forEach(function ($val) use (&$newValues, $fn) {
-            $opt = $fn($val);
-            if ($opt->isSome()) {
-                $newValues[] = $opt->unwrap();
-            }
-        });
+        $this->forEach(
+            /**
+             * @param T $val
+             */
+            static function (mixed $val) use (&$newValues, $fn): void {
+                $opt = $fn($val);
+
+                if ($opt->isSome()) {
+                    $newValues[] = $opt->unwrap();
+                }
+            },
+        );
+
         return self::of(...$newValues);
     }
 
@@ -280,8 +309,12 @@ final readonly class Set
     public function fold(callable $fn, mixed $initial): mixed
     {
         return $this->map->fold(
-            static fn($acc, $key, $_) => $fn($acc, $key),
-            $initial
+            /**
+             * @param U $acc
+             * @param T $key
+             */
+            static fn(mixed $acc, mixed $key, bool $_): mixed => $fn($acc, $key),
+            $initial,
         );
     }
 
@@ -292,8 +325,14 @@ final readonly class Set
      */
     public function flatten(): self
     {
-        // Assuming T is iterable?
-        return $this->flatMap(static fn($x) => $x);
+        return $this->flatMap(
+            /**
+             * @param T $x
+             * @return iterable<T>
+             * @psalm-suppress MixedReturnTypeCoercion
+             */
+            static fn(mixed $x): mixed => $x,
+        );
     }
 
     /**
@@ -303,7 +342,14 @@ final readonly class Set
      */
     public function forEach(callable $fn): void
     {
-        $this->map->forEach(static fn($key, $_) => $fn($key));
+        $this->map->forEach(
+            /**
+             * @param T $key
+             */
+            static function (mixed $key, bool $_) use ($fn): void {
+                $fn($key);
+            },
+        );
     }
 
     /**
@@ -313,10 +359,17 @@ final readonly class Set
      */
     public function toArray(): array
     {
+        /** @var array<T> $result */
         $result = [];
-        $this->forEach(function ($val) use (&$result) {
-            $result[] = $val;
-        });
+        $this->forEach(
+            /**
+             * @param T $val
+             */
+            static function (mixed $val) use (&$result): void {
+                $result[] = $val;
+            },
+        );
+
         return $result;
     }
 
@@ -340,6 +393,6 @@ final readonly class Set
      */
     public static function ofArray(array $array): self
     {
-        return new self(\Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map::fromKeys($array, true));
+        return new self(Map::fromKeys($array, true));
     }
 }
