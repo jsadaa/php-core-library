@@ -297,6 +297,52 @@ $result = $none->orElse(fn() => Option::some(computeValue()));   // Some(result 
 
 These methods are useful for providing fallbacks when working with multiple optional values.
 
+### AndThen (Monadic Chaining)
+
+The `andThen` method is the key to composing operations that themselves return Options. Unlike `map()` which wraps the result in a new `Some`, `andThen()` expects the callback to return an `Option` directly, avoiding nested `Option<Option<T>>` structures.
+
+```php
+// andThen chains operations that return Options
+$userOption = getUserById($id); // Option<User>
+
+$emailOption = $userOption
+    ->andThen(fn($user) => $user->getEmail()); // Option<string> (getEmail returns Option)
+
+// Compare with map: would produce Option<Option<string>> - not what we want
+$nested = $userOption->map(fn($user) => $user->getEmail()); // Option<Option<string>>
+```
+
+Use `andThen()` when the callback itself returns an `Option`. Use `map()` when the callback returns a plain value.
+
+```php
+// Chain multiple Option-returning operations
+$seq = Sequence::of(10, 20, 30);
+
+// Get the second element, then look it up in a Map
+$config = Map::of(20, 'twenty')->add(30, 'thirty');
+
+$result = $seq->get(1)                          // Option::some(20)
+    ->andThen(fn($val) => $config->get($val));  // Option::some('twenty')
+
+// If any step returns None, the entire chain returns None
+$result = $seq->get(99)                          // Option::none()
+    ->andThen(fn($val) => $config->get($val));   // Option::none() - callback never called
+```
+
+**Real-world example: safely navigating nested optional data**
+
+```php
+// Each step may fail - andThen propagates None automatically
+$port = loadConfig()                                         // Option<Config>
+    ->andThen(fn($config) => $config->getSection('server'))  // Option<Section>
+    ->andThen(fn($section) => $section->getValue('port'))    // Option<string>
+    ->andThen(fn($portStr) => Str::of($portStr)
+        ->parseInt()                                         // Result<Integer, ParseError>
+        ->option()                                           // Option<Integer>
+    )
+    ->unwrapOr(Integer::of(8080));                           // Default if any step is None
+```
+
 ### Chaining Operations
 
 ```php

@@ -324,6 +324,83 @@ $option = $err->option(); // None
 
 This is useful when you only care about the success value and want to discard any error information.
 
+### AndThen (Railway-Oriented Programming)
+
+The `andThen` method is the cornerstone of composing failable operations. It calls the callback only if the Result is `Ok`, and the callback itself returns a `Result`. If any step in the chain produces an `Err`, all subsequent steps are skipped and the error propagates through.
+
+This is the PHP equivalent of Rust's `?` operator: a way to chain operations where any step can fail, without nesting `match()` calls.
+
+```php
+// Without andThen: deeply nested and hard to read
+$usernameResult = validateUsername("bob");
+$validUser = $usernameResult->match(
+    function($username) {
+        return validateEmail("bob@example.com")->match(
+            fn($email) => ["username" => $username, "email" => $email],
+            fn($error) => $error
+        );
+    },
+    fn($error) => $error
+);
+
+// With andThen: flat, readable pipeline
+$result = validateUsername("bob")
+    ->andThen(fn($username) => validateEmail("bob@example.com")
+        ->map(fn($email) => ["username" => $username, "email" => $email])
+    );
+```
+
+**Arithmetic chaining:**
+
+```php
+// Each division can fail with DivisionByZero
+$result = Integer::of(100)
+    ->div(2)                                    // Result::ok(Integer::of(50))
+    ->andThen(fn($val) => $val->div(5))         // Result::ok(Integer::of(10))
+    ->andThen(fn($val) => $val->div(0));        // Result::err(DivisionByZero)
+    // The chain short-circuits at the first Err
+```
+
+**File operations pipeline:**
+
+```php
+// Create, write, and configure a file in one pipeline
+$result = File::new('/path/to/config.json')
+    ->andThen(fn($file) => $file->write('{"debug": true}'))
+    ->andThen(fn($file) => $file->setPermissions(Permissions::create(0644)));
+
+// If any step fails (permission denied, disk full, etc.), the Err propagates
+$result->match(
+    fn($file) => "Configuration file created successfully",
+    fn($error) => "Failed: " . $error->getMessage()
+);
+```
+
+**Input validation pipeline:**
+
+```php
+// Parse and validate in one clean chain
+$result = Str::of($userInput)
+    ->parseInt()                                         // Result<Integer, ParseError>
+    ->andThen(fn($n) => $n->gt(0)
+        ? Result::ok($n)
+        : Result::err('Must be positive')
+    )
+    ->andThen(fn($n) => $n->le(100)
+        ? Result::ok($n)
+        : Result::err('Must be at most 100')
+    )
+    ->map(fn($n) => $n->toInt());                        // Extract the raw int
+
+$result->match(
+    fn($value) => "Valid input: $value",
+    fn($error) => "Invalid: $error"
+);
+```
+
+> [!TIP]
+> Use `andThen()` when the callback returns a `Result`. Use `map()` when the callback returns a plain value. Think of `andThen()` as "and then try this, which might also fail" and `map()` as "and then transform the success value".
+
 ### Chaining Operations
 
 ```php
@@ -340,17 +417,15 @@ function validateEmail(string $email): Result {
         : Result::err("Invalid email format");
 }
 
-// Chain them together
-$usernameResult = validateUsername("bob");
-$validUser = $usernameResult->match(
-    function($username) {
-        // Only runs if username was valid
-        return validateEmail("bob@example.com")->match(
-            fn($email) => ["username" => $username, "email" => $email],
-            fn($error) => $error
-        );
-    },
-    fn($error) => $error
+// Chain them with andThen
+$result = validateUsername("bob")
+    ->andThen(fn($username) => validateEmail("bob@example.com")
+        ->map(fn($email) => ["username" => $username, "email" => $email])
+    );
+
+$result->match(
+    fn($data) => "Valid: {$data['username']} <{$data['email']}>",
+    fn($error) => "Error: $error"
 );
 ```
 

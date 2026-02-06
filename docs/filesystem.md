@@ -1922,7 +1922,7 @@ $readonlyResult = Permissions::create(0444)->apply('/path/to/config.conf');
 > [!NOTE]
 > **Result Type Usage**: All potentially failing operations return Result types, forcing explicit error handling and preventing silent failures.
 > **Specific Error Types**: Each operation can return specific error types that provide meaningful context about what went wrong, enabling appropriate error handling strategies.
-> **Result Chaining**: Result types can be chained and composed, allowing for elegant error propagation and handling in complex operations.
+> **Result Chaining**: Result types can be chained with `andThen()`, allowing for elegant error propagation without nested `match()` calls.
 
 ```php
 // Using Result::match
@@ -1944,16 +1944,58 @@ if ($result->isOk()) {
         echo "Failed to create directory: " . $error->getMessage();
     }
 }
+```
 
-// Chain operations with error propagation
+### Chaining with andThen
+
+The `andThen()` method enables railway-oriented programming for file operations. Each step only executes if the previous one succeeded. If any step fails, the error propagates through and subsequent steps are skipped entirely.
+
+```php
+// Create, write, and set permissions in one safe pipeline
 $result = File::new('/path/to/config.json')
     ->andThen(fn($file) => $file->write('{"setting": "value"}'))
     ->andThen(fn($file) => $file->setPermissions(Permissions::create(0644)));
 
-if ($result->isErr()) {
-    echo "Operation failed: " . $result->unwrapErr()->getMessage();
-}
+// Handle the final result once
+$result->match(
+    fn($file) => "Config file created and secured",
+    fn($error) => "Failed: " . $error->getMessage()
+);
 ```
+
+```php
+// Read, transform, and write back
+$result = File::from('/path/to/data.json')
+    ->andThen(fn($file) => $file->read())
+    ->map(fn($content) => $content->toString())
+    ->map(fn($json) => strtoupper($json))
+    ->andThen(fn($transformed) =>
+        File::from('/path/to/data.json')
+            ->andThen(fn($file) => $file->write($transformed))
+    );
+```
+
+```php
+// Combine with Option::andThen for directory traversal
+$result = FileSystem::readDir('/var/log');
+
+$firstLogContent = $result
+    ->map(fn($entries) => $entries
+        ->find(fn($entry) => $entry->path()->extension()
+            ->match(fn($ext) => $ext->toString() === 'log', fn() => false)
+        )
+    )
+    ->andThen(fn($optEntry) => $optEntry
+        ->andThen(fn($entry) => File::from($entry->path())
+            ->andThen(fn($file) => $file->read())
+            ->option()   // Convert Result to Option
+        )
+        ->okOr(new \RuntimeException('No log file found'))
+    );
+```
+
+> [!TIP]
+> Use `andThen()` when the callback returns a `Result` (operations that can fail). Use `map()` when the callback returns a plain value (transformations that always succeed).
 
 **Notes:**
 

@@ -16,6 +16,8 @@ This ecosystem provides a growing collection of types and modules that work toge
 ### Core Types
 
 - `Sequence`: An ordered collection of elements of the same type
+- `Map`: A key-value collection with O(1) lookups, supporting both scalar and object keys
+- `Set`: A collection of unique values with mathematical set operations
 - `Option`: A type that represents optional values (Some or None)
 - `Result`: A type that represents either success (Ok) or failure (Err)
 - `Str`: A UTF-8 string type with extensive manipulation methods
@@ -79,6 +81,81 @@ Sequence provides many more powerful operations for working with collections, in
 
 For complete documentation with examples, see [Sequence Documentation](./docs/sequence.md).
 
+### Map
+
+A `Map` is an immutable key-value collection with O(1) lookups, supporting both scalar and object keys:
+
+```php
+// Create and manipulate a Map
+$config = Map::of('host', 'localhost')
+    ->add('port', 8080)
+    ->add('debug', true);
+
+// Safe access with Option
+$host = $config->get('host')->unwrapOr('127.0.0.1'); // "localhost"
+$timeout = $config->get('timeout')->unwrapOr(30);     // 30 (default)
+
+// Transform, filter, fold
+$uppercased = $config
+    ->filter(fn($key, $value) => is_string($value))
+    ->map(fn($key, $value) => strtoupper($value));
+
+// Merge configurations
+$defaults = Map::of('host', 'localhost')->add('port', 3000);
+$overrides = Map::of('port', 8080)->add('debug', true);
+$merged = $defaults->append($overrides); // overrides take precedence
+
+// Object keys with identity comparison
+$user = new User('Alice');
+$roles = Map::of($user, 'admin');
+$roles->get($user)->unwrap(); // 'admin'
+```
+
+Map provides many operations for working with key-value data, including:
+- Creation methods: `of()`, `fromKeys()`, `new()`
+- Inspection: `containsKey()`, `containsValue()`, `isEmpty()`
+- Access: `get()`, `find()`, `keys()`, `values()`
+- Transformation: `map()`, `filter()`, `flatMap()`, `fold()`
+- Combination: `append()`
+
+For complete documentation with examples, see [Map Documentation](./docs/map.md).
+
+### Set
+
+A `Set` is an immutable collection of unique values with mathematical set operations:
+
+```php
+// Create a Set (duplicates are removed)
+$languages = Set::of('PHP', 'Rust', 'Go', 'PHP');
+$languages->size(); // Integer::of(3)
+
+// Set operations
+$backend = Set::of('PHP', 'Rust', 'Go', 'Java');
+$systems = Set::of('Rust', 'C', 'Go', 'Zig');
+
+$common = $backend->intersection($systems);   // Set { 'Rust', 'Go' }
+$onlyBackend = $backend->difference($systems); // Set { 'PHP', 'Java' }
+$all = $backend->append($systems);             // Union of both
+
+// Functional operations
+$lengths = $languages->map(fn($lang) => strlen($lang)); // Set { 3, 4, 2 }
+$short = $languages->filter(fn($lang) => strlen($lang) <= 3); // Set { 'PHP', 'Go' }
+$hasRust = $languages->contains('Rust'); // true
+
+// Subset/superset checks
+$small = Set::of('PHP', 'Rust');
+$small->isSubset($backend); // true
+```
+
+Set provides many operations for working with unique collections, including:
+- Creation methods: `of()`, `ofArray()`
+- Set operations: `intersection()`, `difference()`, `append()`, `isSubset()`, `isSuperset()`, `isDisjoint()`
+- Inspection: `contains()`, `any()`, `all()`, `isEmpty()`
+- Transformation: `map()`, `filter()`, `flatMap()`, `filterMap()`, `fold()`
+- Conversion: `toArray()`, `toSequence()`
+
+For complete documentation with examples, see [Set Documentation](./docs/set.md).
+
 ### Option Type
 
 The `Option` type represents an optional value that can be either `Some(value)` or `None`. It's used to handle the absence of values without using null.
@@ -103,12 +180,25 @@ $result = $some->match(
 $mapped = $some->map(fn($x) => $x * 2);           // Some(84)
 $filtered = $some->filter(fn($x) => $x % 2 === 0); // Some(42) - condition met
 
+// Monadic chaining with andThen - chain operations that themselves return Options
+$seq = Sequence::of(10, 20, 30);
+$result = $seq->get(1)                                  // Option::some(20)
+    ->andThen(fn($val) => $val > 10                     // Chain only if Some
+        ? Option::some($val * 2)
+        : Option::none()
+    );                                                   // Option::some(40)
+
+// andThen propagates None automatically
+$result = $seq->get(99)                                  // Option::none()
+    ->andThen(fn($val) => Option::some($val * 2));       // Option::none() - never called
+
 // ... And more
 ```
 
 The Option type provides a safe and expressive way to handle optional values:
 
 - Eliminates null reference errors by forcing explicit handling of absence
+- Enables monadic chaining with `andThen()` for composing operations that return Options
 - Enables fluent method chaining for transforming optional values
 - Integrates well with other types in the library
 
@@ -137,13 +227,32 @@ $result = $ok->match(
 // Transformations
 $mapped = $ok->map(fn($x) => $x * 2);  // Ok(84) - only transforms Ok values
 
+// Monadic chaining with andThen - the key to railway-oriented programming
+// Each step only executes if the previous one succeeded
+$result = Integer::of(10)
+    ->div(2)                                             // Result::ok(Integer::of(5))
+    ->andThen(fn($val) => $val->div(0));                 // Result::err(DivisionByZero)
+    // The chain short-circuits: once an Err appears, subsequent steps are skipped
+
+// Real-world example: validate and transform user input
+$result = Str::of('42')
+    ->parseInt()                                         // Result::ok(Integer::of(42))
+    ->andThen(fn($n) => $n->gt(0)
+        ? Result::ok($n)
+        : Result::err('Must be positive')
+    )
+    ->andThen(fn($n) => $n->lt(100)
+        ? Result::ok($n)
+        : Result::err('Must be less than 100')
+    );                                                   // Result::ok(Integer::of(42))
+
 // ... And more
 ```
 
 The Result type provides explicit and type-safe error handling:
 
 - Makes success and error paths explicit in your code
-- Enables composition of operations that might fail
+- Enables railway-oriented programming with `andThen()` for composing failable operations
 - Forces comprehensive error handling at compile time
 - Provides rich methods for working with potentially failed operations
 
@@ -306,19 +415,27 @@ if ($result->isOk()) {
     echo $content->toString();
 }
 
+// Chain file operations with andThen - errors propagate automatically
+$result = File::from('/path/to/config.json')
+    ->andThen(fn($file) => $file->read())
+    ->andThen(fn($content) => Str::of($content->toString())
+        ->replace(Str::of('"debug": false'), Str::of('"debug": true'))
+        ->parseInt()  // Would fail here and propagate the Err
+    );
+
+// Create, write, and set permissions in one safe pipeline
+$result = File::new('/path/to/script.sh')
+    ->andThen(fn($file) => $file->write('#!/bin/bash\necho "Hello"'))
+    ->andThen(fn($file) => $file->setPermissions(Permissions::create(0755)));
+
+$result->match(
+    fn($file) => "Script created and made executable",
+    fn($error) => "Failed: " . $error->getMessage()
+);
+
 // Directory operations
 $entries = FileSystem::readDir('/var/log')->unwrap();
 $logFiles = $entries->filter(fn($entry) => $entry->fileName()->unwrapOr(Str::of(''))->endsWith('.log'));
-
-// Atomic file operations
-$file = File::from('/path/to/config.json')->unwrap();
-$file->writeAtomic($newConfig, true)->unwrap(); // Atomic write with sync
-
-// File metadata and permissions
-$metadata = $file->metadata()->unwrap();
-if ($metadata->isWritable()) {
-    echo "File is writable";
-}
 ```
 
 The FileSystem module includes:
@@ -486,7 +603,7 @@ This approach reflects a **hybrid** between Rust’s conceptual strengths and PH
 
 This library is designed as a cohesive ecosystem where modules complement each other:
 
-- **Core Types** (`Sequence`, `Option`, `Result`, `Str`, `Integer`, `Double`) provide the foundation
+- **Core Types** (`Sequence`, `Map`, `Set`, `Option`, `Result`, `Str`, `Integer`, `Double`) provide the foundation
 - **FileSystem** uses `Path`, `Result`, and core types for safe file operations
 - **Path** integrates with `Option` and `Result` for path validation and manipulation
 - **Time** provides `SystemTime` and `Duration` with overflow-safe arithmetic using `Integer`
