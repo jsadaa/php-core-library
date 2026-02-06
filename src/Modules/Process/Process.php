@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
@@ -40,7 +40,7 @@ final class Process
     private function __construct(
         $handle,
         Map $pipes,
-        SystemTime $startTime
+        SystemTime $startTime,
     ) {
         $this->handle = $handle;
         $this->pipes = $pipes;
@@ -59,7 +59,7 @@ final class Process
         foreach ($pipes as $fd => $pipe) {
             $pipeMap = $pipeMap->add(
                 FileDescriptor::custom($fd),
-                $pipe
+                $pipe,
             );
         }
 
@@ -85,7 +85,7 @@ final class Process
 
         return $pid->gt(0)
             ? Result::ok($pid)
-            : Result::err("Process has no valid PID");
+            : Result::err('Process has no valid PID');
     }
 
     /**
@@ -106,12 +106,13 @@ final class Process
         while ($this->isRunning()) {
             if ($deadline !== null) {
                 $now = SystemTime::now();
+
                 if ($now->ge($deadline->unwrap())) {
-                    return Result::err("Process wait timed out");
+                    return Result::err('Process wait timed out');
                 }
             }
 
-            usleep(10000); // 10ms
+            \usleep(10000); // 10ms
         }
 
         return Result::ok($this->status());
@@ -122,17 +123,17 @@ final class Process
      *
      * @return Result<Unit, string>
      */
-    public function kill(int $signal = SIGTERM): Result
+    public function kill(int $signal = \SIGTERM): Result
     {
         if (!$this->isRunning()) {
             return Result::ok(Unit::new());
         }
 
-        $result = proc_terminate($this->handle, $signal);
+        $result = \proc_terminate($this->handle, $signal);
 
         return $result
             ? Result::ok(Unit::new())
-            : Result::err("Failed to send signal to process");
+            : Result::err('Failed to send signal to process');
     }
 
     /**
@@ -170,7 +171,7 @@ final class Process
 
         return $stdin->isSome()
             ? Result::ok(StreamWriter::createAutoFlushing($stdin->unwrap()))
-            : Result::err("Failed to get stdin");
+            : Result::err('Failed to get stdin');
     }
 
     /**
@@ -178,7 +179,7 @@ final class Process
      *
      * @return Result<Integer, string>
      */
-    public function writeStdin(string|Str $data): Result
+    public function writeStdin(string | Str $data): Result
     {
         $writer = $this->stdinWriter();
 
@@ -197,15 +198,15 @@ final class Process
         $stdout = $this->stdout();
 
         if ($stdout->isNone()) {
-            return Result::err("Failed to get stdout");
+            return Result::err('Failed to get stdout');
         }
 
-        stream_set_blocking($stdout->unwrap(), false);
-        $data = stream_get_contents($stdout->unwrap());
+        \stream_set_blocking($stdout->unwrap(), false);
+        $data = \stream_get_contents($stdout->unwrap());
 
         return $data !== false
             ? Result::ok(Str::of($data))
-            : Result::err("Failed to read from stdout");
+            : Result::err('Failed to read from stdout');
     }
 
     /**
@@ -218,15 +219,15 @@ final class Process
         $stderr = $this->stderr();
 
         if ($stderr->isNone()) {
-            return Result::err("Failed to get stderr");
+            return Result::err('Failed to get stderr');
         }
 
-        stream_set_blocking($stderr->unwrap(), false);
-        $data = stream_get_contents($stderr->unwrap());
+        \stream_set_blocking($stderr->unwrap(), false);
+        $data = \stream_get_contents($stderr->unwrap());
 
         return $data !== false
             ? Result::ok(Str::of($data))
-            : Result::err("Failed to read from stderr");
+            : Result::err('Failed to read from stderr');
     }
 
     /**
@@ -238,9 +239,10 @@ final class Process
     {
         // Close stdin if available
         $stdinResult = $this->stdin();
+
         if ($stdinResult->isSome()) {
             $stdinRes = $stdinResult->unwrap();
-            fclose($stdinRes);
+            \fclose($stdinRes);
         }
 
         // Create readers for stdout and stderr
@@ -248,11 +250,11 @@ final class Process
         $stderrResult = $this->stderr();
 
         if ($stdoutResult->isNone()) {
-            return Result::err("Failed to read from stdout");
+            return Result::err('Failed to read from stdout');
         }
 
         if ($stderrResult->isNone()) {
-            return Result::err("Failed to read from stderr");
+            return Result::err('Failed to read from stderr');
         }
 
         $stdoutReader = StreamReader::from($stdoutResult->unwrap());
@@ -269,17 +271,20 @@ final class Process
 
         while (true) {
             if (SystemTime::now()->ge($deadline->unwrap())) {
-                $this->kill(SIGKILL);
-                return Result::err("Process execution timed out");
+                $this->kill(\SIGKILL);
+
+                return Result::err('Process execution timed out');
             }
 
             // Read available data from both streams
             $stdoutData = $stdoutReader->readAvailable();
+
             if ($stdoutData->isOk() && !$stdoutData->unwrap()->isEmpty()) {
                 $stdout = $stdout->append($stdoutData->unwrap());
             }
 
             $stderrData = $stderrReader->readAvailable();
+
             if ($stderrData->isOk() && !$stderrData->unwrap()->isEmpty()) {
                 $stderr = $stderr->append($stderrData->unwrap());
             }
@@ -287,11 +292,13 @@ final class Process
             if (!$this->isRunning()) {
                 // Process finished, read any remaining data
                 $finalStdout = $stdoutReader->readAvailable();
+
                 if ($finalStdout->isOk()) {
                     $stdout = $stdout->append($finalStdout->unwrap());
                 }
 
                 $finalStderr = $stderrReader->readAvailable();
+
                 if ($finalStderr->isOk()) {
                     $stderr = $stderr->append($finalStderr->unwrap());
                 }
@@ -299,7 +306,7 @@ final class Process
                 break;
             }
 
-            usleep(10000); // 10ms
+            \usleep(10000); // 10ms
         }
 
         $stdoutReader->close();
@@ -314,15 +321,15 @@ final class Process
     public function close(): void
     {
         $this->pipes->forEach(
-            function ($_, $resource) {
-                if (is_resource($resource)) {
-                    fclose($resource);
+            static function($_, $resource) {
+                if (\is_resource($resource)) {
+                    \fclose($resource);
                 }
-            }
+            },
         );
 
-        if (is_resource($this->handle)) {
-            proc_close($this->handle);
+        if (\is_resource($this->handle)) {
+            \proc_close($this->handle);
         }
     }
 }

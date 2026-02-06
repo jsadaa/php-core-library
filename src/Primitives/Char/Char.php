@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Primitives\Char;
 
@@ -22,6 +22,11 @@ final readonly class Char
         $this->value = $value;
     }
 
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+
     /**
      * @psalm-pure
      */
@@ -30,7 +35,7 @@ final readonly class Char
         return new self($value);
     }
 
-    public static function ofDigit(int|Integer $digit): self
+    public static function ofDigit(int | Integer $digit): self
     {
         $digit = $digit instanceof Integer ? $digit->toInt() : $digit;
 
@@ -102,11 +107,6 @@ final readonly class Char
         return new self(\mb_strtolower($this->value));
     }
     public function toString(): string
-    {
-        return $this->value;
-    }
-
-    public function __toString(): string
     {
         return $this->value;
     }

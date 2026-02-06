@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
@@ -47,10 +47,10 @@ final readonly class FileDescriptor
     /**
      * @psalm-pure
      */
-    public static function custom(int|Integer $number): self
+    public static function custom(int | Integer $number): self
     {
         return new self(
-            is_int($number) ? Integer::of($number) : $number
+            \is_int($number) ? Integer::of($number) : $number,
         );
     }
 

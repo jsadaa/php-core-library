@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
@@ -35,7 +35,7 @@ final readonly class ProcessStreams
         return new self(
             Map::of(FileDescriptor::stdin(), StreamDescriptor::pipe('r'))
                 ->add(FileDescriptor::stdout(), StreamDescriptor::pipe('w'))
-                ->add(FileDescriptor::stderr(), StreamDescriptor::pipe('w'))
+                ->add(FileDescriptor::stderr(), StreamDescriptor::pipe('w')),
         );
     }
 
@@ -49,7 +49,7 @@ final readonly class ProcessStreams
         return new self(
             Map::of(FileDescriptor::stdin(), StreamDescriptor::inherit())
                 ->add(FileDescriptor::stdout(), StreamDescriptor::inherit())
-                ->add(FileDescriptor::stderr(), StreamDescriptor::inherit())
+                ->add(FileDescriptor::stderr(), StreamDescriptor::inherit()),
         );
     }
 
@@ -63,35 +63,35 @@ final readonly class ProcessStreams
         return new self(
             Map::of(FileDescriptor::stdin(), StreamDescriptor::null())
                 ->add(FileDescriptor::stdout(), StreamDescriptor::null())
-                ->add(FileDescriptor::stderr(), StreamDescriptor::null())
+                ->add(FileDescriptor::stderr(), StreamDescriptor::null()),
         );
     }
 
     public function withStdin(StreamDescriptor $descriptor): self
     {
         return new self(
-            $this->descriptors->add(FileDescriptor::stdin(), $descriptor)
+            $this->descriptors->add(FileDescriptor::stdin(), $descriptor),
         );
     }
 
     public function withStdout(StreamDescriptor $descriptor): self
     {
         return new self(
-            $this->descriptors->add(FileDescriptor::stdout(), $descriptor)
+            $this->descriptors->add(FileDescriptor::stdout(), $descriptor),
         );
     }
 
     public function withStderr(StreamDescriptor $descriptor): self
     {
         return new self(
-            $this->descriptors->add(FileDescriptor::stderr(), $descriptor)
+            $this->descriptors->add(FileDescriptor::stderr(), $descriptor),
         );
     }
 
     public function withDescriptor(FileDescriptor $fd, StreamDescriptor $descriptor): self
     {
         return new self(
-            $this->descriptors->add($fd, $descriptor)
+            $this->descriptors->add($fd, $descriptor),
         );
     }
 
@@ -117,14 +117,16 @@ final readonly class ProcessStreams
                  * @param array<int, array<int, string>|resource> $carry
                  * @return array<int, array<int, string>|resource>
                  */
-                function (array $carry, FileDescriptor $fd, StreamDescriptor $descriptor): array {
+                static function(array $carry, FileDescriptor $fd, StreamDescriptor $descriptor): array {
                     $val = $descriptor->toDescriptor();
+
                     if ($val !== null) {
                         $carry[$fd->toInt()] = $val;
                     }
+
                     return $carry;
                 },
-                []
+                [],
             );
     }
 

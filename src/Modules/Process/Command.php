@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
@@ -30,7 +30,7 @@ final readonly class Command
     private function __construct(
         ProcessBuilder $builder,
         Sequence $pipeline,
-        Duration $timeout
+        Duration $timeout,
     ) {
         $this->builder = $builder;
         $this->pipeline = $pipeline;
@@ -40,7 +40,7 @@ final readonly class Command
     /**
      * Creates a new command.
      */
-    public static function of(string|Str $name): self
+    public static function of(string | Str $name): self
     {
         return new self(
             ProcessBuilder::command($name),
@@ -49,7 +49,7 @@ final readonly class Command
         );
     }
 
-    public function withArg(string|Str $arg): self
+    public function withArg(string | Str $arg): self
     {
         return new self(
             $this->builder->arg($arg),
@@ -58,7 +58,7 @@ final readonly class Command
         );
     }
 
-    public function atPath(string|Path $path): self
+    public function atPath(string | Path $path): self
     {
         return new self(
             $this->builder->workingDirectory($path),
@@ -67,7 +67,7 @@ final readonly class Command
         );
     }
 
-    public function withEnv(string|Str $var, string|Str $value): self
+    public function withEnv(string | Str $var, string | Str $value): self
     {
         return new self(
             $this->builder->env($var, $value),
@@ -76,7 +76,7 @@ final readonly class Command
         );
     }
 
-    public function withTimeout(int|Integer|Duration $timeout): self
+    public function withTimeout(int | Integer | Duration $timeout): self
     {
         $duration = match (true) {
             $timeout instanceof Duration => $timeout,
@@ -106,7 +106,7 @@ final readonly class Command
     /**
      * Redirects stdin from a file.
      */
-    public function fromFile(string|Path $path): self
+    public function fromFile(string | Path $path): self
     {
         return new self(
             $this->builder->stdin(StreamDescriptor::file($path, 'r')),
@@ -118,7 +118,7 @@ final readonly class Command
     /**
      * Redirects stdout to a file.
      */
-    public function toFile(string|Path $path): self
+    public function toFile(string | Path $path): self
     {
         return new self(
             $this->builder->stdout(StreamDescriptor::file($path, 'w')),
@@ -130,7 +130,7 @@ final readonly class Command
     /**
      * Redirects stderr to a file.
      */
-    public function errorToFile(string|Path $path): self
+    public function errorToFile(string | Path $path): self
     {
         return new self(
             $this->builder->stderr(StreamDescriptor::file($path, 'w')),
@@ -156,7 +156,7 @@ final readonly class Command
     /**
      * Pipe this command into another command.
      */
-    public function pipe(self|ProcessBuilder $command): self
+    public function pipe(self | ProcessBuilder $command): self
     {
         $builder = $command instanceof self ? $command->builder : $command;
 
@@ -180,6 +180,56 @@ final readonly class Command
     }
 
     /**
+     * Spawns the command without waiting for it to complete.
+     *
+     * @return Result<Process, string>
+     */
+    public function spawn(): Result
+    {
+        if (!$this->pipeline->isEmpty()) {
+            /** @var Result<Process, string> */
+            return Result::err('Cannot spawn a pipeline command. Use run() instead.');
+        }
+
+        return $this->builder->spawn();
+    }
+
+    /**
+     * Executes the command and returns only stdout as a string.
+     *
+     * @return Result<Str, string>
+     */
+    public function output(): Result
+    {
+        $result = $this->run();
+
+        if ($result->isErr()) {
+            $error = $result->unwrapErr();
+            /** @var Result<Str, string> $err */
+            $err = Result::err(
+                $error instanceof Output
+                ? $error->stderr()->toString()
+                : $error,
+            );
+
+            return $err;
+        }
+
+        /** @var Result<Str, string> $ok */
+        $ok = Result::ok($result->unwrap()->stdout());
+
+        return $ok;
+    }
+
+    /**
+     * Gets the underlying ProcessBuilder for advanced configuration.
+     */
+    public function builder(): ProcessBuilder
+    {
+        return $this->builder;
+    }
+
+    /**
      * @return Result<Output, Output|string>
      */
     private function runSingle(): Result
@@ -189,6 +239,7 @@ final readonly class Command
         if ($processResult->isErr()) {
             /** @var Result<Output, Output|string> $err */
             $err = Result::err($processResult->unwrapErr());
+
             return $err;
         }
 
@@ -199,6 +250,7 @@ final readonly class Command
         if ($outputResult->isErr()) {
             /** @var Result<Output, Output|string> $err */
             $err = Result::err($outputResult->unwrapErr());
+
             return $err;
         }
 
@@ -207,11 +259,13 @@ final readonly class Command
         if ($output->isSuccess()) {
             /** @var Result<Output, Output|string> $ok */
             $ok = Result::ok($output);
+
             return $ok;
         }
 
         /** @var Result<Output, Output|string> $err */
         $err = Result::err($output);
+
         return $err;
     }
 
@@ -228,8 +282,10 @@ final readonly class Command
         $processes = Sequence::new();
 
         $i = 0;
+
         foreach ($builders->iter() as $builder) {
             $index = $i++;
+
             // Connect pipes between processes
             if ($index > 0) {
                 $prevProcess = $processes->get(Integer::of($index - 1))->unwrap();
@@ -237,7 +293,7 @@ final readonly class Command
 
                 if ($stdoutResult->isSome()) {
                     $builder = $builder->stdin(
-                        StreamDescriptor::resource($stdoutResult->unwrap())
+                        StreamDescriptor::resource($stdoutResult->unwrap()),
                     );
                 }
             }
@@ -261,6 +317,7 @@ final readonly class Command
                 $this->cleanupProcesses($processes);
                 /** @var Result<Output, Output|string> $err */
                 $err = Result::err($processResult->unwrapErr());
+
                 return $err;
             }
 
@@ -273,9 +330,10 @@ final readonly class Command
         // Close stdin of first process if it's still open
         $firstProcess = $processes->first()->unwrap();
         $stdinResult = $firstProcess->stdin();
+
         if ($stdinResult->isSome()) {
             $stdinRes = $stdinResult->unwrap();
-            fclose($stdinRes);
+            \fclose($stdinRes);
         }
 
         $outputResult = $lastProcess->output($this->timeout);
@@ -286,6 +344,7 @@ final readonly class Command
         if ($outputResult->isErr()) {
             /** @var Result<Output, Output|string> $err */
             $err = Result::err($outputResult->unwrapErr());
+
             return $err;
         }
 
@@ -294,11 +353,13 @@ final readonly class Command
         if ($output->isSuccess()) {
             /** @var Result<Output, Output|string> $ok */
             $ok = Result::ok($output);
+
             return $ok;
         }
 
         /** @var Result<Output, Output|string> $err */
         $err = Result::err($output);
+
         return $err;
     }
 
@@ -309,57 +370,9 @@ final readonly class Command
     {
         foreach ($processes->iter() as $process) {
             if ($process->isRunning()) {
-                $process->kill(SIGKILL);
+                $process->kill(\SIGKILL);
             }
             $process->close();
         }
-    }
-
-    /**
-     * Spawns the command without waiting for it to complete.
-     *
-     * @return Result<Process, string>
-     */
-    public function spawn(): Result
-    {
-        if (!$this->pipeline->isEmpty()) {
-            /** @var Result<Process, string> */
-            return Result::err("Cannot spawn a pipeline command. Use run() instead.");
-        }
-
-        return $this->builder->spawn();
-    }
-
-    /**
-     * Executes the command and returns only stdout as a string.
-     *
-     * @return Result<Str, string>
-     */
-    public function output(): Result
-    {
-        $result = $this->run();
-
-        if ($result->isErr()) {
-            $error = $result->unwrapErr();
-            /** @var Result<Str, string> $err */
-            $err = Result::err(
-                $error instanceof Output
-                ? $error->stderr()->toString()
-                : $error
-            );
-            return $err;
-        }
-
-        /** @var Result<Str, string> $ok */
-        $ok = Result::ok($result->unwrap()->stdout());
-        return $ok;
-    }
-
-    /**
-     * Gets the underlying ProcessBuilder for advanced configuration.
-     */
-    public function builder(): ProcessBuilder
-    {
-        return $this->builder;
     }
 }

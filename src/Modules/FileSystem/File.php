@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\FileSystem;
 
@@ -71,7 +71,7 @@ final readonly class File
      * @param string|Path $path The path of the file to open
      * @return Result<File, FileNotFound|InvalidFileType> A Result containing the opened File or an error
      */
-    public static function from(string|Path $path): Result
+    public static function from(string | Path $path): Result
     {
         if (\is_string($path)) {
             $path = Path::of($path);
@@ -106,7 +106,7 @@ final readonly class File
      * @param string|Path $path The path of the file to create
      * @return Result<File, CreateFailed|AlreadyExists> A Result containing the created File or an error
      */
-    public static function new(string|Path $path): Result
+    public static function new(string | Path $path): Result
     {
         if (\is_string($path)) {
             $path = Path::of($path);
@@ -179,7 +179,7 @@ final readonly class File
      * @psalm-suppress ImpureFunctionCall
      * @psalm-suppress ImpureMethodCall
      */
-    public function readRange(int|Integer $offset, int|Integer $length): Result
+    public function readRange(int | Integer $offset, int | Integer $length): Result
     {
         $offset = $offset instanceof Integer ? $offset->toInt() : $offset;
         $length = $length instanceof Integer ? $length->toInt() : $length;
@@ -240,7 +240,7 @@ final readonly class File
      * @psalm-suppress ImpureFunctionCall
      * @psalm-suppress ImpureMethodCall
      */
-    public function readFrom(int|Integer $offset): Result
+    public function readFrom(int | Integer $offset): Result
     {
         $offset = $offset instanceof Integer ? $offset->toInt() : $offset;
 
@@ -278,7 +278,7 @@ final readonly class File
      * @param int|Integer $length Exact number of bytes to read
      * @return Result<Str, ReadFailed|PermissionDenied> The bytes read or an error if EOF is encountered before reading all requested bytes
      */
-    public function readExact(int|Integer $offset, int|Integer $length): Result
+    public function readExact(int | Integer $offset, int | Integer $length): Result
     {
         $offset = $offset instanceof Integer ? $offset->toInt() : $offset;
         $length = $length instanceof Integer ? $length->toInt() : $length;
@@ -361,7 +361,7 @@ final readonly class File
      * @return Result<File, WriteFailed|PermissionDenied> A Result containing the File or a write error
      * @psalm-suppress ImpureFunctionCall
      */
-    public function write(string|Str $data): Result
+    public function write(string | Str $data): Result
     {
         if (!Permissions::of($this->path)->isWritable()) {
             /** @var Result<File, WriteFailed|PermissionDenied> */
@@ -398,7 +398,7 @@ final readonly class File
      * @return Result<File, WriteFailed|PermissionDenied> A Result containing the File or a write error
      * @psalm-suppress ImpureFunctionCall
      */
-    public function append(string|Str $data): Result
+    public function append(string | Str $data): Result
     {
         if (!Permissions::of($this->path)->isWritable()) {
             /** @var Result<File, WriteFailed|PermissionDenied> */
@@ -437,7 +437,7 @@ final readonly class File
      * @return Result<File, WriteFailed|PermissionDenied> A Result containing the modified File or a write error
      * @psalm-suppress ImpureFunctionCall
      */
-    public function setSize(int|Integer $length): Result
+    public function setSize(int | Integer $length): Result
     {
         if (!Permissions::of($this->path)->isWritable()) {
             /** @var Result<File, WriteFailed|PermissionDenied> */
@@ -492,7 +492,7 @@ final readonly class File
      * @return Result<File, WriteFailed|PermissionDenied> A Result containing the File or a write error
      * @psalm-suppress ImpureFunctionCall
      */
-    public function writeAtomic(string|Str $data, bool $sync = false): Result
+    public function writeAtomic(string | Str $data, bool $sync = false): Result
     {
         $pathString = $this->path->toString();
         $tempPath = $pathString . '.tmp.' . \uniqid();

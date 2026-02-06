@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
@@ -33,11 +33,11 @@ final class StreamReader
     /**
      * @param resource $stream
      */
-    public static function from($stream, int|Integer $bufferSize = 8192): self
+    public static function from($stream, int | Integer $bufferSize = 8192): self
     {
         return new self(
             $stream,
-            is_int($bufferSize) ? Integer::of($bufferSize) : $bufferSize
+            \is_int($bufferSize) ? Integer::of($bufferSize) : $bufferSize,
         );
     }
 
@@ -48,18 +48,20 @@ final class StreamReader
      */
     public function readAvailable(): Result
     {
-        stream_set_blocking($this->stream, false);
+        \stream_set_blocking($this->stream, false);
 
-        $data = fread($this->stream, $this->bufferSize->toInt());
+        $data = \fread($this->stream, $this->bufferSize->toInt());
 
         if ($data === false) {
             /** @var Result<Str, string> $err */
-            $err = Result::err("Failed to read from stream");
+            $err = Result::err('Failed to read from stream');
+
             return $err;
         }
 
         /** @var Result<Str, string> $ok */
         $ok = Result::ok(Str::of($data));
+
         return $ok;
     }
 
@@ -73,24 +75,26 @@ final class StreamReader
         $deadline = SystemTime::now()->add($timeout)->unwrap();
         $result = Str::new();
 
-        stream_set_blocking($this->stream, false);
+        \stream_set_blocking($this->stream, false);
 
         while (true) {
             if (SystemTime::now()->ge($deadline)) {
                 /** @var Result<Str, string> $err */
-                $err = Result::err("Read timeout exceeded");
+                $err = Result::err('Read timeout exceeded');
+
                 return $err;
             }
 
-            if (feof($this->stream)) {
+            if (\feof($this->stream)) {
                 break;
             }
 
-            $data = fread($this->stream, $this->bufferSize->toInt());
+            $data = \fread($this->stream, $this->bufferSize->toInt());
 
             if ($data === false) {
                 /** @var Result<Str, string> $err */
-                $err = Result::err("Failed to read from stream");
+                $err = Result::err('Failed to read from stream');
+
                 return $err;
             }
 
@@ -98,12 +102,13 @@ final class StreamReader
                 $result = $result->append($data);
             } else {
                 // No data available, wait a bit
-                usleep(1000); // 1ms
+                \usleep(1000); // 1ms
             }
         }
 
         /** @var Result<Str, string> $ok */
         $ok = Result::ok($result);
+
         return $ok;
     }
 
@@ -112,40 +117,43 @@ final class StreamReader
      *
      * @return Result<Str, string>
      */
-    public function readUntil(string|Str $delimiter, Duration $timeout): Result
+    public function readUntil(string | Str $delimiter, Duration $timeout): Result
     {
-        $delimiter = is_string($delimiter) ? $delimiter : $delimiter->toString();
+        $delimiter = \is_string($delimiter) ? $delimiter : $delimiter->toString();
         $deadline = SystemTime::now()->add($timeout)->unwrap();
         $result = Str::new();
 
-        stream_set_blocking($this->stream, false);
+        \stream_set_blocking($this->stream, false);
 
         while (true) {
             if (SystemTime::now()->ge($deadline)) {
                 /** @var Result<Str, string> $err */
-                $err = Result::err("Read timeout exceeded");
+                $err = Result::err('Read timeout exceeded');
+
                 return $err;
             }
 
-            $char = fgetc($this->stream);
+            $char = \fgetc($this->stream);
 
             if ($char === false) {
-                if (feof($this->stream)) {
+                if (\feof($this->stream)) {
                     break;
                 }
-                usleep(1000); // 1ms
+                \usleep(1000); // 1ms
+
                 continue;
             }
 
             $result = $result->append($char);
 
-            if (str_ends_with($result->toString(), $delimiter)) {
+            if (\str_ends_with($result->toString(), $delimiter)) {
                 break;
             }
         }
 
         /** @var Result<Str, string> $ok */
         $ok = Result::ok($result);
+
         return $ok;
     }
 
@@ -154,7 +162,7 @@ final class StreamReader
      */
     public function isEof(): bool
     {
-        return feof($this->stream);
+        return \feof($this->stream);
     }
 
     /**
@@ -166,6 +174,6 @@ final class StreamReader
         // but the underlying resource state changes, which Psalm tracks.
         // We accept that the property will hold a closed resource.
         /** @psalm-suppress InvalidPropertyAssignmentValue */
-        fclose($this->stream);
+        \fclose($this->stream);
     }
 }

@@ -1,10 +1,9 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
-use Jsadaa\PhpCoreLibrary\Modules\Process\StreamType;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
@@ -33,7 +32,7 @@ final class StreamDescriptor
         StreamType $type,
         Option $mode,
         Option $path,
-        $resource = null
+        $resource = null,
     ) {
         $this->type = $type;
         $this->mode = $mode;
@@ -46,12 +45,12 @@ final class StreamDescriptor
      *
      * @psalm-pure
      */
-    public static function pipe(string|Str $mode = 'r'): self
+    public static function pipe(string | Str $mode = 'r'): self
     {
         return new self(
             StreamType::PIPE,
-            is_string($mode) ? Option::some(Str::of($mode)) : Option::some($mode),
-            Option::none()
+            \is_string($mode) ? Option::some(Str::of($mode)) : Option::some($mode),
+            Option::none(),
         );
     }
 
@@ -60,12 +59,12 @@ final class StreamDescriptor
      *
      * @psalm-pure
      */
-    public static function file(string|Path $path, string|Str $mode = 'r'): self
+    public static function file(string | Path $path, string | Str $mode = 'r'): self
     {
         return new self(
             StreamType::FILE,
-            is_string($mode) ? Option::some(Str::of($mode)) : Option::some($mode),
-            is_string($path) ? Option::some(Path::of($path)) : Option::some($path)
+            \is_string($mode) ? Option::some(Str::of($mode)) : Option::some($mode),
+            \is_string($path) ? Option::some(Path::of($path)) : Option::some($path),
         );
     }
 
@@ -81,7 +80,7 @@ final class StreamDescriptor
             StreamType::RESOURCE,
             Option::none(),
             Option::none(),
-            $resource
+            $resource,
         );
     }
 
@@ -95,7 +94,7 @@ final class StreamDescriptor
         return new self(
             StreamType::INHERIT,
             Option::none(),
-            Option::none()
+            Option::none(),
         );
     }
 
@@ -109,7 +108,7 @@ final class StreamDescriptor
         return new self(
             StreamType::NULL,
             Option::none(),
-            Option::none()
+            Option::none(),
         );
     }
 
@@ -132,11 +131,11 @@ final class StreamDescriptor
                 : 'r',
             ],
             StreamType::RESOURCE => $this->resource,
-            StreamType::INHERIT => match (PHP_OS_FAMILY) {
+            StreamType::INHERIT => match (\PHP_OS_FAMILY) {
                     'Windows' => ['pipe', 'r'],
-                    default => STDIN,  // Will be overridden for stdout/stderr
+                    default => \STDIN,  // Will be overridden for stdout/stderr
                 },
-            StreamType::NULL => match (PHP_OS_FAMILY) {
+            StreamType::NULL => match (\PHP_OS_FAMILY) {
                     'Windows' => ['file', 'NUL', 'r'],
                     default => ['file', '/dev/null', 'r'],
                 },

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Result;
 
@@ -19,12 +19,12 @@ final readonly class Result
     /**
      * @var Ok<T>|Err<E>
      */
-    private Ok|Err $value;
+    private Ok | Err $value;
 
     /**
      * @param Ok<T>|Err<E> $value
      */
-    private function __construct(Ok|Err $value)
+    private function __construct(Ok | Err $value)
     {
         $this->value = $value;
     }

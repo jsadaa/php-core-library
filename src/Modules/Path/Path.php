@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Path;
 
@@ -42,7 +42,7 @@ final readonly class Path
      * @return self A new Path instance
      * @psalm-pure
      */
-    public static function of(string|Str $path): self
+    public static function of(string | Str $path): self
     {
         return new self($path instanceof Str ? $path->toString() : $path);
     }

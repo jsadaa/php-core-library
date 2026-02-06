@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
@@ -29,7 +29,7 @@ final class StreamWriter
         $stream,
         Integer $bufferSize,
         bool $autoFlush,
-        Str $lineEnding
+        Str $lineEnding,
     ) {
         $this->stream = $stream;
         $this->bufferSize = $bufferSize;
@@ -46,7 +46,7 @@ final class StreamWriter
             $stream,
             Integer::of(8192),
             false,
-            Str::of(PHP_EOL)
+            Str::of(\PHP_EOL),
         );
     }
 
@@ -61,27 +61,27 @@ final class StreamWriter
             $stream,
             Integer::of(8192),
             true,
-            Str::of(PHP_EOL)
+            Str::of(\PHP_EOL),
         );
     }
 
-    public function withBufferSize(int|Integer $size): self
+    public function withBufferSize(int | Integer $size): self
     {
         return new self(
             $this->stream,
-            is_int($size) ? Integer::of($size) : $size,
+            \is_int($size) ? Integer::of($size) : $size,
             $this->autoFlush,
-            $this->lineEnding
+            $this->lineEnding,
         );
     }
 
-    public function withLineEnding(string|Str $ending): self
+    public function withLineEnding(string | Str $ending): self
     {
         return new self(
             $this->stream,
             $this->bufferSize,
             $this->autoFlush,
-            is_string($ending) ? Str::of($ending) : $ending
+            \is_string($ending) ? Str::of($ending) : $ending,
         );
     }
 
@@ -91,7 +91,7 @@ final class StreamWriter
             $this->stream,
             $this->bufferSize,
             $enabled,
-            $this->lineEnding
+            $this->lineEnding,
         );
     }
 
@@ -100,21 +100,23 @@ final class StreamWriter
      *
      * @return Result<Integer, string>
      */
-    public function write(string|Str $data): Result
+    public function write(string | Str $data): Result
     {
-        $dataStr = is_string($data) ? $data : $data->toString();
+        $dataStr = \is_string($data) ? $data : $data->toString();
 
-        if (strlen($dataStr) === 0) {
+        if (\strlen($dataStr) === 0) {
             /** @var Result<Integer, string> $ok */
             $ok = Result::ok(Integer::of(0));
+
             return $ok;
         }
 
-        $written = @fwrite($this->stream, $dataStr);
+        $written = @\fwrite($this->stream, $dataStr);
 
         if ($written === false) {
             /** @var Result<Integer, string> $err */
-            $err = Result::err("Failed to write to stream");
+            $err = Result::err('Failed to write to stream');
+
             return $err;
         }
 
@@ -124,6 +126,7 @@ final class StreamWriter
 
         /** @var Result<Integer, string> $ok */
         $ok = Result::ok(Integer::of($written));
+
         return $ok;
     }
 
@@ -132,9 +135,10 @@ final class StreamWriter
      *
      * @return Result<Integer, string>
      */
-    public function writeLine(string|Str $line): Result
+    public function writeLine(string | Str $line): Result
     {
-        $line = is_string($line) ? Str::of($line) : $line;
+        $line = \is_string($line) ? Str::of($line) : $line;
+
         return $this->write($line->append($this->lineEnding));
     }
 
@@ -148,7 +152,7 @@ final class StreamWriter
     {
         $sequence = $lines instanceof Sequence
             ? $lines
-            : Sequence::of(...array_map(fn($l) => Str::of($l), $lines));
+            : Sequence::of(...\array_map(static fn($l) => Str::of($l), $lines));
 
         $totalWritten = Integer::of(0);
 
@@ -165,6 +169,7 @@ final class StreamWriter
 
         /** @var Result<Integer, string> $ok */
         $ok = Result::ok($totalWritten);
+
         return $ok;
     }
 
@@ -173,16 +178,16 @@ final class StreamWriter
      *
      * @return Result<Integer, string>
      */
-    public function writeChunked(string|Str $data): Result
+    public function writeChunked(string | Str $data): Result
     {
-        $dataStr = is_string($data) ? $data : $data->toString();
+        $dataStr = \is_string($data) ? $data : $data->toString();
         $totalWritten = Integer::of(0);
         $offset = 0;
-        $length = strlen($dataStr);
+        $length = \strlen($dataStr);
         $chunkSize = $this->bufferSize->toInt();
 
         while ($offset < $length) {
-            $chunk = substr($dataStr, $offset, $chunkSize);
+            $chunk = \substr($dataStr, $offset, $chunkSize);
             $result = $this->write($chunk);
 
             if ($result->isErr()) {
@@ -196,6 +201,7 @@ final class StreamWriter
 
         /** @var Result<Integer, string> $ok */
         $ok = Result::ok($totalWritten);
+
         return $ok;
     }
 
@@ -206,16 +212,18 @@ final class StreamWriter
      */
     public function flush(): Result
     {
-        $result = @fflush($this->stream);
+        $result = @\fflush($this->stream);
 
         if ($result !== false) {
             /** @var Result<null, string> $ok */
             $ok = Result::ok(null);
+
             return $ok;
         }
 
         /** @var Result<null, string> $err */
-        $err = Result::err("Failed to flush stream");
+        $err = Result::err('Failed to flush stream');
+
         return $err;
     }
 }

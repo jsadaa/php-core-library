@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Primitives\Str;
 
@@ -107,7 +107,7 @@ final readonly class Str implements \Stringable
      * @return self The new string with the inserted value
      */
     public function insertAt(
-        int|Integer $offset,
+        int | Integer $offset,
         self $value,
     ): self {
         $offset = $offset instanceof Integer ? $offset->toInt() : $offset;
@@ -128,7 +128,7 @@ final readonly class Str implements \Stringable
      * @param self|string $other The string to append
      * @return self The new Str instance with the appended string
      */
-    public function append(self|string $other): self
+    public function append(self | string $other): self
     {
         $other = $other instanceof self ? $other->value : $other;
         $newValue = $this->value . $other;
@@ -142,7 +142,7 @@ final readonly class Str implements \Stringable
      * @param self|string $other The string to prepend
      * @return self The new Str instance with the prepended string
      */
-    public function prepend(self|string $other): self
+    public function prepend(self | string $other): self
     {
         $other = $other instanceof self ? $other->value : $other;
         $newValue = $other . $this->value;
@@ -166,7 +166,7 @@ final readonly class Str implements \Stringable
      * @param int|Integer $index The character index to remove
      * @return self A new Str instance with the character removed
      */
-    public function removeAt(int|Integer $index): self
+    public function removeAt(int | Integer $index): self
     {
         $index = $index instanceof Integer ? $index->toInt() : $index;
 
@@ -183,7 +183,7 @@ final readonly class Str implements \Stringable
      * @param string|Str $pattern The regex pattern to match
      * @return self A new Str instance with matches removed (unchanged if no matches)
      */
-    public function removeMatches(string|self $pattern): self
+    public function removeMatches(string | self $pattern): self
     {
         $pattern = $pattern instanceof self ? $pattern->toString() : $pattern;
 
@@ -211,7 +211,7 @@ final readonly class Str implements \Stringable
      * @param int|Integer $length The maximum length in characters
      * @return self A new Str instance with the string truncated
      */
-    public function truncate(int|Integer $length): self
+    public function truncate(int | Integer $length): self
     {
         $length = $length instanceof Integer ? $length : Integer::of($length);
 
@@ -234,7 +234,7 @@ final readonly class Str implements \Stringable
      * @param bool $useRegex Set to true to interpret $search as a regular expression
      * @return self The new string with replacements made
      */
-    public function replace(string|self $search, string|self $replace, bool $useRegex = false): self
+    public function replace(string | self $search, string | self $replace, bool $useRegex = false): self
     {
         $search = $search instanceof self ? $search : self::of($search);
         $replace = $replace instanceof self ? $replace : self::of($replace);
@@ -328,7 +328,7 @@ final readonly class Str implements \Stringable
      * @param string|Str $delimiter The delimiter to use for splitting the string
      * @return Sequence<Str> A Sequence containing the substrings resulting from the split
      */
-    public function split(string|self $delimiter): Sequence
+    public function split(string | self $delimiter): Sequence
     {
         $delimiter = $delimiter instanceof self ? $delimiter->toString() : $delimiter;
 
@@ -368,7 +368,7 @@ final readonly class Str implements \Stringable
      * @param int|Integer $index The index at which to split the string
      * @return Sequence<Str> A Sequence containing two substrings (before and after the index),
      */
-    public function splitAt(int|Integer $index): Sequence
+    public function splitAt(int | Integer $index): Sequence
     {
         $index = $index instanceof Integer ? $index->toInt() : $index;
 
@@ -413,7 +413,7 @@ final readonly class Str implements \Stringable
      * @param string|Str $padString The string to use for padding (default: space)
      * @return self A new Str instance with padding applied
      */
-    public function padStart(int|Integer $targetLength, string|self $padString): self
+    public function padStart(int | Integer $targetLength, string | self $padString): self
     {
         $targetLength = $targetLength instanceof Integer ? $targetLength : Integer::of($targetLength);
         $targetLength = $targetLength->max(0);
@@ -447,7 +447,7 @@ final readonly class Str implements \Stringable
      * @param string|Str $padString The string to use for padding (default: space)
      * @return self A new Str instance with padding applied
      */
-    public function padEnd(int|Integer $targetLength, string|self $padString): self
+    public function padEnd(int | Integer $targetLength, string | self $padString): self
     {
         $targetLength = $targetLength instanceof Integer ? $targetLength : Integer::of($targetLength);
         $targetLength = $targetLength->max(0);
@@ -576,7 +576,7 @@ final readonly class Str implements \Stringable
      * @param int<0, max>|Integer $count The number of times to repeat the string
      * @return self A new Str instance with the repeated string
      */
-    public function repeat(int|Integer $count): self
+    public function repeat(int | Integer $count): self
     {
         $count = $count instanceof Integer ? $count : Integer::of($count);
         $count = $count->max(0);
@@ -594,7 +594,7 @@ final readonly class Str implements \Stringable
      * @param string|Str $prefix The prefix to remove
      * @return self A new Str instance with the prefix removed (unchanged if prefix doesn't match)
      */
-    public function stripPrefix(string|self $prefix): self
+    public function stripPrefix(string | self $prefix): self
     {
         $prefix = $prefix instanceof self ? $prefix->toString() : $prefix;
 
@@ -617,7 +617,7 @@ final readonly class Str implements \Stringable
      * @param string|Str $suffix The suffix to remove
      * @return self A new Str instance with the suffix removed (unchanged if suffix doesn't match)
      */
-    public function stripSuffix(string|self $suffix): self
+    public function stripSuffix(string | self $suffix): self
     {
         $suffix = $suffix instanceof self ? $suffix->toString() : $suffix;
 
@@ -641,7 +641,7 @@ final readonly class Str implements \Stringable
      * @param string|Str $prefix The prefix to check for
      * @return bool True if the string starts with the prefix
      */
-    public function startsWith(string|self $prefix): bool
+    public function startsWith(string | self $prefix): bool
     {
         $prefix = $prefix instanceof self ? $prefix->toString() : $prefix;
 
@@ -658,7 +658,7 @@ final readonly class Str implements \Stringable
      * @param string|Str $suffix The suffix to check for
      * @return bool True if the string ends with the suffix
      */
-    public function endsWith(string|self $suffix): bool
+    public function endsWith(string | self $suffix): bool
     {
         $suffix = $suffix instanceof self ? $suffix->toString() : $suffix;
 
@@ -687,9 +687,9 @@ final readonly class Str implements \Stringable
      * @return self The new string with the range replaced
      */
     public function replaceRange(
-        int|Integer $start,
-        int|Integer $length,
-        string|self $replacement,
+        int | Integer $start,
+        int | Integer $length,
+        string | self $replacement,
     ): self {
         $start = $start instanceof Integer ? $start->toInt() : $start;
         $length = $length instanceof Integer ? $length->toInt() : $length;
@@ -723,7 +723,7 @@ final readonly class Str implements \Stringable
      * @param string $break The line break character(s) to use
      * @return self A new Str instance with line breaks inserted
      */
-    public function wrap(int|Integer $width, string $break = "\n"): self
+    public function wrap(int | Integer $width, string $break = "\n"): self
     {
         $width = $width instanceof Integer ? $width : Integer::of($width);
         $width = $width->max(1);
@@ -835,7 +835,7 @@ final readonly class Str implements \Stringable
                         'Number "%s" is too large for PHP\'s integer type. Max value: %s, Min value: %s',
                         $this->value,
                         \PHP_INT_MAX,
-                        \PHP_INT_MIN
+                        \PHP_INT_MIN,
                     ),
                 ),
             );
@@ -936,7 +936,7 @@ final readonly class Str implements \Stringable
      * @param string|Str $substring The substring to check for
      * @return bool True if the string contains the substring
      */
-    public function contains(string|self $substring): bool
+    public function contains(string | self $substring): bool
     {
         $substring = $substring instanceof self ? $substring->toString() : $substring;
 
@@ -953,7 +953,7 @@ final readonly class Str implements \Stringable
      * @param string|Str $pattern The regex pattern to match with "u" modifier for UTF-8
      * @return Sequence<Str> A Sequence with all matching substrings
      */
-    public function matches(string|self $pattern): Sequence
+    public function matches(string | self $pattern): Sequence
     {
         $pattern = $pattern instanceof self ? $pattern->toString() : $pattern;
 
@@ -1002,7 +1002,7 @@ final readonly class Str implements \Stringable
      * @param string|Str $pattern The regex pattern to match with "u" modifier for UTF-8
      * @return Sequence<array{Integer, Str}> A Sequence with tuples of [index, match]
      */
-    public function matchIndices(string|self $pattern): Sequence
+    public function matchIndices(string | self $pattern): Sequence
     {
         $pattern = $pattern instanceof self ? $pattern->toString() : $pattern;
 
@@ -1188,7 +1188,7 @@ final readonly class Str implements \Stringable
      * @param int|Integer $length The length of the substring
      * @return Option<self> A new Str with the substring, or None if the indices are invalid
      */
-    public function getRange(int|Integer $start, int|Integer $length): Option
+    public function getRange(int | Integer $start, int | Integer $length): Option
     {
         $start = $start instanceof Integer ? $start : Integer::of($start);
         $length = $length instanceof Integer ? $length : Integer::of($length);
@@ -1213,7 +1213,7 @@ final readonly class Str implements \Stringable
      * @param int|Integer $index The index of the character to get
      * @return Option<Char> The character at the given index, or None if out of bounds
      */
-    public function get(int|Integer $index): Option
+    public function get(int | Integer $index): Option
     {
         $index = $index instanceof Integer ? $index : Integer::of($index);
 
@@ -1232,7 +1232,7 @@ final readonly class Str implements \Stringable
      * @param string|Str $needle The substring to search for
      * @return Option<Integer> The index of the first occurrence, or None if not found
      */
-    public function find(string|self $needle): Option
+    public function find(string | self $needle): Option
     {
         $needle = $needle instanceof self ? $needle->toString() : $needle;
         $pos = \mb_strpos($this->value, $needle);
@@ -1286,7 +1286,7 @@ final readonly class Str implements \Stringable
      * @param int|Integer $length The number of characters to take.
      * @return Str The new string.
      */
-    public function take(int|Integer $length): self
+    public function take(int | Integer $length): self
     {
         $length = $length instanceof Integer ? $length : Integer::of($length);
 
@@ -1305,7 +1305,7 @@ final readonly class Str implements \Stringable
      * @param int|Integer $length The number of characters to drop from the start of the string.
      * @return Str The new string.
      */
-    public function skip(int|Integer $length): self
+    public function skip(int | Integer $length): self
     {
         $length = $length instanceof Integer ? $length : Integer::of($length);
 
@@ -1478,7 +1478,7 @@ final readonly class Str implements \Stringable
                 new InvalidSourceCharacters(
                     \sprintf(
                         'Failed to encode string from %s to UTF-8: possible invalid source character(s) in string',
-                        $sourceEncoding
+                        $sourceEncoding,
                     ),
                 ),
             );
@@ -1500,7 +1500,7 @@ final readonly class Str implements \Stringable
                         new InvalidUTF8Sequences(
                             \sprintf(
                                 'String contains invalid UTF-8 sequences that could not be converted. Source encoding: %s',
-                                $sourceEncoding
+                                $sourceEncoding,
                             ),
                         ),
                     );

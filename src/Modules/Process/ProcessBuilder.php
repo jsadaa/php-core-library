@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
@@ -34,7 +34,7 @@ final readonly class ProcessBuilder
         Sequence $args,
         Path $workingDirectory,
         Map $environment,
-        ProcessStreams $streams
+        ProcessStreams $streams,
     ) {
         $this->command = $command;
         $this->args = $args;
@@ -46,25 +46,25 @@ final readonly class ProcessBuilder
     /**
      * @psalm-suppress ImpureFunctionCall
      */
-    public static function command(string|Str $command): self
+    public static function command(string | Str $command): self
     {
         return new self(
-            is_string($command) ? Str::of($command) : $command,
+            \is_string($command) ? Str::of($command) : $command,
             Sequence::new(),
-            Path::of(getcwd() ?: '/'),
+            Path::of(\getcwd() ?: '/'),
             Map::new(),
-            ProcessStreams::defaults()
+            ProcessStreams::defaults(),
         );
     }
 
-    public function arg(string|Str $arg): self
+    public function arg(string | Str $arg): self
     {
         return new self(
             $this->command,
-            $this->args->add(is_string($arg) ? Str::of($arg) : $arg),
+            $this->args->add(\is_string($arg) ? Str::of($arg) : $arg),
             $this->workingDirectory,
             $this->environment,
-            $this->streams
+            $this->streams,
         );
     }
 
@@ -75,39 +75,39 @@ final readonly class ProcessBuilder
     {
         $sequence = $args instanceof Sequence
             ? $args
-            : Sequence::of(...array_map(fn($a) => Str::of($a), $args));
+            : Sequence::of(...\array_map(static fn($a) => Str::of($a), $args));
 
         return new self(
             $this->command,
             $this->args->append($sequence),
             $this->workingDirectory,
             $this->environment,
-            $this->streams
+            $this->streams,
         );
     }
 
-    public function workingDirectory(string|Path $path): self
+    public function workingDirectory(string | Path $path): self
     {
         return new self(
             $this->command,
             $this->args,
-            is_string($path) ? Path::of($path) : $path,
+            \is_string($path) ? Path::of($path) : $path,
             $this->environment,
-            $this->streams
+            $this->streams,
         );
     }
 
-    public function env(string|Str $key, string|Str $value): self
+    public function env(string | Str $key, string | Str $value): self
     {
         return new self(
             $this->command,
             $this->args,
             $this->workingDirectory,
             $this->environment->add(
-                is_string($key) ? Str::of($key) : $key,
-                is_string($value) ? Str::of($value) : $value
+                \is_string($key) ? Str::of($key) : $key,
+                \is_string($value) ? Str::of($value) : $value,
             ),
-            $this->streams
+            $this->streams,
         );
     }
 
@@ -118,7 +118,7 @@ final readonly class ProcessBuilder
             $this->args,
             $this->workingDirectory,
             $this->environment,
-            $this->streams->withStdin($descriptor)
+            $this->streams->withStdin($descriptor),
         );
     }
 
@@ -129,7 +129,7 @@ final readonly class ProcessBuilder
             $this->args,
             $this->workingDirectory,
             $this->environment,
-            $this->streams->withStdout($descriptor)
+            $this->streams->withStdout($descriptor),
         );
     }
 
@@ -140,7 +140,7 @@ final readonly class ProcessBuilder
             $this->args,
             $this->workingDirectory,
             $this->environment,
-            $this->streams->withStderr($descriptor)
+            $this->streams->withStderr($descriptor),
         );
     }
 
@@ -151,7 +151,7 @@ final readonly class ProcessBuilder
             $this->args,
             $this->workingDirectory,
             $this->environment,
-            $streams
+            $streams,
         );
     }
 
@@ -169,13 +169,15 @@ final readonly class ProcessBuilder
     {
         if ($this->command->isEmpty()) {
             /** @var Result<Process, string> $err */
-            $err = Result::err("Command cannot be empty");
+            $err = Result::err('Command cannot be empty');
+
             return $err;
         }
 
         if (!$this->workingDirectory->isDir()) {
             /** @var Result<Process, string> $err */
             $err = Result::err("Working directory does not exist: {$this->workingDirectory->toString()}");
+
             return $err;
         }
 
@@ -184,49 +186,51 @@ final readonly class ProcessBuilder
         /** @var array<int, resource> $pipes */
         $pipes = [];
 
-        $handle = proc_open(
+        $handle = \proc_open(
             $commandLine->toString(),
             $descriptorSpec,
             $pipes,
             $this->workingDirectory->toString(),
             $this->buildEnvironmentArray(),
-            ['suppress_errors' => true, 'bypass_shell' => false]
+            ['suppress_errors' => true, 'bypass_shell' => false],
         );
 
-        if (!is_resource($handle)) {
+        if (!\is_resource($handle)) {
             /** @var Result<Process, string> $err */
-            $err = Result::err("Failed to spawn process");
+            $err = Result::err('Failed to spawn process');
+
             return $err;
         }
 
         /** @var array<int, resource> $pipesList */
-        $pipesList = array_values($pipes);
+        $pipesList = \array_values($pipes);
 
         /** @var Result<Process, string> $ok */
         $ok = Result::ok(Process::fromHandle($handle, $pipesList));
+
         return $ok;
     }
 
     private function buildCommandLine(): Str
     {
-        $escaped = $this->command->map(fn($c) => escapeshellcmd($c));
+        $escaped = $this->command->map(static fn($c) => \escapeshellcmd($c));
 
         return $this->args->fold(
-            fn(Str $cmd, Str $arg) => $cmd->append(
-                $arg->map(fn($a) => ' ' . escapeshellarg($a))
+            static fn(Str $cmd, Str $arg) => $cmd->append(
+                $arg->map(static fn($a) => ' ' . \escapeshellarg($a)),
             ),
-            $escaped
+            $escaped,
         );
     }
 
     private function buildEnvironmentArray(): array
     {
         return $this->environment->fold(
-            fn(array $env, Str $key, Str $value) => array_merge(
+            static fn(array $env, Str $key, Str $value) => \array_merge(
                 $env,
-                [$key->toString() => $value->toString()]
+                [$key->toString() => $value->toString()],
             ),
-            $_ENV
+            $_ENV,
         );
     }
 }

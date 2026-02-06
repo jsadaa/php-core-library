@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\FileSystem;
 
@@ -14,7 +14,7 @@ final readonly class FileType
     private function __construct(
         private bool $isFile,
         private bool $isDir,
-        private bool $isSymLink
+        private bool $isSymLink,
     ) {
     }
 
@@ -22,7 +22,7 @@ final readonly class FileType
      * @psalm-pure
      * @psalm-suppress ImpureFunctionCall
      */
-    public static function of(string|Path $path): self
+    public static function of(string | Path $path): self
     {
         $pathStr = $path instanceof Path ? $path->toString() : $path;
 

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence;
 
@@ -261,7 +261,7 @@ final readonly class Sequence
      * @param int|Integer $index The index of the element to get
      * @return Option<T> The element at the given index, or None if the index is out of bounds
      */
-    public function get(int|Integer $index): Option
+    public function get(int | Integer $index): Option
     {
         $index = $index instanceof Integer ? $index->toInt() : $index;
 
@@ -352,7 +352,7 @@ final readonly class Sequence
      * @param positive-int|Integer $size The size of the windows (must be positive)
      * @return self<Sequence<T>> A new collection containing the windows
      */
-    public function windows(int|Integer $size): self
+    public function windows(int | Integer $size): self
     {
         $size = $size instanceof Integer ? $size : Integer::of($size);
         $size = $size->max(0);
@@ -480,7 +480,7 @@ final readonly class Sequence
      * @param T $item The element to insert
      * @return self<T> A new collection with the element inserted
      */
-    public function insertAt(int|Integer $index, mixed $item): self
+    public function insertAt(int | Integer $index, mixed $item): self
     {
         $index = $index instanceof Integer ? $index->toInt() : $index;
 
@@ -510,7 +510,7 @@ final readonly class Sequence
      * @param int<0, max>|Integer $index The index of the element to remove
      * @return self<T> A new collection with the element removed
      */
-    public function removeAt(int|Integer $index): self
+    public function removeAt(int | Integer $index): self
     {
         $index = $index instanceof Integer ? $index : Integer::of($index);
 
@@ -626,7 +626,7 @@ final readonly class Sequence
      * @param T $value The value to fill with if the collection is growing.
      * @return self<T> The resized collection.
      */
-    public function resize(int|Integer $size, mixed $value): self
+    public function resize(int | Integer $size, mixed $value): self
     {
         $size = $size instanceof Integer ? $size : Integer::of($size);
         $size = $size->max(0);
@@ -653,7 +653,7 @@ final readonly class Sequence
      * @param int<0, max>|Integer $size The size to truncate to.
      * @return self<T> The new Sequence with the specified size.
      */
-    public function truncate(int|Integer $size): self
+    public function truncate(int | Integer $size): self
     {
         $size = $size instanceof Integer ? $size : Integer::of($size);
 
@@ -726,7 +726,7 @@ final readonly class Sequence
      * @param int<0, max>|Integer $count The number of elements to take.
      * @return self<T> The new Sequence containing the taken elements.
      */
-    public function take(int|Integer $count): self
+    public function take(int | Integer $count): self
     {
         $count = $count instanceof Integer ? $count : Integer::of($count);
         $count = $count->max(0);
@@ -742,7 +742,7 @@ final readonly class Sequence
      * @param int<0, max>|Integer $count The number of elements to skip.
      * @return self<T> The new Sequence containing the elements after skipping.
      */
-    public function skip(int|Integer $count): self
+    public function skip(int | Integer $count): self
     {
         $count = $count instanceof Integer ? $count : Integer::of($count);
         $count = $count->max(0);
@@ -757,7 +757,7 @@ final readonly class Sequence
      * @param int|Integer $index2 The index of the second element to swap.
      * @return Result<self<T>, IndexOutOfBounds> The result of the swap operation.
      */
-    public function swap(int|Integer $index1, int|Integer $index2): Result
+    public function swap(int | Integer $index1, int | Integer $index2): Result
     {
         $index1 = $index1 instanceof Integer ? $index1 : Integer::of($index1);
         $index2 = $index2 instanceof Integer ? $index2 : Integer::of($index2);

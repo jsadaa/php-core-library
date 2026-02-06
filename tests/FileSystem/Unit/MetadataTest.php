@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Jsadaa\PhpCoreLibrary\Tests\FileSystem\Unit;
 
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\FileNotFound;
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\FileType;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Metadata;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Permissions;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;

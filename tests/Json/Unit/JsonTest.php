@@ -1,14 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\Json\Unit;
 
-use Jsadaa\PhpCoreLibrary\Modules\Json\Json;
 use Jsadaa\PhpCoreLibrary\Modules\Json\Error\DecodingError;
 use Jsadaa\PhpCoreLibrary\Modules\Json\Error\EncodingError;
 use Jsadaa\PhpCoreLibrary\Modules\Json\Error\ValidationError;
-use Jsadaa\PhpCoreLibrary\Modules\Result\Err;
+use Jsadaa\PhpCoreLibrary\Modules\Json\Json;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 use PHPUnit\Framework\TestCase;
 
@@ -17,7 +16,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class JsonTest extends TestCase
 {
-
     public function testEncode(): void
     {
         $data = ['foo' => 'bar', 'baz' => 123];
@@ -39,12 +37,12 @@ final class JsonTest extends TestCase
     public function testEncodeError(): void
     {
         // Resources cannot be JSON encoded
-        $resource = fopen('php://memory', 'r');
+        $resource = \fopen('php://memory', 'r');
         $result = Json::encode(['res' => $resource]);
 
         $this->assertTrue($result->isErr());
         $this->assertInstanceOf(EncodingError::class, $result->unwrapErr());
-        fclose($resource);
+        \fclose($resource);
     }
 
     public function testDecode(): void
