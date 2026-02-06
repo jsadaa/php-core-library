@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Map;
 
@@ -13,7 +13,9 @@ use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
  * A collection of key-value pairs where the keys are unique and the values can be of any type.
  * Type safety is enforced via static analysis only - no runtime type checking.
  *
- * This type is not a real Hash Map, but a Sequence of Pairs for now, so expect performance issues.
+ * Object keys are stored using spl_object_id() for O(1) lookups.
+ * The Map holds strong references to object keys, preventing garbage collection
+ * and ensuring ID stability.
  *
  * @template K
  * @template V
@@ -24,14 +26,14 @@ final readonly class Map
     /** @var array<string, array{K, V}> */
     private array $scalars;
 
-    /** @var \SplObjectStorage<object, V> */
-    private \SplObjectStorage $objects;
+    /** @var array<int, array{object, V}> */
+    private array $objects;
 
     /**
      * @param array<string, array{K, V}> $scalars
-     * @param \SplObjectStorage<object, V> $objects
+     * @param array<int, array{object, V}> $objects
      */
-    private function __construct(array $scalars, \SplObjectStorage $objects)
+    private function __construct(array $scalars, array $objects)
     {
         $this->scalars = $scalars;
         $this->objects = $objects;
@@ -49,7 +51,11 @@ final readonly class Map
      */
     public static function of(mixed $key, mixed $value): self
     {
-        return self::new()->add($key, $value);
+        if (\is_object($key)) {
+            return new self([], [\spl_object_id($key) => [$key, $value]]);
+        }
+
+        return new self([self::encodeKey($key) => [$key, $value]], []);
     }
 
     /**
@@ -58,24 +64,22 @@ final readonly class Map
      *
      * @template A
      * @template B
-     * @param iterable<A> $keys
+     * @param array<A> $keys
      * @param B $value
+     * @psalm-pure
      * @return self<A, B>
      */
-    public static function fromKeys(iterable $keys, mixed $value): self
+    public static function fromKeys(array $keys, mixed $value): self
     {
         $scalars = [];
-        $objects = new \SplObjectStorage();
-        $dummy = new self([], $objects); // Helper to access encodeKey if needed? No, purely internal or object context?
-        // Static context, can't call private encodeKey if it's instance method.
-        // Make encodeKey static or duplicate logic.
-        // Prefer static helper.
+        /** @var array<int, array{object, B}> $objects */
+        $objects = [];
 
         foreach ($keys as $key) {
             if (\is_object($key)) {
-                $objects->attach($key, $value);
+                $objects[\spl_object_id($key)] = [$key, $value];
             } else {
-                $scalars[self::staticEncodeKey($key)] = [$key, $value];
+                $scalars[self::encodeKey($key)] = [$key, $value];
             }
         }
 
@@ -92,7 +96,7 @@ final readonly class Map
      */
     public static function new(): self
     {
-        return new self([], new \SplObjectStorage());
+        return new self([], []);
     }
 
     /**
@@ -113,10 +117,10 @@ final readonly class Map
     public function containsKey(mixed $key): bool
     {
         if (\is_object($key)) {
-            return $this->objects->contains($key);
+            return \array_key_exists(\spl_object_id($key), $this->objects);
         }
 
-        return \array_key_exists($this->encodeKey($key), $this->scalars);
+        return \array_key_exists(self::encodeKey($key), $this->scalars);
     }
 
     /**
@@ -132,8 +136,8 @@ final readonly class Map
             }
         }
 
-        foreach ($this->objects as $object) {
-            if ($this->objects[$object] === $value) {
+        foreach ($this->objects as $pair) {
+            if ($pair[1] === $value) {
                 return true;
             }
         }
@@ -151,19 +155,24 @@ final readonly class Map
     {
         /** @var array<string, array{K, V}> $newScalars */
         $newScalars = [];
-        $newObjects = new \SplObjectStorage();
+        /** @var array<int, array{object, V}> $newObjects */
+        $newObjects = [];
 
         foreach ($this->scalars as $hash => $pair) {
+            /** @psalm-suppress ImpureFunctionCall */
             if ($predicate($pair[0], $pair[1])) {
                 $newScalars[$hash] = $pair;
             }
         }
 
-        foreach ($this->objects as $object) {
-            $value = $this->objects[$object];
-            /** @var K $object */
-            if ($predicate($object, $value)) {
-                $newObjects->attach($object, $value);
+        foreach ($this->objects as $id => $pair) {
+            /** @var K $key */
+            $key = $pair[0];
+            $value = $pair[1];
+
+            /** @psalm-suppress ImpureFunctionCall */
+            if ($predicate($key, $value)) {
+                $newObjects[$id] = $pair;
             }
         }
 
@@ -181,15 +190,20 @@ final readonly class Map
     {
         /** @var array<string, array{K, U}> $newScalars */
         $newScalars = [];
-        $newObjects = new \SplObjectStorage();
+        /** @var array<int, array{object, U}> $newObjects */
+        $newObjects = [];
 
         foreach ($this->scalars as $hash => $pair) {
+            /** @psalm-suppress ImpureFunctionCall */
             $newScalars[$hash] = [$pair[0], $mapper($pair[0], $pair[1])];
         }
 
-        foreach ($this->objects as $object) {
-            /** @var K $object */
-            $newObjects->attach($object, $mapper($object, $this->objects[$object]));
+        foreach ($this->objects as $id => $pair) {
+            /** @var K $key */
+            $key = $pair[0];
+
+            /** @psalm-suppress ImpureFunctionCall */
+            $newObjects[$id] = [$pair[0], $mapper($key, $pair[1])];
         }
 
         return new self($newScalars, $newObjects);
@@ -224,12 +238,16 @@ final readonly class Map
     public function forEach(callable $callback): void
     {
         foreach ($this->scalars as $pair) {
+            /** @psalm-suppress ImpureFunctionCall */
             $callback($pair[0], $pair[1]);
         }
 
-        foreach ($this->objects as $object) {
-            /** @var K $object */
-            $callback($object, $this->objects[$object]);
+        foreach ($this->objects as $pair) {
+            /** @var K $key */
+            $key = $pair[0];
+
+            /** @psalm-suppress ImpureFunctionCall */
+            $callback($key, $pair[1]);
         }
     }
 
@@ -247,12 +265,16 @@ final readonly class Map
         $carry = $initial;
 
         foreach ($this->scalars as $pair) {
+            /** @psalm-suppress ImpureFunctionCall */
             $carry = $callback($carry, $pair[0], $pair[1]);
         }
 
-        foreach ($this->objects as $object) {
-            /** @var K $object */
-            $carry = $callback($carry, $object, $this->objects[$object]);
+        foreach ($this->objects as $pair) {
+            /** @var K $key */
+            $key = $pair[0];
+
+            /** @psalm-suppress ImpureFunctionCall */
+            $carry = $callback($carry, $key, $pair[1]);
         }
 
         return $carry;
@@ -267,13 +289,17 @@ final readonly class Map
     public function get(mixed $key): Option
     {
         if (\is_object($key)) {
-            if ($this->objects->contains($key)) {
-                return Option::some($this->objects[$key]);
+            $id = \spl_object_id($key);
+
+            if (isset($this->objects[$id])) {
+                return Option::some($this->objects[$id][1]);
             }
+
             return Option::none();
         }
 
-        $hash = $this->encodeKey($key);
+        $hash = self::encodeKey($key);
+
         if (isset($this->scalars[$hash])) {
             return Option::some($this->scalars[$hash][1]);
         }
@@ -291,13 +317,15 @@ final readonly class Map
     public function add(mixed $key, mixed $value): self
     {
         if (\is_object($key)) {
-            $newObjects = clone $this->objects;
-            $newObjects->attach($key, $value);
+            $newObjects = $this->objects;
+            $newObjects[\spl_object_id($key)] = [$key, $value];
+
             return new self($this->scalars, $newObjects);
         }
 
         $newScalars = $this->scalars;
-        $newScalars[$this->encodeKey($key)] = [$key, $value];
+        $newScalars[self::encodeKey($key)] = [$key, $value];
+
         return new self($newScalars, $this->objects);
     }
 
@@ -310,21 +338,27 @@ final readonly class Map
     public function remove(mixed $key): self
     {
         if (\is_object($key)) {
-            if (!$this->objects->contains($key)) {
+            $id = \spl_object_id($key);
+
+            if (!isset($this->objects[$id])) {
                 return $this;
             }
-            $newObjects = clone $this->objects;
-            $newObjects->detach($key);
+
+            $newObjects = $this->objects;
+            unset($newObjects[$id]);
+
             return new self($this->scalars, $newObjects);
         }
 
-        $hash = $this->encodeKey($key);
+        $hash = self::encodeKey($key);
+
         if (!isset($this->scalars[$hash])) {
             return $this;
         }
 
         $newScalars = $this->scalars;
         unset($newScalars[$hash]);
+
         return new self($newScalars, $this->objects);
     }
 
@@ -334,7 +368,7 @@ final readonly class Map
      */
     public function isEmpty(): bool
     {
-        return empty($this->scalars) && $this->objects->count() === 0;
+        return \count($this->scalars) === 0 && \count($this->objects) === 0;
     }
 
     /**
@@ -344,15 +378,17 @@ final readonly class Map
      */
     public function keys(): Set
     {
-        // For efficiency, we should probably construct Set directly from keys,
-        // but Set logic relies on Sequence. For now, delegate to Set::of logic.
-        // Or refactor Set later.
+        /** @var array<K> $keys */
         $keys = [];
+
         foreach ($this->scalars as $pair) {
             $keys[] = $pair[0];
         }
-        foreach ($this->objects as $object) {
-            $keys[] = $object;
+
+        foreach ($this->objects as $pair) {
+            /** @var K $key */
+            $key = $pair[0];
+            $keys[] = $key;
         }
 
         return Set::ofArray($keys);
@@ -366,11 +402,13 @@ final readonly class Map
     public function values(): Sequence
     {
         $values = [];
+
         foreach ($this->scalars as $pair) {
             $values[] = $pair[1];
         }
-        foreach ($this->objects as $object) {
-            $values[] = $this->objects[$object];
+
+        foreach ($this->objects as $pair) {
+            $values[] = $pair[1];
         }
 
         return Sequence::ofArray($values);
@@ -392,6 +430,7 @@ final readonly class Map
             if (!$other->containsKey($pair[0])) {
                 return false;
             }
+
             // Strict value check
             if ($other->get($pair[0])->unwrap() !== $pair[1]) {
                 return false;
@@ -399,12 +438,16 @@ final readonly class Map
         }
 
         // Check objects
-        foreach ($this->objects as $object) {
-            if (!$other->containsKey($object)) {
+        foreach ($this->objects as $pair) {
+            /** @var K $key */
+            $key = $pair[0];
+
+            if (!$other->containsKey($key)) {
                 return false;
             }
+
             // Strict value check
-            if ($other->get($object)->unwrap() !== $this->objects[$object]) {
+            if ($other->get($key)->unwrap() !== $pair[1]) {
                 return false;
             }
         }
@@ -421,16 +464,20 @@ final readonly class Map
     public function find(callable $predicate): Option
     {
         foreach ($this->scalars as $pair) {
+            /** @psalm-suppress ImpureFunctionCall */
             if ($predicate($pair[0], $pair[1])) {
                 return Option::some(Pair::of($pair[0], $pair[1]));
             }
         }
 
-        foreach ($this->objects as $object) {
-            $value = $this->objects[$object];
-            /** @var K $object */
-            if ($predicate($object, $value)) {
-                return Option::some(Pair::of($object, $value));
+        foreach ($this->objects as $pair) {
+            /** @var K $key */
+            $key = $pair[0];
+            $value = $pair[1];
+
+            /** @psalm-suppress ImpureFunctionCall */
+            if ($predicate($key, $value)) {
+                return Option::some(Pair::of($key, $value));
             }
         }
 
@@ -446,17 +493,15 @@ final readonly class Map
     public function append(self $other): self
     {
         $newScalars = $this->scalars;
+
         foreach ($other->scalars as $hash => $pair) {
             $newScalars[$hash] = $pair;
         }
 
-        if ($this->objects->count() === 0 && $other->objects->count() > 0) {
-            $newObjects = clone $other->objects;
-        } elseif ($other->objects->count() === 0) {
-            $newObjects = clone $this->objects;
-        } else {
-            $newObjects = clone $this->objects;
-            $newObjects->addAll($other->objects);
+        $newObjects = $this->objects;
+
+        foreach ($other->objects as $id => $pair) {
+            $newObjects[$id] = $pair;
         }
 
         return new self($newScalars, $newObjects);
@@ -468,7 +513,7 @@ final readonly class Map
      */
     public function size(): Integer
     {
-        return Integer::of(\count($this->scalars) + $this->objects->count());
+        return Integer::of(\count($this->scalars) + \count($this->objects));
     }
 
     /**
@@ -478,30 +523,35 @@ final readonly class Map
      */
     public function toArray(): array
     {
+        /** @var array<array{K, V}> $result */
         $result = [];
+
         foreach ($this->scalars as $pair) {
             $result[] = [$pair[0], $pair[1]];
         }
-        foreach ($this->objects as $object) {
-            $result[] = [$object, $this->objects[$object]];
+
+        foreach ($this->objects as $pair) {
+            /** @var K $key */
+            $key = $pair[0];
+            $result[] = [$key, $pair[1]];
         }
+
         return $result;
     }
 
-    private function encodeKey(mixed $key): string
-    {
-        return self::staticEncodeKey($key);
-    }
-
-    private static function staticEncodeKey(mixed $key): string
+    /**
+     * @psalm-pure
+     * @psalm-suppress ImpureFunctionCall
+     */
+    private static function encodeKey(mixed $key): string
     {
         return match (true) {
             \is_string($key) => 's:' . $key,
             \is_int($key) => 'i:' . $key,
             \is_null($key) => 'n:',
             \is_bool($key) => 'b:' . ($key ? '1' : '0'),
-            \is_float($key) => 'f:' . $key,
-            \is_array($key) => 'a:' . \md5(\serialize($key)), // Robust array hashing
+            \is_float($key) => 'f:' . (string) $key,
+            \is_array($key) => 'a:' . \md5(\serialize($key)),
             \is_resource($key) => 'r:' . \get_resource_id($key),
             default => 'u:' . \serialize($key),
         };
