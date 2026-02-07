@@ -21,6 +21,7 @@ This ecosystem provides a growing collection of types and modules that work toge
 - `Option`: A type that represents optional values (Some or None)
 - `Result`: A type that represents either success (Ok) or failure (Err)
 - `Str`: A UTF-8 string type with extensive manipulation methods
+- `Char`: An immutable Unicode character type with classification and conversion operations
 - `Integer`: An immutable wrapper around PHP integers with safe operations and overflow handling
 - `Double`: An immutable wrapper around PHP floats with safe operations and precision handling
 
@@ -140,8 +141,8 @@ $onlyBackend = $backend->difference($systems); // Set { 'PHP', 'Java' }
 $all = $backend->append($systems);             // Union of both
 
 // Functional operations
-$lengths = $languages->map(fn($lang) => strlen($lang)); // Set { 3, 4, 2 }
-$short = $languages->filter(fn($lang) => strlen($lang) <= 3); // Set { 'PHP', 'Go' }
+$lengths = $languages->map(fn($lang) => Str::of($lang)->size()->toInt()); // Set { 3, 4, 2 }
+$short = $languages->filter(fn($lang) => Str::of($lang)->size()->le(3)); // Set { 'PHP', 'Go' }
 $hasRust = $languages->contains('Rust'); // true
 
 // Subset/superset checks
@@ -304,6 +305,35 @@ $bool = Str::of('true')->parseBool();   // Result::ok(true)
 - Safety: immutable operations prevent accidental string mutations
 
 For complete documentation with examples, see [Str Documentation](./docs/str.md).
+
+### Char Type
+
+The `Char` type represents a single Unicode codepoint with Unicode-aware classification and conversion operations:
+
+```php
+// Create Char instances
+$char = Char::of('A');
+$digit = Char::ofDigit(5);    // Char '5'
+$unicode = Char::of('é');
+
+// Unicode-aware classification (powered by IntlChar)
+$char->isAlphabetic();         // true
+$char->isUppercase();          // true
+$char->isAscii();              // true
+Char::of('é')->isLowercase();  // true
+
+// Case conversion (returns new Char instance)
+$lower = Char::of('A')->toLowercase();  // Char 'a'
+$upper = Char::of('é')->toUppercase();  // Char 'É'
+```
+
+`Char` provides:
+- Unicode-aware classification: alphabetic, digit, whitespace, case, punctuation, and more
+- Case conversion with full Unicode support
+- Single codepoint validation (not grapheme clusters)
+- Immutable design consistent with other library types
+
+For complete documentation with examples, see [Char Documentation](./docs/char.md).
 
 ### Double Type
 
@@ -687,14 +717,14 @@ This approach reflects a **hybrid** between Rust’s conceptual strengths and PH
 - PHP 8.3 or higher
 - PHP Extensions:
   - `ext-mbstring`: For proper UTF-8 string handling (required for `Str` type)
-  - `ext-intl`: For Unicode normalization and other internationalization features (required for `Str` type)
+  - `ext-intl`: For Unicode normalization and character classification (required for `Str` and `Char` types)
   - `ext-iconv`: For character encoding conversion (required for `Str` type)
 
 ## Standard Library Architecture
 
 This library is designed as a cohesive ecosystem where modules complement each other:
 
-- **Core Types** (`Sequence`, `Map`, `Set`, `Option`, `Result`, `Str`, `Integer`, `Double`) provide the foundation
+- **Core Types** (`Sequence`, `Map`, `Set`, `Option`, `Result`, `Str`, `Char`, `Integer`, `Double`) provide the foundation
 - **FileSystem** uses `Path`, `Result`, and core types for safe file operations
 - **Process** uses `Result`, `Option`, `Str`, `Duration`, and typed errors for safe process execution
 - **Json** wraps PHP native JSON functions with `Result` and `Str` integration
