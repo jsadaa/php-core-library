@@ -72,6 +72,19 @@ $thirdItem = $seq
         fn() => "Not found"
     ); // "Found: 3"
 
+// andThen chaining on Option — get, find, first, last all return Option
+$result = $seq
+    ->find(fn($n) => $n > 3)                             // Option::some(4)
+    ->andThen(fn(int $n) => $seq->get($n))               // Option::some(5) — use 4 as index
+    ->map(fn(int $n) => $n * 10);                        // Option::some(50)
+
+// first/last return Option — chain safely
+$doubled = $seq->first()                                 // Option::some(1)
+    ->map(fn(int $n) => $n * 2);                         // Option::some(2)
+
+$doubled = Sequence::ofArray([])->first()                // Option::none()
+    ->map(fn(int $n) => $n * 2);                         // Option::none() — never called
+
 // ... And more
 ```
 
@@ -173,37 +186,103 @@ $isSome = $some->isSome();       // true
 $value = $some->unwrap();        // 42 (throws exception if None)
 $safeValue = $none->unwrapOr(0); // 0 (default value if None)
 
-// Pattern matching
+// Pattern matching — exhaustive handling of both cases
 $result = $some->match(
     fn($value) => "Got value: $value",  // Called if Some
     fn() => "No value present"          // Called if None
 ); // "Got value: 42"
 
-// Transformations
-$mapped = $some->map(fn($x) => $x * 2);           // Some(84)
-$filtered = $some->filter(fn($x) => $x % 2 === 0); // Some(42) - condition met
+// map — transform the inner value (stays None if None)
+$mapped = $some->map(fn($x) => $x * 2);  // Some(84)
+$mapped = $none->map(fn($x) => $x * 2);  // None — callback never called
 
-// Monadic chaining with andThen - chain operations that themselves return Options
+// filter — keep Some only if predicate passes
+$filtered = $some->filter(fn($x) => $x % 2 === 0); // Some(42) — 42 is even
+$filtered = $some->filter(fn($x) => $x > 100);     // None — predicate fails
+```
+
+#### `andThen()` — monadic chaining for operations that return Option
+
+The key method for composing operations that themselves return `Option`. Unlike `map()` which wraps the result in `Some`, `andThen()` expects the callback to return an `Option` — preventing nested `Option<Option<T>>`.
+
+```php
+// andThen chains operations that return Option
 $seq = Sequence::of(10, 20, 30);
+
 $result = $seq->get(1)                                  // Option::some(20)
     ->andThen(fn($val) => $val > 10                     // Chain only if Some
         ? Option::some($val * 2)
         : Option::none()
     );                                                   // Option::some(40)
 
-// andThen propagates None automatically
+// andThen propagates None automatically — short-circuit
 $result = $seq->get(99)                                  // Option::none()
-    ->andThen(fn($val) => Option::some($val * 2));       // Option::none() - never called
+    ->andThen(fn($val) => Option::some($val * 2));       // Option::none() — never called
 
-// ... And more
+// Real-world: safe nested access on a Path
+$extension = Path::of('/var/www/app/config.json')
+    ->parent()                                           // Option::some(Path('/var/www/app'))
+    ->andThen(fn(Path $p) => $p->parent())               // Option::some(Path('/var/www'))
+    ->andThen(fn(Path $p) => $p->fileName())             // Option::some(Str('www'))
+    ->map(fn(Str $name) => $name->toUppercase());        // Option::some(Str('WWW'))
+
+// Chaining with Sequence::find and Str::find
+$users = Sequence::of('alice@example.com', 'bob@test.org', 'carol@example.com');
+$domain = $users
+    ->find(fn(string $email) => str_contains($email, 'bob'))  // Option::some('bob@test.org')
+    ->map(fn(string $email) => Str::of($email))               // Option::some(Str('bob@test.org'))
+    ->andThen(fn(Str $s) => $s->find('@'))                    // Option::some(Integer(3))
+    ->map(fn(Integer $pos) => $pos->toInt());                 // Option::some(3)
+
+// Map::get returns Option — chain lookups across maps
+$users = Map::of('alice', 42)->add('bob', 38);
+$scores = Map::of(42, 'A+')->add(38, 'B');
+
+$grade = $users->get('alice')                            // Option::some(42)
+    ->andThen(fn(int $id) => $scores->get($id));         // Option::some('A+')
+
+$grade = $users->get('unknown')                          // Option::none()
+    ->andThen(fn(int $id) => $scores->get($id));         // Option::none() — short-circuit
+```
+
+#### Other useful methods
+
+```php
+// orElse — provide a fallback Option when None
+$config = Map::of('port', '8080');
+$port = $config->get('port')                             // Option::some('8080')
+    ->orElse(fn() => Option::some('3000'));               // Option::some('8080') — not called
+
+$port = $config->get('missing')                          // Option::none()
+    ->orElse(fn() => Option::some('3000'));               // Option::some('3000') — fallback
+
+// or — simpler version with a static fallback
+$value = Option::none()->or(Option::some('default'));    // Option::some('default')
+
+// okOr — convert Option to Result (bridge between the two monads)
+$result = $seq->get(1)->okOr(new \RuntimeException('Index out of bounds'));
+// Some(20) becomes Result::ok(20), None becomes Result::err(RuntimeException)
+
+// inspect — side effect without altering the chain (useful for logging/debugging)
+$value = $seq->get(0)
+    ->inspect(fn($v) => error_log("Found value: $v"))    // Logs "Found value: 10"
+    ->map(fn($v) => $v * 2);                             // Option::some(20)
+
+// flatten — unwrap nested Option<Option<T>>
+$nested = Option::some(Option::some(42));
+$flat = $nested->flatten();                              // Option::some(42)
+
+// isSomeAnd — check presence AND condition in one call
+$isPositive = $some->isSomeAnd(fn($x) => $x > 0);      // true
+$isPositive = $none->isSomeAnd(fn($x) => $x > 0);      // false — None
 ```
 
 The Option type provides a safe and expressive way to handle optional values:
 
 - Eliminates null reference errors by forcing explicit handling of absence
 - Enables monadic chaining with `andThen()` for composing operations that return Options
-- Enables fluent method chaining for transforming optional values
-- Integrates well with other types in the library
+- Bridges to `Result` via `okOr()` / `okOrElse()` for error contexts
+- Integrates with all library types (`Sequence::get`, `Map::get`, `Path::parent`, `Str::find`, etc.)
 
 For complete documentation with examples, see [Option Documentation](./docs/option.md).
 
@@ -221,43 +300,105 @@ $isOk = $ok->isOk();             // true
 $value = $ok->unwrap();          // 42 (throws exception if Err)
 $safeValue = $err->unwrapOr(0);  // 0 (default if Err)
 
-// Pattern matching
+// Pattern matching — exhaustive handling of both cases
 $result = $ok->match(
     fn($value) => "Success: $value",  // Called if Ok
     fn($error) => "Error: $error"     // Called if Err
 ); // "Success: 42"
 
-// Transformations
-$mapped = $ok->map(fn($x) => $x * 2);  // Ok(84) - only transforms Ok values
+// map — transform the Ok value (stays Err if Err)
+$mapped = $ok->map(fn($x) => $x * 2);   // Ok(84)
+$mapped = $err->map(fn($x) => $x * 2);  // Err("Not found") — callback never called
+```
 
-// Monadic chaining with andThen - the key to railway-oriented programming
-// Each step only executes if the previous one succeeded
+#### `andThen()` — railway-oriented programming
+
+The key method for composing operations that themselves return `Result`. Each step only executes if the previous one succeeded. Once an `Err` appears, all subsequent steps are skipped and the error propagates.
+
+```php
+// Basic chaining — short-circuit on first error
 $result = Integer::of(10)
     ->div(2)                                             // Result::ok(Integer::of(5))
-    ->andThen(fn($val) => $val->div(0));                 // Result::err(DivisionByZero)
-    // The chain short-circuits: once an Err appears, subsequent steps are skipped
+    ->andThen(fn(Integer $val) => $val->div(0));         // Result::err(DivisionByZero)
+    // div(0) fails => the chain stops here
 
-// Real-world example: validate and transform user input
+// Validate and transform user input — each step can fail independently
 $result = Str::of('42')
-    ->parseInt()                                         // Result::ok(Integer::of(42))
-    ->andThen(fn($n) => $n->gt(0)
+    ->parseInteger()                                     // Result::ok(Integer::of(42))
+    ->andThen(fn(Integer $n) => $n->gt(0)
         ? Result::ok($n)
         : Result::err('Must be positive')
     )
-    ->andThen(fn($n) => $n->lt(100)
+    ->andThen(fn(Integer $n) => $n->lt(100)
         ? Result::ok($n)
         : Result::err('Must be less than 100')
     );                                                   // Result::ok(Integer::of(42))
 
-// ... And more
+// FileSystem: read, parse, and validate a config file
+$result = FileSystem::read('/path/to/config.json')       // Result<Str, FileNotFound|...>
+    ->map(fn(Str $content) => $content->toString())      // Result<string, ...>
+    ->andThen(fn(string $json) => Json::decode($json))   // Result<array, DecodingError>
+    ->map(fn(array $config) => $config['port'] ?? 3000); // Result<int, ...>
+
+// Process: run a command and parse its output
+$result = Command::of('git')
+    ->withArg('rev-parse')->withArg('HEAD')
+    ->output()                                           // Result<Output, ...>
+    ->map(fn(Output $o) => $o->stdout())                 // Result<Str, ...>
+    ->map(fn(Str $s) => $s->trim());                     // Result<Str, ...>
+
+// Chaining across modules — read file, decode JSON, extract a value
+$dbHost = FileSystem::read('/etc/app/db.json')
+    ->andThen(fn(Str $s) => Json::decode($s->toString()))
+    ->map(fn(array $c) => $c['database']['host'] ?? 'localhost');
+
+$dbHost->match(
+    fn(string $host) => "Connecting to $host",
+    fn($error) => "Config error: " . $error->getMessage(),
+);
+```
+
+#### Other useful methods
+
+```php
+// mapErr — transform the error without touching the Ok value
+$result = Str::of('not a number')
+    ->parseInteger()                                     // Result::err(ParseError)
+    ->mapErr(fn($e) => new \RuntimeException(            // Result::err(RuntimeException)
+        "Invalid input: " . $e->getMessage()
+    ));
+
+// orElse — try an alternative on error
+$config = FileSystem::read('/etc/app/config.json')
+    ->orElse(fn($e) => FileSystem::read('/etc/app/config.default.json'))
+    ->orElse(fn($e) => Result::ok(Str::of('{}')));      // Ultimate fallback
+
+// option() — convert Result to Option (bridge between the two monads)
+$maybeContent = FileSystem::read('/optional/file.txt')
+    ->option();                                          // Ok(x) => Some(x), Err(_) => None
+
+// inspect / inspectErr — side effects without altering the chain (logging, debugging)
+$result = FileSystem::read('/path/to/file.txt')
+    ->inspect(fn(Str $s) => error_log("Read " . $s->size()->toInt() . " chars"))
+    ->inspectErr(fn($e) => error_log("Read failed: " . $e->getMessage()))
+    ->map(fn(Str $s) => $s->toUppercase());
+
+// flatten — unwrap nested Result<Result<T, E>, E>
+$nested = Result::ok(Result::ok(42));
+$flat = $nested->flatten();                              // Result::ok(42)
+
+// isOkAnd / isErrAnd — check variant AND condition
+$isPositive = Integer::of(10)->div(2)
+    ->isOkAnd(fn(Integer $n) => $n->gt(0));              // true
 ```
 
 The Result type provides explicit and type-safe error handling:
 
-- Makes success and error paths explicit in your code
 - Enables railway-oriented programming with `andThen()` for composing failable operations
-- Forces comprehensive error handling at compile time
-- Provides rich methods for working with potentially failed operations
+- Bridges to `Option` via `option()` for contexts where the error doesn't matter
+- Transforms errors with `mapErr()` for error normalization across module boundaries
+- Falls back with `orElse()` for retry / default strategies
+- Integrates with all library modules (`FileSystem`, `Json`, `Process`, `Integer::div`, `Str::parseInteger`, etc.)
 
 For complete documentation with examples, see [Result Documentation](./docs/result.md).
 
@@ -290,10 +431,26 @@ $parts = $str->split(' ');               // Sequence containing ["Hello", "World
 $words = $str->splitWhitespace();        // Sequence of words
 $chars = $str->chars();                  // Sequence containing ['H','e','l','l','o',...]
 
-// Parsing to other types
-$number = Str::of('42')->parseInt();    // Result::ok(42)
-$float = Str::of('3.14')->parseFloat(); // Result::ok(3.14)
-$bool = Str::of('true')->parseBool();   // Result::ok(true)
+// Parsing to other types — returns Result for safe error handling
+$number = Str::of('42')->parseInteger();    // Result::ok(Integer::of(42))
+$float = Str::of('3.14')->parseDouble();    // Result::ok(Double::of(3.14))
+$bool = Str::of('true')->parseBool();       // Result::ok(true)
+
+// andThen chaining on parse results
+$result = Str::of('  42  ')
+    ->trim()                                             // Str('42')
+    ->parseInteger()                                     // Result::ok(Integer::of(42))
+    ->andThen(fn(Integer $n) => $n->mul(2)->div(3));     // Result::ok(Integer::of(28))
+
+// find returns Option — chain with andThen
+$atPos = Str::of('user@example.com')
+    ->find('@')                                          // Option::some(Integer(4))
+    ->map(fn(Integer $pos) => $pos->toInt());            // Option::some(4)
+
+// get returns Option — chain for safe character access
+$initial = Str::of('Hello')
+    ->get(0)                                             // Option::some(Char('H'))
+    ->map(fn(Char $c) => $c->toLowercase());             // Option::some(Char('h'))
 
 // ... And more
 ```
@@ -302,7 +459,8 @@ $bool = Str::of('true')->parseBool();   // Result::ok(true)
 - UTF-8 handling: byte counting, substring extraction, normalization, and encoding support
 - Text transformation: case conversion, padding, trimming, replacement
 - Text analysis: matching, finding, splitting in various ways
-- Safety: immutable operations prevent accidental string mutations
+- `parseInteger()`, `parseDouble()`, `parseBool()` return `Result` for safe chaining with `andThen()`
+- `find()`, `get()` return `Option` for safe chaining with `andThen()`
 
 For complete documentation with examples, see [Str Documentation](./docs/str.md).
 
@@ -366,12 +524,17 @@ $rounded = Double::of(3.7)->round();              // Integer::of(4)
 $isFinite = Double::of(42.5)->isFinite();         // true
 $approxEqual = $double->approxEq(42.500000001);     // true - within epsilon
 
+// andThen chaining on arithmetic results — div() returns Result
+$result = Double::of(100.0)
+    ->div(3.0)                                           // Result::ok(Double::of(33.333...))
+    ->andThen(fn(Double $d) => $d->div(0.0));            // Result::err(DivisionByZero)
+
 // ... And more
 ```
 
 The `Double` type provides an immutable wrapper around floating-point numbers with mathematical capabilities:
 
-- Complete set of arithmetic operations with proper error handling
+- `div()` returns `Result` for safe chaining with `andThen()`
 - Extensive mathematical functions (trigonometric, logarithmic, exponential)
 - Special value handling (NaN, infinity) and approximate equality comparisons
 - Constants, rounding functions, and unit conversions
@@ -423,12 +586,25 @@ $sqrt = Integer::of(16)->sqrt();                 // Integer::of(4)
 $andResult = Integer::of(10)->and(6);            // Integer::of(2) - (1010 & 0110 = 0010)
 $leftShift = Integer::of(5)->leftShift(1);       // Integer::of(10) - (101 << 1 = 1010)
 
+// andThen chaining on arithmetic results — div() returns Result
+$result = Integer::of(100)
+    ->div(3)                                             // Result::ok(Integer::of(33))
+    ->andThen(fn(Integer $n) => $n->div(2))              // Result::ok(Integer::of(16))
+    ->andThen(fn(Integer $n) => $n->div(0));             // Result::err(DivisionByZero)
+    // Short-circuit: the chain stops at the first error
+
+// Combine with map for transformations that can't fail
+$result = Integer::of(42)
+    ->div(2)                                             // Result::ok(Integer::of(21))
+    ->map(fn(Integer $n) => $n->mul(3))                  // Result::ok(Integer::of(63))
+    ->map(fn(Integer $n) => $n->toInt());                // Result::ok(63)
+
 // ... And more
 ```
 
 The `Integer` type provides safe and predictable arithmetic operations with comprehensive error handling. Key features include:
 
-- Arithmetic operations that explicitly handle errors through Result types
+- `div()` returns `Result` for safe chaining with `andThen()` on failable arithmetic
 - Multiple arithmetic modes: standard, overflowing (with error reporting), and saturating
 - Comprehensive mathematical functions and bitwise operations
 - Immutable design that prevents unexpected side effects
@@ -470,6 +646,16 @@ $result = File::withOpen('/path/to/data.txt', fn(File $f) => $f->readAll()->unwr
 // Directory operations return Sequence<Path>
 $entries = FileSystem::readDir('/var/log')->unwrap();
 $logFiles = $entries->filter(fn(Path $entry) => $entry->isFile());
+
+// andThen chaining — read, decode JSON, extract value in one pipeline
+$dbConfig = FileSystem::read('/etc/app/config.json')         // Result<Str, ...>
+    ->andThen(fn(Str $s) => Json::decode($s->toString()))    // Result<array, ...>
+    ->map(fn(array $c) => $c['database'] ?? []);             // Result<array, ...>
+
+// orElse — fallback to default config on error
+$config = FileSystem::read('/app/config.json')
+    ->orElse(fn($e) => FileSystem::read('/app/config.default.json'))
+    ->orElse(fn($e) => Result::ok(Str::of('{}')));          // Ultimate fallback
 ```
 
 The FileSystem module includes:
@@ -516,7 +702,20 @@ $process->writeStdin('Hello from PHP');
 $process->kill();
 $process->close();
 
-// Typed error handling
+// andThen chaining — run a command and transform output
+$branch = Command::of('git')
+    ->withArg('rev-parse')->withArg('--abbrev-ref')->withArg('HEAD')
+    ->output()                                           // Result<Output, ...>
+    ->map(fn(Output $o) => $o->stdout())                 // Result<Str, ...>
+    ->map(fn(Str $s) => $s->trim()->toString());         // Result<string, ...>
+
+// mapErr — normalize errors from different operations
+$result = Command::of('node')
+    ->withArg('--version')
+    ->output()
+    ->mapErr(fn($e) => new \RuntimeException('Node.js not installed'));
+
+// Typed error handling with match
 $result = Command::of('sleep')
     ->withArg('60')
     ->withTimeout(Duration::fromMillis(100))
@@ -568,6 +767,17 @@ Json::validate('{invalid}')->isErr();        // true
 Json::encode($resource);       // Result::err(EncodingError)
 Json::decode('{bad}');         // Result::err(DecodingError)
 Json::validate('{bad}');       // Result::err(ValidationError)
+
+// andThen chaining — validate then decode
+$config = Json::validate($rawJson)                       // Result<string, ValidationError>
+    ->andThen(fn(string $json) => Json::decode($json))   // Result<array, DecodingError>
+    ->map(fn(array $data) => $data['settings'] ?? []);   // Result<array, ...>
+
+// Cross-module: read file, decode, transform, re-encode
+$result = FileSystem::read('/app/settings.json')
+    ->andThen(fn(Str $s) => Json::decode($s->toString()))
+    ->map(fn(array $c) => array_merge($c, ['updated' => true]))
+    ->andThen(fn(array $c) => Json::encode($c, JSON_PRETTY_PRINT));
 ```
 
 For complete documentation with examples, see [Json Documentation](./docs/json.md).
@@ -594,6 +804,24 @@ if ($path->isAbsolute()) {
 
 // Canonicalization (resolves symlinks and . / ..)
 $canonical = $path->canonicalize()->unwrap();
+
+// andThen chaining on Option — safe nested navigation
+$grandParentName = Path::of('/var/www/html/index.php')
+    ->parent()                                           // Option::some(Path('/var/www/html'))
+    ->andThen(fn(Path $p) => $p->parent())               // Option::some(Path('/var/www'))
+    ->andThen(fn(Path $p) => $p->fileName())             // Option::some(Str('www'))
+    ->map(fn(Str $name) => $name->toString());           // Option::some('www')
+
+// extension returns Option — chain safely
+$isPhp = Path::of('/var/www/index.php')
+    ->extension()                                        // Option::some(Str('php'))
+    ->map(fn(Str $ext) => $ext->toString() === 'php')    // Option::some(true)
+    ->unwrapOr(false);                                   // true
+
+// okOr — convert Option to Result when you need error context
+$parent = Path::of('/')
+    ->parent()                                           // Option::none() (root has no parent)
+    ->okOr(new \RuntimeException('Path has no parent')); // Result::err(RuntimeException)
 ```
 
 > [!NOTE]
@@ -624,6 +852,17 @@ $doubled = $precise->mul(2)->unwrap(); // 3 seconds
 // Converting between time representations
 $dateTime = $now->toDateTimeImmutable()->unwrap();
 $backToSystemTime = SystemTime::fromDateTimeImmutable($dateTime)->unwrap();
+
+// andThen chaining on Result — time arithmetic can fail (negative durations, overflow)
+$elapsed = SystemTime::now()
+    ->durationSince($start)                              // Result<Duration, ...>
+    ->map(fn(Duration $d) => $d->seconds())              // Result<Integer, ...>
+    ->map(fn(Integer $s) => $s->toInt());                // Result<int, ...>
+
+// Duration arithmetic with andThen
+$timeout = Duration::fromSeconds(30)
+    ->div(0)                                             // Result::err(DivisionByZero)
+    ->orElse(fn($e) => Result::ok(Duration::fromSeconds(1))); // Fallback to 1s
 ```
 
 > [!NOTE]
@@ -651,6 +890,72 @@ This enforces you to really think about your implementation and the types you ar
 - Immutable data structures with method chaining
 - Functional programming patterns
 - Error handling with Option and Result types instead of exceptions or nulls
+
+### Monadic Composition with `Option` and `Result`
+
+A central pattern in this library is **monadic composition** — chaining operations that may fail or return absent values, without nested `if` / `try` / `null` checks. Two types carry this pattern: `Option<T>` (presence/absence) and `Result<T, E>` (success/failure).
+
+#### The key methods
+
+| Method | On `Option` | On `Result` | Purpose |
+|---|---|---|---|
+| `map()` | `(T) -> U` | `(T) -> U` | Transform the inner value. Can't fail. |
+| `andThen()` | `(T) -> Option<U>` | `(T) -> Result<U, E>` | Chain an operation that itself returns Option/Result. **This is flatMap.** |
+| `orElse()` | `() -> Option<T>` | `(E) -> Result<T, F>` | Provide a fallback on None/Err. |
+| `match()` | `(T)->U, ()->U` | `(T)->U, (E)->V` | Exhaustive pattern matching. |
+| `mapErr()` | — | `(E) -> F` | Transform the error without touching the value. |
+| `option()` | — | → `Option<T>` | Drop the error, keep only presence. |
+| `okOr()` | → `Result<T, E>` | — | Attach an error to absence. |
+
+#### `map()` vs `andThen()` — when to use which
+
+`map()` transforms the inner value with a function that **always succeeds** (returns a plain value). `andThen()` chains an operation that **can itself fail or be absent** (returns `Option` or `Result`). Using `map()` where `andThen()` is needed produces nested types (`Option<Option<T>>` or `Result<Result<T, E>, E>`).
+
+```php
+// map: transform the value (callback returns a plain value)
+$seq->get(0)->map(fn(int $n) => $n * 2);                // Option<int>
+
+// andThen: chain another Optional operation (callback returns an Option)
+$seq->get(0)->andThen(fn(int $n) => $seq->get($n));     // Option<int> — not Option<Option<int>>
+
+// Same logic with Result
+Integer::of(10)->div(2)->map(fn(Integer $n) => $n->mul(3));         // Result<Integer, ...>
+Integer::of(10)->div(2)->andThen(fn(Integer $n) => $n->div(0));     // Result<Integer, ...>
+```
+
+#### Bridging `Option` and `Result`
+
+```php
+// Option -> Result with okOr (attach an error to None)
+$port = $config->get('port')
+    ->okOr(new \RuntimeException('Missing port'));       // Result<string, RuntimeException>
+
+// Result -> Option with option() (drop the error)
+$content = FileSystem::read('/optional.txt')
+    ->option();                                          // Some(Str) or None — error discarded
+```
+
+#### Cross-module pipelines
+
+The real power emerges when chaining across modules — each step can fail independently, and errors propagate automatically:
+
+```php
+// File -> JSON -> Validation -> Domain object
+$settings = FileSystem::read('/app/config.json')         // Result<Str, FileNotFound|...>
+    ->andThen(fn(Str $s) => Json::decode($s->toString()))// Result<array, DecodingError>
+    ->andThen(fn(array $c) => isset($c['port'])
+        ? Result::ok($c)
+        : Result::err(new \RuntimeException('Missing port'))
+    )
+    ->map(fn(array $c) => new AppConfig($c))             // Result<AppConfig, ...>
+    ->inspectErr(fn($e) => error_log($e->getMessage())); // Log error without breaking the chain
+
+// Sequence -> Option -> Result (bridge between the two monads)
+$result = $users
+    ->find(fn(User $u) => $u->isAdmin())                 // Option<User>
+    ->okOr(new \RuntimeException('No admin found'))      // Result<User, RuntimeException>
+    ->andThen(fn(User $u) => $u->loadProfile());         // Result<Profile, ...>
+```
 
 ### Why Immutability? — Divergences from Rust and the PHP Context
 
