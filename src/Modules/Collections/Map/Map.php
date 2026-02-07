@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Map;
 
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Pair;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Set\Set;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;

@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Jsadaa\PhpCoreLibrary\Tests\Map\Unit;
 
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Pair;
 use PHPUnit\Framework\TestCase;
 
 class MapTest extends TestCase
@@ -247,8 +248,9 @@ class MapTest extends TestCase
         $found = $map->find(fn($key, $value) => $value > 10);
         $this->assertTrue($found->isSome());
         $pair = $found->unwrap();
-        $this->assertSame($b, $pair->key());
-        $this->assertEquals(15, $pair->value());
+        $this->assertInstanceOf(Pair::class, $pair);
+        $this->assertSame($b, $pair->first());
+        $this->assertEquals(15, $pair->second());
 
         $notFound = $map->find(fn($key, $value) => $value > 100);
         $this->assertTrue($notFound->isNone());

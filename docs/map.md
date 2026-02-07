@@ -187,7 +187,7 @@ $failing = $scores->find(fn($name, $score) => $score < 50);
 // Extract the pair
 $scores->find(fn($name, $score) => $score > 90)
     ->match(
-        fn($pair) => "Top scorer: " . $pair->key() . " (" . $pair->value() . ")",
+        fn($pair) => "Top scorer: " . $pair->first() . " (" . $pair->second() . ")",
         fn() => "No top scorers found"
     );
 ```
