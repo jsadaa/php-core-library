@@ -1,6 +1,6 @@
 # Map
 
-Map is an immutable, homogeneous collection of key-value pairs where keys are unique. All values must be of the same type `V`, just like Rust's `HashMap<K, V>`. It provides O(1) lookups for both scalar and object keys through a dual-storage architecture. Type safety is enforced via static analysis only (no runtime type checking).
+Map is an immutable, homogeneous collection of key-value pairs where keys are unique. All values must be of the same type `V`. It provides O(1) lookups for both scalar and object keys through a dual-storage architecture. Type safety is enforced via static analysis only (no runtime type checking).
 
 Maps are particularly useful when you need to:
 - Associate values with unique keys

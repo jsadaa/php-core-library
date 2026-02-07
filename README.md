@@ -85,7 +85,7 @@ For complete documentation with examples, see [Sequence Documentation](./docs/se
 
 ### Map
 
-A `Map` is an immutable, homogeneous key-value collection with O(1) lookups, supporting both scalar and object keys. All values must be of the same type `V`, just like Rust's `HashMap<K, V>`:
+A `Map` is an immutable, homogeneous key-value collection with O(1) lookups, supporting both scalar and object keys. All values must be of the same type `V`:
 
 ```php
 // Create and manipulate a Map (Map<string, int>)
