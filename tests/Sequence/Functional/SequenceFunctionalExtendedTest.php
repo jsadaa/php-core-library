@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\Sequence\Functional;
 
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Pair;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use PHPUnit\Framework\TestCase;
@@ -75,19 +76,19 @@ final class SequenceFunctionalExtendedTest extends TestCase
         // Zip timestamps with temperature and humidity for a combined dataset
         $sensorData = $timestamps
             ->zip($temperatures) // Combine timestamps with temperatures
-            ->map(static function($pair) {
+            ->map(static function (Pair $pair) {
                 return [
-                    'timestamp' => $pair->get(0)->unwrap(),
-                    'temperature' => $pair->get(1)->unwrap(),
+                    'timestamp' => $pair->first(),
+                    'temperature' => $pair->second(),
                 ];
             });
 
         // Add humidity data using a second zip operation
         $completeData = $sensorData
             ->zip($humidity)
-            ->map(static function($pair) {
-                $record = $pair->get(0)->unwrap();
-                $record['humidity'] = $pair->get(1)->unwrap();
+            ->map(static function (Pair $pair) {
+                $record = $pair->first();
+                $record['humidity'] = $pair->second();
 
                 return $record;
             });

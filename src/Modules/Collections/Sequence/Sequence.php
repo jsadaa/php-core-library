@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence;
 
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Pair;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Error\IndexOutOfBounds;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Set\Set;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
@@ -164,10 +165,11 @@ final readonly class Sequence
     /**
      * Zip two Sequences together
      *
-     * If the Sequence are of different lengths, the resulting Sequence will be as long as the shorter one.
+     * If the Sequences are of different lengths, the resulting Sequence will be as long as the shorter one.
      *
-     * @param self<T> $other The Sequence to zip with
-     * @return self<Sequence<T>> A Sequence containing pairs of elements as Sequences
+     * @template U
+     * @param self<U> $other The Sequence to zip with
+     * @return self<Pair<T, U>> A Sequence containing Pair elements
      */
     public function zip(self $other): self
     {
@@ -175,7 +177,7 @@ final readonly class Sequence
         $length = $this->size()->min($other->size());
 
         for ($i = 0; $i < $length->toInt(); $i++) {
-            $zipped[] = self::of($this->collection[$i], $other->collection[$i]);
+            $zipped[] = Pair::of($this->collection[$i], $other->collection[$i]);
         }
 
         return new self($zipped);

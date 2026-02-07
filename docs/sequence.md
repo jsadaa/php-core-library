@@ -414,12 +414,15 @@ $combined = $seq1->append($seq2); // Sequence [1, 2, 3, 4, 5, 6]
 
 ### Zip
 
-Combines two Sequences into a single Sequence of pairs. Each pair is represented as a Sequence with two elements.
+Combines two Sequences into a single Sequence of `Pair` elements. Each pair holds the corresponding elements accessible via `first()` and `second()`. The two Sequences can have different element types.
 
 ```php
-$seq1 = Sequence::of(1, 2, 3);
-$seq2 = Sequence::of(4, 5, 6);
-$zipped = $seq1->zip($seq2); // Sequence [Sequence [1, 4], Sequence [2, 5], Sequence [3, 6]]
+$names = Sequence::of('Alice', 'Bob', 'Charlie');
+$scores = Sequence::of(95, 78, 92);
+$zipped = $names->zip($scores); // Sequence [Pair('Alice', 95), Pair('Bob', 78), Pair('Charlie', 92)]
+
+$zipped->get(0)->unwrap()->first();  // 'Alice'
+$zipped->get(0)->unwrap()->second(); // 95
 ```
 
 **Note:** If the Sequences are of different lengths, the resulting Sequence will be as long as the shorter one.

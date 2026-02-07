@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\Sequence\Unit;
 
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Pair;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use PHPUnit\Framework\TestCase;
@@ -718,14 +719,17 @@ final class SequenceOperationsTest extends TestCase
         $this->assertSame(['a', 'b', 'c'], $seq2->toArray(), 'Original Sequence2 should remain unchanged');
 
         $firstPair = $zipped->get(0)->match(static fn($v) => $v, static fn() => null);
-        $this->assertInstanceOf(Sequence::class, $firstPair);
-        $this->assertSame([1, 'a'], $firstPair->toArray());
+        $this->assertInstanceOf(Pair::class, $firstPair);
+        $this->assertSame(1, $firstPair->first());
+        $this->assertSame('a', $firstPair->second());
 
         $secondPair = $zipped->get(1)->match(static fn($v) => $v, static fn() => null);
-        $this->assertSame([2, 'b'], $secondPair->toArray());
+        $this->assertSame(2, $secondPair->first());
+        $this->assertSame('b', $secondPair->second());
 
         $thirdPair = $zipped->get(2)->match(static fn($v) => $v, static fn() => null);
-        $this->assertSame([3, 'c'], $thirdPair->toArray());
+        $this->assertSame(3, $thirdPair->first());
+        $this->assertSame('c', $thirdPair->second());
     }
 
     public function testZipWithSequencesDifferentLengths(): void
@@ -738,10 +742,12 @@ final class SequenceOperationsTest extends TestCase
         $this->assertSame(2, $zipped->size()->toInt());
 
         $firstPair = $zipped->get(0)->match(static fn($v) => $v, static fn() => null);
-        $this->assertSame([1, 'a'], $firstPair->toArray());
+        $this->assertSame(1, $firstPair->first());
+        $this->assertSame('a', $firstPair->second());
 
         $secondPair = $zipped->get(1)->match(static fn($v) => $v, static fn() => null);
-        $this->assertSame([2, 'b'], $secondPair->toArray());
+        $this->assertSame(2, $secondPair->first());
+        $this->assertSame('b', $secondPair->second());
     }
 
     public function testZipWithEmptySequence(): void
@@ -769,9 +775,11 @@ final class SequenceOperationsTest extends TestCase
         $this->assertSame(2, $zipped->size()->toInt());
 
         $firstPair = $zipped->get(0)->match(static fn($v) => $v, static fn() => null);
-        $this->assertSame([$obj1, $obj3], $firstPair->toArray());
+        $this->assertSame($obj1, $firstPair->first());
+        $this->assertSame($obj3, $firstPair->second());
 
         $secondPair = $zipped->get(1)->match(static fn($v) => $v, static fn() => null);
-        $this->assertSame([$obj2, $obj4], $secondPair->toArray());
+        $this->assertSame($obj2, $secondPair->first());
+        $this->assertSame($obj4, $secondPair->second());
     }
 }
