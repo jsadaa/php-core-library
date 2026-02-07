@@ -88,13 +88,21 @@ final readonly class Str implements \Stringable
     }
 
     /**
-     * Returns the length of the string in bytes
+     * Returns the number of Unicode characters in the string
      *
-     * This does not count the number of characters in the string. Use `chars()->size()` to count characters.
+     * @return Integer The number of characters
+     */
+    public function size(): Integer
+    {
+        return Integer::of(\mb_strlen($this->value, self::UTF8));
+    }
+
+    /**
+     * Returns the length of the string in bytes
      *
      * @return Integer The number of bytes
      */
-    public function size(): Integer
+    public function byteSize(): Integer
     {
         return Integer::of(\strlen($this->value));
     }
@@ -481,7 +489,7 @@ final readonly class Str implements \Stringable
      */
     public function toLowercase(): self
     {
-        return new self(\mb_strtolower($this->value));
+        return new self(\mb_strtolower($this->value, self::UTF8));
     }
 
     /**
@@ -491,7 +499,7 @@ final readonly class Str implements \Stringable
      */
     public function toUppercase(): self
     {
-        return new self(\mb_strtoupper($this->value));
+        return new self(\mb_strtoupper($this->value, self::UTF8));
     }
 
     /**
@@ -1055,8 +1063,8 @@ final readonly class Str implements \Stringable
             $byteOffset = $match[1];
             $matchText = $match[0];
 
-            // Compute character offset by counting UTF-8 characters before this position
-            $substring = \mb_substr($this->value, 0, $byteOffset, self::UTF8);
+            // Compute character offset: extract bytes then count UTF-8 characters
+            $substring = \substr($this->value, 0, $byteOffset);
             $charOffset = \mb_strlen($substring, self::UTF8);
 
             /** @var array{Integer, Str} $offset */
@@ -1235,7 +1243,7 @@ final readonly class Str implements \Stringable
     public function find(string | self $needle): Option
     {
         $needle = $needle instanceof self ? $needle->toString() : $needle;
-        $pos = \mb_strpos($this->value, $needle);
+        $pos = \mb_strpos($this->value, $needle, 0, self::UTF8);
 
         return $pos === false ? Option::none() : Option::some(Integer::of($pos));
     }
@@ -1267,7 +1275,7 @@ final readonly class Str implements \Stringable
             return Sequence::new();
         }
 
-        $lines = \mb_split("\n", $this->value);
+        $lines = \preg_split('/\r\n|\n|\r/u', $this->value);
 
         if (!\is_array($lines)) {
             /** @var Sequence<Str> */

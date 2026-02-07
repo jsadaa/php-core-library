@@ -173,7 +173,7 @@ final class StrTransformationTest extends TestCase
 
         $this->assertSame('Hello \u00e9', $escaped->toString());
 
-        $this->assertGreaterThan($str->size(), $escaped->size());
+        $this->assertGreaterThan($str->byteSize(), $escaped->byteSize());
     }
 
     public function testNormalizeExtended(): void

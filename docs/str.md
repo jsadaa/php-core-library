@@ -60,23 +60,24 @@ $emptyStr = $str->clear(); // Creates a new empty string
 
 ### Length
 
-Returns the length of the string in bytes (not characters).
+Returns the number of Unicode characters in the string.
 
 ```php
 $str = Str::of('Hello');
-$length = $str->size()->toInt(); // 5 (for ASCII characters, bytes equal characters)
+$length = $str->size()->toInt(); // 5
 
-$utf8Str = Str::of('été'); // Multi-byte characters
-$length = $utf8Str->size()->toInt(); // 4 (counts bytes, not characters)
+$utf8Str = Str::of('été');
+$length = $utf8Str->size()->toInt(); // 3 (counts characters, not bytes)
 ```
 
-**Notes:** For graphemes counting, use :
+For the byte length, use `byteSize()`:
 
 ```php
-$len = Str::of('été')->chars()->size()->toInt();
+$str = Str::of('été');
+$bytes = $str->byteSize()->toInt(); // 5 (UTF-8 bytes)
 ```
 
-But note that it also depends of the normalization form used. see `Str::normalize()`.
+**Note:** `size()` counts Unicode codepoints, not grapheme clusters. The count may vary depending on the normalization form used. See `Str::normalize()`.
 
 ### Is Empty
 
