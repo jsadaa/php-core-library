@@ -188,14 +188,15 @@ final readonly class Set
      */
     public function map(callable $fn): self
     {
-        /** @var list<U> $newValues */
-        $newValues = [];
-        $this->forEach(
-            /** @param T $val */
-            static fn(mixed $val) => $newValues[] = $fn($val),
-        );
+        /** @var self<U> $empty */
+        $empty = new self(Map::new());
 
-        return self::of(...$newValues);
+        /** @psalm-suppress ImpureFunctionCall */
+        return $this->fold(
+            /** @param T $val */
+            static fn(self $acc, mixed $val) => $acc->add($fn($val)),
+            $empty,
+        );
     }
 
     /**
@@ -207,20 +208,25 @@ final readonly class Set
      */
     public function flatMap(callable $fn): self
     {
-        /** @var list<U> $newValues */
-        $newValues = [];
-        $this->forEach(
-            /**
-             * @param T $val
-             */
-            static function(mixed $val) use (&$newValues, $fn): void {
-                foreach ($fn($val) as $item) {
-                    $newValues[] = $item;
-                }
-            },
-        );
+        /** @var self<U> $empty */
+        $empty = new self(Map::new());
 
-        return self::of(...$newValues);
+        /** @psalm-suppress ImpureFunctionCall */
+        return $this->fold(
+            /**
+             * @param self<U> $acc
+             * @param T $val
+             * @return self<U>
+             */
+            static function(self $acc, mixed $val) use ($fn): self {
+                foreach ($fn($val) as $item) {
+                    $acc = $acc->add($item);
+                }
+
+                return $acc;
+            },
+            $empty,
+        );
     }
 
     /**
@@ -280,22 +286,23 @@ final readonly class Set
      */
     public function filterMap(callable $fn): self
     {
-        /** @var list<U> $newValues */
-        $newValues = [];
-        $this->forEach(
+        /** @var self<U> $empty */
+        $empty = new self(Map::new());
+
+        /** @psalm-suppress ImpureFunctionCall */
+        return $this->fold(
             /**
+             * @param self<U> $acc
              * @param T $val
+             * @return self<U>
              */
-            static function(mixed $val) use (&$newValues, $fn): void {
+            static function(self $acc, mixed $val) use ($fn): self {
                 $opt = $fn($val);
 
-                if ($opt->isSome()) {
-                    $newValues[] = $opt->unwrap();
-                }
+                return $opt->isSome() ? $acc->add($opt->unwrap()) : $acc;
             },
+            $empty,
         );
-
-        return self::of(...$newValues);
     }
 
     /**
@@ -359,18 +366,20 @@ final readonly class Set
      */
     public function toArray(): array
     {
-        /** @var array<T> $result */
-        $result = [];
-        $this->forEach(
+        /** @psalm-suppress ImpureFunctionCall */
+        return $this->map->fold(
             /**
-             * @param T $val
+             * @param array<T> $acc
+             * @param T $key
+             * @return array<T>
              */
-            static function(mixed $val) use (&$result): void {
-                $result[] = $val;
-            },
-        );
+            static function(array $acc, mixed $key, bool $_): array {
+                $acc[] = $key;
 
-        return $result;
+                return $acc;
+            },
+            [],
+        );
     }
 
     /**
