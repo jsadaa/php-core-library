@@ -437,48 +437,51 @@ For complete documentation with examples, see [Integer Documentation](./docs/int
 
 ### FileSystem Module
 
-The FileSystem module provides file and directory operations with type-safe error handling, supporting both high-level operations and fine-grained file manipulation:
+The FileSystem module separates one-shot operations (`FileSystem` static methods) from handle-based streaming (`File` class), mirroring the Rust `std::fs` / `std::fs::File` split:
 
 ```php
-// File operations with proper error handling
-$result = FileSystem::read('/etc/hosts');
-if ($result->isOk()) {
-    $content = $result->unwrap();
-    echo $content->toString();
+// One-shot operations via FileSystem
+$content = FileSystem::read('/etc/hosts')->unwrap();
+echo $content->toString();
+
+// Handle-based streaming via File
+$file = File::open('/path/to/large-file.csv')->unwrap();
+
+while (true) {
+    $line = $file->readLine()->unwrap();
+
+    if ($line->isNone()) {
+        break;
+    }
+
+    // Process line...
 }
 
-// Chain file operations with andThen - errors propagate automatically
-$result = File::from('/path/to/config.json')
-    ->andThen(fn($file) => $file->read())
-    ->andThen(fn($content) => Str::of($content->toString())
-        ->replace(Str::of('"debug": false'), Str::of('"debug": true'))
-        ->parseInt()  // Would fail here and propagate the Err
-    );
+$file->close();
 
-// Create, write, and set permissions in one safe pipeline
-$result = File::new('/path/to/script.sh')
-    ->andThen(fn($file) => $file->write('#!/bin/bash\necho "Hello"'))
-    ->andThen(fn($file) => $file->setPermissions(Permissions::create(0755)));
+// Atomic writes for critical data
+$file = File::open('/path/to/config.json')->unwrap();
+$file->writeAtomic($newJson, sync: true)->unwrap();
+$file->close();
 
-$result->match(
-    fn($file) => "Script created and made executable",
-    fn($error) => "Failed: " . $error->getMessage()
-);
+// Scoped pattern: auto-close on exit
+$result = File::withOpen('/path/to/data.txt', fn(File $f) => $f->readAll()->unwrap());
 
-// Directory operations
+// Directory operations return Sequence<Path>
 $entries = FileSystem::readDir('/var/log')->unwrap();
-$logFiles = $entries->filter(fn($entry) => $entry->fileName()->unwrapOr(Str::of(''))->endsWith('.log'));
+$logFiles = $entries->filter(fn(Path $entry) => $entry->isFile());
 ```
 
 The FileSystem module includes:
-- `File`: Immutable file handle with read, write, and metadata operations
-- `FileSystem`: Static methods for common filesystem operations
-- `DirectoryEntry`: Represents files and directories in directory listings
-- `Metadata`: File metadata including size, timestamps, and permissions
+- `File`: Mutable handle-based file I/O (streaming, seeking, atomic writes)
+- `FileSystem`: Static methods for one-shot filesystem operations
+- `Metadata`: Immutable snapshot via `lstat()` (size, timestamps, permissions, file type)
+- `FileType`: PHP native enum (`RegularFile`, `Directory`, `Symlink`)
 - `Permissions`: Type-safe permission management
+- `FileTimes`: Immutable builder for setting file timestamps
 - Comprehensive error types for different failure modes
 
-For complete documentation with examples, see [File Documentation](./docs/filesystem.md).
+For complete documentation with examples, see [FileSystem Documentation](./docs/filesystem.md).
 
 ### Process Module
 
@@ -710,7 +713,39 @@ $s = Str::of("Hello");
 $s = $s->append(Str::of(" World"));
 ```
 
-This approach reflects a **hybrid** between Rust’s conceptual strengths and PHP’s practical realities, bringing the benefits of functional programming and data safety to a language not originally designed with these patterns in mind.
+This approach reflects a **hybrid** between Rust's conceptual strengths and PHP's practical realities, bringing the benefits of functional programming and data safety to a language not originally designed with these patterns in mind.
+
+### The Exception: Mutable Handles for OS Resources
+
+While immutability is the default for all value types, some objects wrap **mutable OS resources** (file descriptors, process handles) that are inherently stateful. Forcing immutability on these would introduce real costs with no benefit:
+
+- **TOCTOU vulnerabilities**: Opening and closing a file for each operation creates a window where another process can modify or delete the file between the check and the action.
+- **No streaming**: Without a persistent handle, the only option is to load entire files into memory, which is impractical for large files.
+- **Artificial complexity**: Returning a new "immutable" object that re-opens the same OS resource on each call is a leaky abstraction — the underlying state is mutable regardless.
+
+The library addresses this with a **two-tier architecture** that mirrors Rust's own separation:
+
+| | Configuration (immutable) | OS Resource (mutable) |
+|---|---|---|
+| **Process** | `Command` / `ProcessBuilder` | `Process` |
+| **FileSystem** | `FileSystem` (static one-shot ops) | `File` (handle-based) |
+
+**Immutable tier** — Configuration and one-shot operations. `Command` builds process configurations immutably (each `withArg()` returns a new instance). `FileSystem` provides stateless static methods (`read()`, `write()`, `copyFile()`) that open, act, and close in a single call.
+
+**Mutable tier** — Persistent OS handles. `Process` wraps a running process with its stdin/stdout/stderr streams. `File` wraps an open file descriptor with seek, read, and write operations. Both follow the same pattern: explicit `close()` with a `__destruct` safety net.
+
+This separation is deliberate and consistent. Value types (`Str`, `Integer`, `Sequence`, `Metadata`, `Permissions`, `FileTimes`) remain `final readonly class` with `@psalm-immutable`. Resource wrappers (`File`, `Process`) are `final class` without immutability annotations, reflecting their true nature.
+
+**Advantages**:
+- Eliminates TOCTOU between read and write on the same file
+- Enables streaming (line-by-line, chunk-by-chunk) for large files
+- Atomic writes via temp-file + rename through the persistent handle
+- Consistent with how Rust separates `std::fs` functions from `std::fs::File`
+
+**Limitations**:
+- The caller is responsible for closing handles (mitigated by `__destruct` and `withOpen()`)
+- Operations on a closed handle will fail at runtime, not at compile time (PHP has no borrow checker)
+- Mutable objects cannot be used in `@psalm-immutable` contexts without suppressions
 
 ## Requirements
 
