@@ -28,6 +28,7 @@ This ecosystem provides a growing collection of types and modules that work toge
 
 - **FileSystem**: Complete file and directory manipulation with type-safe error handling
 - **Process**: Safe process spawning, pipeline execution, and stream I/O with typed errors
+- **Json**: Safe JSON encoding, decoding, and validation with `Result` types
 - **Path**: Path manipulation and validation
 - **Time**: Precise time handling with `SystemTime` and `Duration` types
 
@@ -508,6 +509,36 @@ The Process module includes:
 
 For complete documentation with examples, see [Process Documentation](./docs/process.md).
 
+### Json Module
+
+The Json module provides safe wrappers around PHP's native JSON functions, returning `Result` types instead of throwing exceptions:
+
+```php
+// Encode to string
+$result = Json::encode(['name' => 'Alice', 'age' => 30]);
+echo $result->unwrap(); // '{"name":"Alice","age":30}'
+
+// Encode to Str type
+$result = Json::encodeToStr(['key' => 'value']);
+$json = $result->unwrap(); // Str instance
+$json->contains('key');    // true
+
+// Decode
+$result = Json::decode('{"name":"Alice"}');
+$data = $result->unwrap(); // ['name' => 'Alice']
+
+// Validate without decoding (faster)
+Json::validate('{"valid": true}')->isOk();  // true
+Json::validate('{invalid}')->isErr();        // true
+
+// Typed errors for each operation
+Json::encode($resource);       // Result::err(EncodingError)
+Json::decode('{bad}');         // Result::err(DecodingError)
+Json::validate('{bad}');       // Result::err(ValidationError)
+```
+
+For complete documentation with examples, see [Json Documentation](./docs/json.md).
+
 ### Path Module
 
 The Path module provides cross-platform path manipulation and validation:
@@ -666,6 +697,7 @@ This library is designed as a cohesive ecosystem where modules complement each o
 - **Core Types** (`Sequence`, `Map`, `Set`, `Option`, `Result`, `Str`, `Integer`, `Double`) provide the foundation
 - **FileSystem** uses `Path`, `Result`, and core types for safe file operations
 - **Process** uses `Result`, `Option`, `Str`, `Duration`, and typed errors for safe process execution
+- **Json** wraps PHP native JSON functions with `Result` and `Str` integration
 - **Path** integrates with `Option` and `Result` for path validation and manipulation
 - **Time** provides `SystemTime` and `Duration` with overflow-safe arithmetic using `Integer`
 
