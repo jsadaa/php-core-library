@@ -1,6 +1,6 @@
 # Map
 
-Map is an immutable collection of key-value pairs where keys are unique. It provides O(1) lookups for both scalar and object keys through a dual-storage architecture. Type safety is enforced via static analysis only (no runtime type checking).
+Map is an immutable, homogeneous collection of key-value pairs where keys are unique. All values must be of the same type `V`, just like Rust's `HashMap<K, V>`. It provides O(1) lookups for both scalar and object keys through a dual-storage architecture. Type safety is enforced via static analysis only (no runtime type checking).
 
 Maps are particularly useful when you need to:
 - Associate values with unique keys
@@ -105,9 +105,9 @@ $empty->isEmpty(); // true
 Checks if the Map contains a given key.
 
 ```php
-$map = Map::of('host', 'localhost')->add('port', 8080);
-$hasHost = $map->containsKey('host'); // true
-$hasUser = $map->containsKey('user'); // false
+$scores = Map::of('Alice', 95)->add('Bob', 78);
+$hasAlice = $scores->containsKey('Alice'); // true
+$hasEve = $scores->containsKey('Eve');     // false
 ```
 
 ### Contains Value
@@ -115,9 +115,9 @@ $hasUser = $map->containsKey('user'); // false
 Checks if the Map contains a given value.
 
 ```php
-$map = Map::of('host', 'localhost')->add('port', 8080);
-$hasLocalhost = $map->containsValue('localhost'); // true
-$hasRemote = $map->containsValue('remote');       // false
+$scores = Map::of('Alice', 95)->add('Bob', 78);
+$has95 = $scores->containsValue(95); // true
+$has50 = $scores->containsValue(50); // false
 ```
 
 ## Element Access
@@ -127,21 +127,21 @@ $hasRemote = $map->containsValue('remote');       // false
 Gets the value associated with a key. Returns an `Option` to handle the case where the key might not exist.
 
 ```php
-$config = Map::of('host', 'localhost')
-    ->add('port', 8080)
-    ->add('debug', true);
+$scores = Map::of('Alice', 95)
+    ->add('Bob', 78)
+    ->add('Charlie', 92);
 
-$host = $config->get('host'); // Option::some('localhost')
-$missing = $config->get('user'); // Option::none()
+$alice = $scores->get('Alice');   // Option::some(95)
+$missing = $scores->get('Eve');   // Option::none()
 
 // Safe extraction with default
-$port = $config->get('port')->unwrapOr(3000); // 8080
-$timeout = $config->get('timeout')->unwrapOr(30); // 30
+$bob = $scores->get('Bob')->unwrapOr(0);   // 78
+$eve = $scores->get('Eve')->unwrapOr(0);   // 0
 
 // Pattern matching
-$config->get('debug')->match(
-    fn($value) => "Debug mode: " . ($value ? 'on' : 'off'),
-    fn() => "Debug mode not configured"
+$scores->get('Charlie')->match(
+    fn($score) => "Charlie scored: $score",
+    fn() => "Charlie not found"
 );
 ```
 
@@ -150,12 +150,12 @@ $config->get('debug')->match(
 Adds a key-value pair to the Map. If the key already exists, the value is replaced.
 
 ```php
-$map = Map::new()
-    ->add('name', 'Alice')
-    ->add('age', 30);
+$scores = Map::new()
+    ->add('Alice', 95)
+    ->add('Bob', 78);
 
 // Overwrite existing key
-$map = $map->add('age', 31); // 'age' is now 31
+$scores = $scores->add('Bob', 82); // Bob's score is now 82
 ```
 
 ### Remove
@@ -227,14 +227,14 @@ $passing = $scores->filter(fn($name, $score) => $score >= 80);
 Maps each key-value pair to a Map and flattens the results.
 
 ```php
-$categories = Map::of('fruit', 'apple')
-    ->add('vegetable', 'carrot');
+$scores = Map::of('Alice', 95)
+    ->add('Bob', 78);
 
-$expanded = $categories->flatMap(fn($cat, $item) =>
-    Map::of($cat . '_name', $item)
-        ->add($cat . '_count', 1)
+$expanded = $scores->flatMap(fn($name, $score) =>
+    Map::of($name . '_best', $score)
+        ->add($name . '_avg', intdiv($score, 2))
 );
-// Map { 'fruit_name' => 'apple', 'fruit_count' => 1, 'vegetable_name' => 'carrot', 'vegetable_count' => 1 }
+// Map { 'Alice_best' => 95, 'Alice_avg' => 47, 'Bob_best' => 78, 'Bob_avg' => 39 }
 ```
 
 ## Composition
@@ -244,15 +244,15 @@ $expanded = $categories->flatMap(fn($cat, $item) =>
 Merges all key-value pairs from another Map. If both Maps share keys, the values from the other Map take precedence.
 
 ```php
-$defaults = Map::of('host', 'localhost')
-    ->add('port', 3000)
-    ->add('debug', false);
+$defaults = Map::of('Alice', 90)
+    ->add('Bob', 75)
+    ->add('Charlie', 80);
 
-$overrides = Map::of('port', 8080)
-    ->add('debug', true);
+$updates = Map::of('Bob', 82)
+    ->add('Diana', 95);
 
-$config = $defaults->append($overrides);
-// Map { 'host' => 'localhost', 'port' => 8080, 'debug' => true }
+$merged = $defaults->append($updates);
+// Map { 'Alice' => 90, 'Bob' => 82, 'Charlie' => 80, 'Diana' => 95 }
 ```
 
 ### Keys
@@ -280,13 +280,13 @@ $values = $map->values(); // Sequence [1, 2, 3]
 Applies a callback to each key-value pair. Intended for side effects.
 
 ```php
-$config = Map::of('host', 'localhost')
-    ->add('port', 8080);
+$scores = Map::of('Alice', 95)
+    ->add('Bob', 78);
 
-$config->forEach(fn($key, $value) => echo "$key = $value\n");
+$scores->forEach(fn($name, $score) => echo "$name: $score\n");
 // Outputs:
-// host = localhost
-// port = 8080
+// Alice: 95
+// Bob: 78
 ```
 
 ## Aggregation

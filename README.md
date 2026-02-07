@@ -85,27 +85,27 @@ For complete documentation with examples, see [Sequence Documentation](./docs/se
 
 ### Map
 
-A `Map` is an immutable key-value collection with O(1) lookups, supporting both scalar and object keys:
+A `Map` is an immutable, homogeneous key-value collection with O(1) lookups, supporting both scalar and object keys. All values must be of the same type `V`, just like Rust's `HashMap<K, V>`:
 
 ```php
-// Create and manipulate a Map
-$config = Map::of('host', 'localhost')
-    ->add('port', 8080)
-    ->add('debug', true);
+// Create and manipulate a Map (Map<string, int>)
+$scores = Map::of('Alice', 95)
+    ->add('Bob', 78)
+    ->add('Charlie', 92);
 
 // Safe access with Option
-$host = $config->get('host')->unwrapOr('127.0.0.1'); // "localhost"
-$timeout = $config->get('timeout')->unwrapOr(30);     // 30 (default)
+$alice = $scores->get('Alice')->unwrapOr(0);   // 95
+$eve = $scores->get('Eve')->unwrapOr(0);       // 0 (default)
 
 // Transform, filter, fold
-$uppercased = $config
-    ->filter(fn($key, $value) => is_string($value))
-    ->map(fn($key, $value) => strtoupper($value));
+$curved = $scores
+    ->filter(fn($name, $score) => $score >= 80)
+    ->map(fn($name, $score) => $score + 5);
 
-// Merge configurations
-$defaults = Map::of('host', 'localhost')->add('port', 3000);
-$overrides = Map::of('port', 8080)->add('debug', true);
-$merged = $defaults->append($overrides); // overrides take precedence
+// Merge maps
+$defaults = Map::of('Alice', 90)->add('Bob', 75);
+$updates = Map::of('Bob', 82)->add('Diana', 95);
+$merged = $defaults->append($updates); // updates take precedence
 
 // Object keys with identity comparison
 $user = new User('Alice');

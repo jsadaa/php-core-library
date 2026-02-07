@@ -10,8 +10,8 @@ use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 
 /**
- * A collection of key-value pairs where the keys are unique and the values can be of any type.
- * Type safety is enforced via static analysis only - no runtime type checking.
+ * An immutable collection of key-value pairs where keys are unique.
+ * All values must be of the same type V, enforced via static analysis (no runtime type checking).
  *
  * Object keys are stored using spl_object_id() for O(1) lookups.
  * The Map holds strong references to object keys, preventing garbage collection
