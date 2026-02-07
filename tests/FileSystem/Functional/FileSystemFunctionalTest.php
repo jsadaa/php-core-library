@@ -7,6 +7,7 @@ namespace Jsadaa\PhpCoreLibrary\Tests\FileSystem\Functional;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\File;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\FileSystem;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Permissions;
+use Jsadaa\PhpCoreLibrary\Modules\Json\Json;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 use PHPUnit\Framework\TestCase;
@@ -132,12 +133,12 @@ final class FileSystemFunctionalTest extends TestCase
             'features' => ['auth', 'api'],
         ];
 
-        $configJson = \json_encode($initialConfig, \JSON_PRETTY_PRINT);
+        $configJson = Json::encode($initialConfig, \JSON_PRETTY_PRINT)->unwrap();
         $file = File::new($configFile)->unwrap();
         $file->writeAtomic($configJson, true)->unwrap();
 
         $currentConfig = FileSystem::read($configFile)->unwrap();
-        $config = \json_decode($currentConfig->toString(), true);
+        $config = Json::decode($currentConfig->toString())->unwrap();
 
         $this->assertEquals('MyApp', $config['app_name']);
         $this->assertEquals('1.0.0', $config['version']);
@@ -145,12 +146,12 @@ final class FileSystemFunctionalTest extends TestCase
         $config['version'] = '1.1.0';
         $config['features'][] = 'logging';
 
-        $updatedJson = \json_encode($config, \JSON_PRETTY_PRINT);
+        $updatedJson = Json::encode($config, \JSON_PRETTY_PRINT)->unwrap();
         $file = File::from($configFile)->unwrap();
         $file->writeAtomic($updatedJson, true)->unwrap();
 
         $verifyContent = FileSystem::read($configFile)->unwrap();
-        $verifyConfig = \json_decode($verifyContent->toString(), true);
+        $verifyConfig = Json::decode($verifyContent->toString())->unwrap();
 
         $this->assertEquals('1.1.0', $verifyConfig['version']);
         $this->assertContains('logging', $verifyConfig['features']);
@@ -447,11 +448,11 @@ final class FileSystemFunctionalTest extends TestCase
         $configFile = Path::of($this->tempDir . '/config.json');
         $file = File::new($configFile)->unwrap();
 
-        $jsonContent = \json_encode($configData, \JSON_PRETTY_PRINT);
+        $jsonContent = Json::encode($configData, \JSON_PRETTY_PRINT)->unwrap();
         $file->writeAtomic($jsonContent, true)->unwrap();
 
         $readConfig = FileSystem::read($configFile)->unwrap();
-        $decodedConfig = \json_decode($readConfig->toString(), true);
+        $decodedConfig = Json::decode($readConfig->toString())->unwrap();
         $this->assertEquals('localhost', $decodedConfig['database']['host']);
         $this->assertEquals(3600, $decodedConfig['cache']['ttl']);
     }
