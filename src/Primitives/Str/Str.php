@@ -4,10 +4,10 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Primitives\Str;
 
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Pair;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
-use Jsadaa\PhpCoreLibrary\Modules\Collections\Pair;
 use Jsadaa\PhpCoreLibrary\Primitives\Char\Char;
 use Jsadaa\PhpCoreLibrary\Primitives\Double\Double;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;

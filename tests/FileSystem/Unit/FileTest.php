@@ -9,7 +9,6 @@ use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\AlreadyExists;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\CreateFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\FileNotFound;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\InvalidFileType;
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\WriteFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\File;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\FileTimes;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Metadata;
@@ -528,7 +527,7 @@ final class FileTest extends TestCase
 
     public function testWithOpen(): void
     {
-        $result = File::withOpen($this->tempFile, function (File $file): string {
+        $result = File::withOpen($this->tempFile, static function(File $file): string {
             return $file->readAll()->unwrap()->toString();
         });
 
@@ -538,7 +537,7 @@ final class FileTest extends TestCase
 
     public function testWithOpenNonExistentFile(): void
     {
-        $result = File::withOpen($this->tempDir . '/nonExistent.txt', function (File $file): string {
+        $result = File::withOpen($this->tempDir . '/nonExistent.txt', static function(File $file): string {
             return $file->readAll()->unwrap()->toString();
         });
 
@@ -551,7 +550,7 @@ final class FileTest extends TestCase
         $path = $this->tempDir . '/withOpenWrite.txt';
         \file_put_contents($path, '');
 
-        $result = File::withOpen($path, function (File $file): string {
+        $result = File::withOpen($path, static function(File $file): string {
             $file->write('written via withOpen')->unwrap();
 
             return $file->readAll()->unwrap()->toString();

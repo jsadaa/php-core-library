@@ -43,6 +43,14 @@ final class File
         $this->path = $path;
     }
 
+    /**
+     * Safety net: close the handle if not explicitly closed.
+     */
+    public function __destruct()
+    {
+        $this->close();
+    }
+
     // --- Factories ---
 
     /**
@@ -494,14 +502,6 @@ final class File
         if (\is_resource($this->handle)) {
             \fclose($this->handle);
         }
-    }
-
-    /**
-     * Safety net: close the handle if not explicitly closed.
-     */
-    public function __destruct()
-    {
-        $this->close();
     }
 
     // --- Scoped pattern ---
