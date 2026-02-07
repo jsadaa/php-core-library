@@ -1,9 +1,8 @@
 # FileSystem Module
 
-> [!NOTE]
-> **Design Philosophy**: This module separates one-shot operations (`FileSystem` static methods) from handle-based streaming (`File` class). `FileSystem` uses `file_get_contents` / `file_put_contents` for simple read/write, while `File` wraps a persistent OS file handle for streaming, seeking, and atomic writes. This mirrors the Rust separation between `std::fs` free functions and `std::fs::File`.
+This module separates one-shot operations (`FileSystem` static methods) from handle-based streaming (`File` class). `FileSystem` uses `file_get_contents` / `file_put_contents` for simple read/write, while `File` wraps a persistent OS file handle for streaming, seeking, and atomic writes. This mirrors the Rust separation between `std::fs` free functions and `std::fs::File`.
 
-The FileSystem module provides types and operations for safely handling files, directories, and filesystem metadata. It offers type-safe error handling via Result types.
+The FileSystem module provides types and operations for safely handling files, directories, and filesystem metadata. All potentially failing operations return `Result` types, enabling monadic composition with `andThen`, `map`, `orElse`, and `mapErr`.
 
 ## Table of Contents
 
@@ -17,21 +16,16 @@ The FileSystem module provides types and operations for safely handling files, d
 
 ## File
 
-> [!IMPORTANT]
-> `File` wraps a mutable OS file handle. It is intentionally NOT immutable, following the same pattern as `Process`. The handle remains open until `close()` is called or the object is destroyed.
-
-The `File` class represents an open file handle for streaming and complex operations.
+`File` wraps a mutable OS file handle. It is intentionally not immutable, following the same pattern as `Process`. The handle remains open until `close()` is called or the object is garbage-collected. All methods that accept a path argument accept both `string` and `Path` objects.
 
 ### Creation
 
 #### Open
 
-> [!TIP]
-> Accepts both string paths and Path objects. The file must exist and be a regular file.
-
-Opens an existing file for reading and writing.
+Opens an existing file for reading and writing. The file must exist and be a regular file.
 
 ```php
+// Imperative style
 $result = File::open('/etc/hosts');
 
 if ($result->isOk()) {
@@ -46,12 +40,17 @@ $path = Path::of('/etc/hosts');
 $file = File::open($path)->unwrap();
 ```
 
+Monadic chaining -- open, read, and transform in a single pipeline:
+
+```php
+$upper = File::withOpen('/etc/hosts', fn(File $f) =>
+    $f->readAll()->map(fn(Str $c) => $c->toUppercase())
+)->andThen(fn(Result $r) => $r);
+```
+
 #### Create
 
-> [!IMPORTANT]
-> The parent directory must exist. Fails if the file already exists (exclusive create).
-
-Creates a new empty file for reading and writing.
+Creates a new empty file for reading and writing. The parent directory must exist. Fails with `AlreadyExists` if the file already exists (exclusive create).
 
 ```php
 $result = File::create('/path/to/file.txt');
@@ -76,6 +75,22 @@ echo $content->toString();
 $file->close();
 ```
 
+Chaining open and read into a transformation:
+
+```php
+// Open -> read -> transform content
+$lineCount = File::withOpen('/path/to/data.txt', fn(File $f) =>
+    $f->readAll()->map(fn(Str $c) => $c->lines()->size())
+);
+
+// Open -> read -> parse JSON via andThen
+$config = File::withOpen('/path/to/config.json', fn(File $f) =>
+    $f->readAll()
+        ->map(fn(Str $c) => $c->toString())
+        ->andThen(fn(string $json) => Json::decode($json))
+);
+```
+
 #### Read Line
 
 Reads a single line from the current position. Returns `Option::none()` when EOF is reached.
@@ -98,10 +113,7 @@ $file->close();
 
 #### Read Chunk
 
-> [!TIP]
-> Ideal for processing large files in chunks without loading everything into memory.
-
-Reads a chunk of bytes from the current position. May return fewer bytes than requested if EOF is reached.
+Reads a chunk of bytes from the current position. May return fewer bytes than requested if EOF is reached. This is the preferred approach for processing large files without loading the entire content into memory.
 
 ```php
 $file = File::open('/path/to/large-file.bin')->unwrap();
@@ -122,18 +134,15 @@ $file->close();
 
 #### Bytes
 
-> [!CAUTION]
-> Creates a Sequence containing one Integer per byte. For large files, this can use significant memory.
-
-Reads the entire file as a Sequence of byte values (0-255). Rewinds to the start and reads all content.
+Reads the entire file as a `Result<Sequence<int>, ReadFailed>`. Each element is a native `int` in the range 0--255. Rewinds to the start and reads all content. For large files, prefer `readChunk()` to avoid holding every byte in memory simultaneously.
 
 ```php
 $file = File::open('/path/to/image.jpg')->unwrap();
 $bytes = $file->bytes()->unwrap();
 
-// Check file signature
-$first = $bytes->get(0)->unwrap()->toInt();
-$second = $bytes->get(1)->unwrap()->toInt();
+// Check JPEG file signature
+$first = $bytes->get(0)->unwrap();
+$second = $bytes->get(1)->unwrap();
 
 if ($first === 0xFF && $second === 0xD8) {
     echo 'This is a JPEG image';
@@ -142,11 +151,18 @@ if ($first === 0xFF && $second === 0xD8) {
 $file->close();
 ```
 
+If you need `Integer` wrappers for interoperability with APIs expecting them, map over the sequence:
+
+```php
+$integers = $file->bytes()
+    ->map(fn(Sequence $seq) => $seq->map(fn(int $b) => Integer::of($b)));
+```
+
 ### Writing Operations
 
 #### Write
 
-Writes data at the current position. Returns the number of bytes written.
+Writes data at the current position. Accepts both `string` and `Str` values. Returns the number of bytes written as `Result<Integer, WriteFailed>`.
 
 ```php
 $file = File::create('/path/to/output.txt')->unwrap();
@@ -161,7 +177,7 @@ $file->close();
 
 #### Append
 
-Seeks to end of file, then writes data. Returns the number of bytes written.
+Seeks to end of file, then writes data. Returns the number of bytes written as `Result<Integer, WriteFailed>`.
 
 ```php
 $file = File::open('/var/log/app.log')->unwrap();
@@ -172,9 +188,7 @@ $file->close();
 #### Write Atomic
 
 > [!IMPORTANT]
-> Provides atomicity via temp-file + rename. Either the entire write succeeds or the original file remains unchanged.
-
-Replaces the entire file content atomically. The handle is reopened after the rename.
+> Provides atomicity via temp-file + rename. Either the entire write succeeds or the original file remains unchanged. The handle is reopened after the rename.
 
 ```php
 $file = File::open('/path/to/config.json')->unwrap();
@@ -248,7 +262,7 @@ $file->close();
 
 #### Metadata
 
-Gets a metadata snapshot for this file.
+Gets a metadata snapshot for this file. See the [Metadata](#metadata) section for details on the returned object.
 
 ```php
 $file = File::open('/path/to/document.txt')->unwrap();
@@ -259,6 +273,14 @@ if ($metadata->isFile()) {
 }
 
 $file->close();
+```
+
+Chaining metadata retrieval:
+
+```php
+$sizeInKb = File::withOpen('/path/to/doc.txt', fn(File $f) =>
+    $f->metadata()->map(fn(Metadata $m) => $m->size()->toInt() / 1024)
+);
 ```
 
 #### Set Permissions
@@ -284,9 +306,9 @@ $file->close();
 #### Set Times
 
 > [!WARNING]
-> Creation time setting only works on Windows and macOS. On Linux, this timestamp is ignored.
+> Creation time (`setCreated`) only takes effect on Windows and macOS. On Linux, this timestamp is silently ignored.
 
-Sets multiple timestamps at once.
+Sets multiple timestamps at once. `FileTimes` uses an immutable builder pattern where each setter returns a new instance.
 
 ```php
 $now = SystemTime::now();
@@ -303,7 +325,7 @@ $file->close();
 
 #### Close
 
-Closes the file handle. Can be called multiple times safely.
+Closes the file handle. Can be called multiple times safely (subsequent calls are no-ops). The destructor also closes the handle as a safety net, but explicit `close()` is preferred.
 
 ```php
 $file = File::open('/path/to/file.txt')->unwrap();
@@ -312,12 +334,9 @@ $file->close();
 $file->close(); // Safe, no-op
 ```
 
-> [!NOTE]
-> The destructor (`__destruct`) also closes the handle as a safety net, but explicit `close()` is recommended.
-
 #### With Open (Scoped Pattern)
 
-Opens a file, passes it to a callback, and closes it automatically.
+Opens a file, passes it to a callback, and closes it automatically. This is the recommended pattern for short-lived file operations because it guarantees cleanup.
 
 ```php
 $result = File::withOpen('/path/to/data.txt', function (File $file): string {
@@ -329,25 +348,42 @@ if ($result->isOk()) {
 }
 ```
 
+Monadic style with `withOpen`:
+
+```php
+// Read and transform in one expression
+$upper = File::withOpen('/path/to/data.txt', fn(File $f) =>
+    $f->readAll()->map(fn(Str $c) => $c->toUppercase()->toString())
+)->andThen(fn(Result $r) => $r);
+```
+
 ## FileSystem
 
-> [!NOTE]
-> Provides static methods for one-shot filesystem operations. Uses `file_get_contents` / `file_put_contents` internally for simple read/write (no delegation to `File`). For streaming or complex operations, use `File` directly.
-
-The `FileSystem` class provides static methods for file and directory operations.
+The `FileSystem` class provides static methods for one-shot filesystem operations. It uses `file_get_contents` / `file_put_contents` internally for simple read/write, with no delegation to `File`. For streaming or complex multi-step operations on the same file, use `File` directly. All path parameters accept both `string` and `Path` objects.
 
 ### Reading Operations
 
 #### Read
 
-Reads file contents as a Str.
+Reads file contents as a `Result<Str, FileNotFound|ReadFailed|InvalidFileType>`.
+
+```php
+// Monadic pipeline: read -> transform -> chain
+$lineCount = FileSystem::read('/etc/hosts')
+    ->map(fn(Str $content) => $content->lines()->size()->toInt());
+
+// With fallback via orElse
+$content = FileSystem::read('/etc/hosts.local')
+    ->orElse(fn() => FileSystem::read('/etc/hosts'));
+```
+
+Imperative style:
 
 ```php
 $result = FileSystem::read('/etc/hosts');
 
 if ($result->isOk()) {
     $content = $result->unwrap();
-
     $lines = $content->lines();
     echo 'Lines: ' . $lines->size()->toInt();
 }
@@ -355,26 +391,27 @@ if ($result->isOk()) {
 
 #### Read Bytes
 
-> [!CAUTION]
-> Each byte becomes an `Integer` object, resulting in significant memory overhead.
-
-Reads file contents as a Sequence of bytes.
+Reads file contents as a `Result<Sequence<int>, FileNotFound|ReadFailed|InvalidFileType>`. Each element is a native `int` in the range 0--255.
 
 ```php
 $bytes = FileSystem::readBytes('/path/to/image.jpg')->unwrap();
 
-$first = $bytes->get(0)->unwrap()->toInt();
+$first = $bytes->get(0)->unwrap();
 if ($first === 0x89) {
     echo 'Likely a PNG file';
 }
 ```
 
+If you need `Integer` wrappers:
+
+```php
+$integers = FileSystem::readBytes('/path/to/file.bin')
+    ->map(fn(Sequence $seq) => $seq->map(fn(int $b) => Integer::of($b)));
+```
+
 #### Read Directory
 
-> [!NOTE]
-> Returns `Sequence<Path>`. Automatically excludes `.` and `..` entries.
-
-Reads directory contents.
+Reads directory contents as a `Sequence<Path>`, automatically excluding `.` and `..` entries.
 
 ```php
 $entries = FileSystem::readDir('/var/log')->unwrap();
@@ -411,7 +448,7 @@ echo 'Points to: ' . $target->toString();
 
 #### Write
 
-Writes content to a file. Creates the file if it doesn't exist, overwrites if it does.
+Writes content to a file. Creates the file if it does not exist, overwrites if it does.
 
 ```php
 $result = FileSystem::write('/path/to/test.txt', 'Hello, world!');
@@ -421,14 +458,19 @@ if ($result->isErr()) {
 }
 ```
 
+Chaining a read-modify-write cycle:
+
+```php
+$result = FileSystem::read('/path/to/data.txt')
+    ->map(fn(Str $c) => $c->toUppercase())
+    ->andThen(fn(Str $c) => FileSystem::write('/path/to/data.txt', $c));
+```
+
 ### File Operations
 
 #### Copy File
 
-> [!NOTE]
-> Uses PHP's native `copy()`, which handles streaming without loading the full content into memory. Overwrites the destination if it exists.
-
-Copies a file.
+Copies a file using PHP's native `copy()`, which streams the content without loading it entirely into memory. Overwrites the destination if it already exists.
 
 ```php
 FileSystem::copyFile('/path/to/source.txt', '/path/to/destination.txt')->unwrap();
@@ -444,10 +486,7 @@ FileSystem::renameFile('/path/to/old.txt', '/path/to/new.txt')->unwrap();
 
 #### Remove File
 
-> [!CAUTION]
-> Permanently deletes the file. Does not move to trash.
-
-Removes a file.
+Permanently deletes the file. This does not move the file to a trash folder.
 
 ```php
 FileSystem::removeFile('/path/to/unwanted.txt')->unwrap();
@@ -490,9 +529,7 @@ if ($result->isErr()) {
 #### Remove Directory All
 
 > [!CAUTION]
-> Permanently and recursively deletes all contents. Equivalent to `rm -rf`.
-
-Removes a directory and all its contents.
+> Permanently and recursively deletes all contents. Equivalent to `rm -rf`. There is no undo.
 
 ```php
 FileSystem::removeDirAll('/path/to/directory')->unwrap();
@@ -536,6 +573,18 @@ echo 'Size: ' . $metadata->size()->toInt() . ' bytes';
 echo 'Modified: ' . date('Y-m-d H:i:s', $metadata->modified()->seconds()->toInt());
 ```
 
+Chaining metadata retrieval with transformation:
+
+```php
+$isLarge = FileSystem::metadata('/path/to/file.bin')
+    ->map(fn(Metadata $m) => $m->size()->toInt() > 1_000_000);
+
+// Retrieve permissions, falling back to a default
+$perms = FileSystem::metadata('/path/to/file.txt')
+    ->map(fn(Metadata $m) => $m->permissions())
+    ->orElse(fn() => Result::ok(Permissions::create(0644)));
+```
+
 #### Set Permissions
 
 Sets permissions on a path.
@@ -546,10 +595,7 @@ FileSystem::setPermissions('/path/to/file.txt', Permissions::create(0644))->unwr
 
 ## FileTimes
 
-> [!NOTE]
-> Uses an immutable builder pattern where each setter returns a new FileTimes instance.
-
-The `FileTimes` class represents the various timestamps that can be set on a file.
+The `FileTimes` class represents the various timestamps that can be set on a file. It uses an immutable builder pattern: each setter returns a new `FileTimes` instance, leaving the original unchanged.
 
 ### Creation
 
@@ -580,12 +626,24 @@ $times->accessed()->isSome(); // false
 $times->created()->isSome();  // false
 ```
 
+Chaining with Option:
+
+```php
+$modifiedEpoch = $times->modified()
+    ->map(fn(SystemTime $t) => $t->seconds()->toInt());
+
+$modifiedEpoch->match(
+    fn(int $ts) => date('Y-m-d H:i:s', $ts),
+    fn() => 'No modification time set',
+);
+```
+
 ## FileType
 
-> [!IMPORTANT]
-> `FileType` is a PHP native enum. If a path is a symlink, it reports `Symlink` regardless of the link target.
+`FileType` is a PHP native enum representing the type of a filesystem entry. It is determined via `lstat`-level checks.
 
-The `FileType` enum represents the type of a filesystem entry.
+> [!IMPORTANT]
+> If a path is a symlink, `FileType::of()` reports `Symlink` regardless of the link target. To inspect the target type, resolve the symlink first with `FileSystem::readSymlink()`.
 
 ### Creation
 
@@ -617,10 +675,10 @@ FileType::Symlink
 
 ## Metadata
 
-> [!IMPORTANT]
-> `Metadata` is an immutable snapshot taken via a single `lstat()` call. All properties reflect the filesystem state at the time of creation — they do not update if the file changes.
+`Metadata` is an immutable snapshot taken via a single `lstat()` call. All properties reflect the filesystem state at the time of creation and do not update if the underlying file changes afterward.
 
-The `Metadata` class represents a point-in-time snapshot of file metadata.
+> [!IMPORTANT]
+> Because `Metadata` is a point-in-time snapshot, properties may become stale. If you need fresh data, call `Metadata::of()` again.
 
 ### Creation
 
@@ -631,6 +689,18 @@ if ($result->isOk()) {
     $metadata = $result->unwrap();
     echo 'Type: ' . ($metadata->isFile() ? 'file' : 'directory');
 }
+```
+
+Monadic style:
+
+```php
+$fileSize = Metadata::of('/etc/hosts')
+    ->map(fn(Metadata $m) => $m->size()->toInt());
+
+// Chain into further operations
+$isRecent = Metadata::of('/var/log/syslog')
+    ->map(fn(Metadata $m) => $m->modified()->seconds()->toInt())
+    ->map(fn(int $ts) => $ts > time() - 3600);
 ```
 
 ### Properties
@@ -703,7 +773,7 @@ $perms->apply('/path/to/file.txt')->unwrap();
 
 ## Error Handling
 
-All potentially failing operations return `Result` types. Error types in `Error/`:
+All potentially failing operations return `Result` types. The error types reside in the `Error/` namespace:
 
 | Error | When |
 |---|---|
@@ -725,8 +795,9 @@ All potentially failing operations return `Result` types. Error types in `Error/
 
 ### Patterns
 
+#### Imperative (if/else)
+
 ```php
-// Using if/else
 $result = FileSystem::read('/path/to/file.txt');
 
 if ($result->isOk()) {
@@ -734,17 +805,71 @@ if ($result->isOk()) {
 } else {
     echo 'Error: ' . $result->unwrapErr()->getMessage();
 }
+```
 
-// Using match
+#### Pattern Matching (match)
+
+```php
 $content = FileSystem::read('/path/to/file.txt')->match(
     fn(Str $content) => $content->toString(),
     fn(\Exception $error) => 'Error: ' . $error->getMessage(),
 );
+```
 
-// Using andThen for chaining
-$result = FileSystem::read('/path/to/config.json')
+#### Monadic Chaining (andThen, map)
+
+`map` transforms the success value without changing the Result wrapper. `andThen` chains into another operation that itself returns a Result, flattening the nesting.
+
+```php
+// map: transform the Ok value
+$lineCount = FileSystem::read('/path/to/file.txt')
+    ->map(fn(Str $content) => $content->lines()->size()->toInt());
+
+// andThen: chain into another Result-returning operation
+$config = FileSystem::read('/path/to/config.json')
     ->map(fn(Str $content) => $content->toString())
     ->andThen(fn(string $json) => Json::decode($json));
+```
+
+#### Error Recovery (orElse)
+
+`orElse` provides a fallback when the initial operation fails. The callback receives the error and must return a new Result.
+
+```php
+// Try primary path, fall back to secondary
+$content = FileSystem::read('/etc/app/config.local.json')
+    ->orElse(fn() => FileSystem::read('/etc/app/config.json'));
+```
+
+#### Error Transformation (mapErr)
+
+`mapErr` transforms the error value while leaving Ok values untouched. This is useful for unifying error types or adding context.
+
+```php
+$result = FileSystem::read('/path/to/file.txt')
+    ->mapErr(fn(\Exception $e) => new \RuntimeException(
+        'Configuration load failed: ' . $e->getMessage(),
+        previous: $e,
+    ));
+```
+
+#### Combined Pipeline
+
+A complete example combining multiple combinators:
+
+```php
+$settings = FileSystem::read('/etc/app/settings.json')
+    ->orElse(fn() => FileSystem::read('/etc/app/settings.defaults.json'))
+    ->map(fn(Str $content) => $content->toString())
+    ->andThen(fn(string $json) => Json::decode($json))
+    ->mapErr(fn(\Exception $e) => new \RuntimeException(
+        'Failed to load settings: ' . $e->getMessage(),
+        previous: $e,
+    ))
+    ->match(
+        fn(array $config) => $config,
+        fn(\RuntimeException $e) => throw $e,
+    );
 ```
 
 ### Architecture

@@ -274,12 +274,19 @@ $repeated = $str->repeat(3); // 'abcabcabc'
 
 ### Get
 
-Gets the character at the specified index.
+Gets the character at the specified index. Returns `Option<Str>`.
 
 ```php
 $str = Str::of('Hello');
 $char = $str->get(1); // Option::some('e')
 $outOfBounds = $str->get(10); // Option::none()
+
+// Chaining: get character and transform
+$upper = Str::of('hello')->get(0)
+    ->map(fn(Str $c) => $c->toUppercase()); // Option::some(Str::of('H'))
+
+// Default value
+$safe = Str::of('')->get(0)->unwrapOr(Str::of('?')); // Str::of('?')
 ```
 
 ### Get Range
@@ -366,12 +373,17 @@ $endsWith = $str->endsWith('Hello'); // false
 
 ### Find
 
-Finds the index of the first occurrence of a substring.
+Finds the index of the first occurrence of a substring. Returns `Option<Integer>`.
 
 ```php
 $str = Str::of('Hello World');
 $index = $str->find('World'); // Option::some(6)
 $notFound = $str->find('PHP'); // Option::none()
+
+// Chaining: find position, then extract substring
+$after = Str::of('key=value')->find('=')
+    ->map(fn(Integer $pos) => Str::of('key=value')->skip($pos->toInt() + 1));
+    // Option::some(Str::of('value'))
 ```
 
 ### Matches
@@ -512,6 +524,21 @@ $result = $str->parseInteger(); // Result::ok(Integer::of(123))
 
 $str = Str::of('abc');
 $result = $str->parseInteger(); // Result::err(...)
+
+// Chaining: parse and compute
+$doubled = Str::of('21')
+    ->parseInteger()
+    ->map(fn(Integer $n) => $n->mul(2)); // Result::ok(Integer::of(42))
+
+// Chaining: parse, then divide (Result -> Result)
+$half = Str::of('100')
+    ->parseInteger()
+    ->andThen(fn(Integer $n) => $n->div(2)); // Result::ok(Integer::of(50))
+
+// Fallback with orElse
+$value = Str::of('invalid')
+    ->parseInteger()
+    ->orElse(fn() => Result::ok(Integer::of(0))); // Result::ok(Integer::of(0))
 ```
 
 ### Parse Double
@@ -524,6 +551,11 @@ $result = $str->parseDouble(); // Result::ok(Double::of(3.14))
 
 $str = Str::of('abc');
 $result = $str->parseDouble(); // Result::err(...)
+
+// Chaining: parse and transform
+$rounded = Str::of('3.14159')
+    ->parseDouble()
+    ->map(fn(Double $d) => $d->round()); // Result::ok(Double::of(3.0))
 ```
 
 ### Parse Bool
@@ -600,4 +632,14 @@ The Str class uses the Option and Result types for error handling:
 - Parsing methods (like `parseInteger()`) return a `Result<T, E>` type
 - Methods that modify the string return a new `Str` instance
 
-This approach provides type-safe error handling without exceptions for most operations.
+This enables monadic chaining across operations:
+
+```php
+// Cross-module pipeline: read file, find a key, parse its value
+$port = FileSystem::read('/etc/config')
+    ->map(fn(Str $content) => $content->lines())
+    ->map(fn(Sequence $lines) => $lines->find(fn(Str $l) => $l->startsWith('port=')))
+    ->andThen(fn(Option $line) => $line->okOr(new \RuntimeException('Key not found')))
+    ->map(fn(Str $line) => $line->skip(5))
+    ->andThen(fn(Str $val) => $val->parseInteger());
+```

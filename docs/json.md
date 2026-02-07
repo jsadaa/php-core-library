@@ -128,10 +128,28 @@ All error types extend `RuntimeException` and include the underlying PHP JSON er
 | `ValidationError` | `json_validate` failure | `Json validation error : Syntax error` |
 
 ```php
+// Using match
 $result = Json::decode($untrustedInput);
 
 $result->match(
     fn(mixed $data) => processData($data),
     fn(DecodingError $error) => logError($error->getMessage()),
 );
+
+// Chaining: validate then decode
+$data = Json::validate($input)
+    ->andThen(fn() => Json::decode($input));
+
+// Chaining: decode then encode (round-trip transform)
+$pretty = Json::decode($compact)
+    ->andThen(fn(mixed $data) => Json::encode($data, \JSON_PRETTY_PRINT));
+
+// Cross-module: read file then decode JSON
+$config = FileSystem::read('/etc/app/config.json')
+    ->map(fn(Str $s) => $s->toString())
+    ->andThen(fn(string $json) => Json::decode($json));
+
+// mapErr to normalize error types
+$data = Json::decode($input)
+    ->mapErr(fn(DecodingError $e) => new \RuntimeException('Invalid config: ' . $e->getMessage()));
 ```

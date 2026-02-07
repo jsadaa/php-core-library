@@ -163,6 +163,16 @@ $int = Integer::of(10);
 $resultDiv = $int->div(2); // Result::ok(Integer::of(5))
 $resultDiv = $int->div(Integer::of(3)); // Result::ok(Integer::of(3)) - integer division
 $resultErr = $int->div(0); // Result::err(new \InvalidArgumentException('Division by zero'))
+
+// Chaining divisions with andThen
+$result = Integer::of(100)
+    ->div(2)
+    ->andThen(fn(Integer $n) => $n->div(5)); // Result::ok(Integer::of(10))
+
+// Map the result
+$doubled = Integer::of(100)
+    ->div(3)
+    ->map(fn(Integer $n) => $n->mul(2)); // Result::ok(Integer::of(66))
 ```
 
 ### Division with Floor
@@ -528,12 +538,20 @@ The Integer class uses the Result type for operations that may fail:
 1. Division operations return `Result<Integer, InvalidArgumentException>` to handle division by zero
 2. Overflow-checking operations return `Result<Integer, OverflowException>` to handle integer overflow
 
-This approach allows for clean error handling without exceptions:
-
 ```php
+// Using match
 $result = Integer::of(10)->div(0);
 $quotient = $result->match(
     fn($value) => "Result: $value",
     fn($error) => "Error: {$error->getMessage()}"
 ); // "Error: Division by zero"
+
+// Chaining: divide then check overflow
+$safe = Integer::of(PHP_INT_MAX)
+    ->div(2)
+    ->andThen(fn(Integer $n) => $n->overflowingAdd(1)); // Result::ok(...)
+
+// Fallback with orElse
+$ratio = Integer::of(100)->div($userInput)
+    ->orElse(fn() => Result::ok(Integer::of(0))); // safe default on division by zero
 ```

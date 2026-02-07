@@ -173,6 +173,16 @@ $double = Double::of(10.0);
 $result1 = $double->div(2.0); // Result::ok(Double::of(5.0))
 $result2 = $double->div(Double::of(5.0)); // Result::ok(Double::of(2.0))
 $error = $double->div(0.0); // Result::err(\InvalidArgumentException)
+
+// Chaining divisions
+$result = Double::of(100.0)
+    ->div(3.0)
+    ->andThen(fn(Double $d) => $d->div(2.0)); // Result::ok(Double::of(16.666...))
+
+// Map after division
+$percentage = Double::of(75.0)
+    ->div(200.0)
+    ->map(fn(Double $d) => $d->mul(100.0)); // Result::ok(Double::of(37.5))
 ```
 
 ### Absolute Value
@@ -644,12 +654,15 @@ The Double class uses the Result type for operations that may fail:
 - Division by zero returns `Result<Double, InvalidArgumentException>`
 - Mathematical functions with invalid inputs (like negative square root) handle errors appropriately
 
-This approach allows for clean error handling without exceptions:
-
 ```php
+// Using match
 $result = Double::of(10.0)->div(0.0);
 $quotient = $result->match(
     fn($value) => "Result: {$value->toFloat()}",
     fn($error) => "Error: {$error->getMessage()}"
 ); // "Error: Division by zero"
+
+// Fallback with orElse
+$ratio = Double::of(100.0)->div($divisor)
+    ->orElse(fn() => Result::ok(Double::of(0.0)));
 ```

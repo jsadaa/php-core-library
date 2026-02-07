@@ -264,9 +264,17 @@ $unique = $seq->unique(); // Sequence [1, 2, 3, 4]
 Gets an element from the collection at the given index. Returns an Option containing the element if the index is valid, or None if the index is out of bounds.
 
 ```php
-$seq = Sequence::of("apple", "banana", "cherry");
-$second = $seq->get(1); // Option::some("banana")
+$seq = Sequence::of(Str::of('apple'), Str::of('banana'), Str::of('cherry'));
+$second = $seq->get(1); // Option::some(Str::of('banana'))
 $outOfBounds = $seq->get(10); // Option::none()
+
+// Chaining: get and transform
+$upper = $seq->get(0)
+    ->map(fn(Str $s) => $s->toUppercase()); // Option::some(Str::of('APPLE'))
+
+// Convert to Result for error propagation
+$item = $seq->get(10)
+    ->okOr(new \OutOfBoundsException('Index out of range')); // Result::err(...)
 ```
 
 ### First
@@ -274,11 +282,16 @@ $outOfBounds = $seq->get(10); // Option::none()
 Returns the first element of the collection. If the collection is empty, returns None.
 
 ```php
-$seq = Sequence::of("apple", "banana", "cherry");
-$first = $seq->first(); // Option::some("apple")
+$seq = Sequence::of(Str::of('apple'), Str::of('banana'), Str::of('cherry'));
+$first = $seq->first(); // Option::some(Str::of('apple'))
 
 $empty = Sequence::new();
 $noFirst = $empty->first(); // Option::none()
+
+// Chaining: filter then take first
+$firstLong = $seq->filter(fn(Str $s) => $s->size()->gt(5))
+    ->first()
+    ->map(fn(Str $s) => $s->toUppercase()); // Option::some(Str::of('BANANA'))
 ```
 
 ### Last
@@ -286,8 +299,8 @@ $noFirst = $empty->first(); // Option::none()
 Returns the last element of the collection. If the collection is empty, returns None.
 
 ```php
-$seq = Sequence::of("apple", "banana", "cherry");
-$last = $seq->last(); // Option::some("cherry")
+$seq = Sequence::of(Str::of('apple'), Str::of('banana'), Str::of('cherry'));
+$last = $seq->last(); // Option::some(Str::of('cherry'))
 
 $empty = Sequence::new();
 $noLast = $empty->last(); // Option::none()
@@ -300,9 +313,17 @@ $noLast = $empty->last(); // Option::none()
 Finds the first element in the collection that satisfies the given predicate. Returns an Option containing the first matching element, or None if no element matches.
 
 ```php
-$seq = Sequence::of(1, 2, 3, 4, 5);
-$found = $seq->find(fn($n) => $n > 3); // Option::some(4)
-$notFound = $seq->find(fn($n) => $n > 10); // Option::none()
+$seq = Sequence::of(Integer::of(1), Integer::of(2), Integer::of(3), Integer::of(4), Integer::of(5));
+$found = $seq->find(fn(Integer $n) => $n->gt(3)); // Option::some(Integer::of(4))
+$notFound = $seq->find(fn(Integer $n) => $n->gt(10)); // Option::none()
+
+// Chaining: find and transform
+$doubled = $seq->find(fn(Integer $n) => $n->gt(3))
+    ->map(fn(Integer $n) => $n->mul(2)); // Option::some(Integer::of(8))
+
+// Chaining: find or error
+$result = $seq->find(fn(Integer $n) => $n->gt(10))
+    ->okOr(new \RuntimeException('No match')); // Result::err(...)
 ```
 
 ### Find Map

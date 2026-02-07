@@ -1,9 +1,6 @@
 # Process Module
 
-> [!NOTE]
-> **Design Philosophy**: This module provides a safe, immutable-where-possible API for spawning and managing OS processes. It follows Rust's `std::process` patterns: commands are built immutably, shell interpretation is bypassed for security, and all I/O is wrapped in `Result` types. Classes that hold mutable OS resources (`Process`, `StreamReader`, `StreamWriter`) are intentionally not marked `@psalm-immutable`.
-
-The Process module provides types for spawning child processes, configuring their I/O streams, building command pipelines, and collecting output with timeout support. All operations use typed error classes instead of raw strings.
+The Process module provides a safe, immutable-where-possible API for spawning and managing OS processes. Commands are built immutably following Rust's `std::process` patterns, shell interpretation is bypassed by default for security, and all I/O is wrapped in `Result` types. Classes that hold mutable OS resources (`Process`, `StreamReader`, `StreamWriter`) are intentionally not marked `@psalm-immutable`. The module covers child process spawning, I/O stream configuration, command pipelines, and output collection with timeout support. All operations use typed error classes instead of raw strings.
 
 ## Table of Contents
 
@@ -25,10 +22,7 @@ The Process module provides types for spawning child processes, configuring thei
 
 ## Command
 
-> [!TIP]
-> `Command` is the recommended entry point for most use cases. It provides a high-level, fluent API that wraps `ProcessBuilder` with sensible defaults (30s timeout, default pipes, current working directory).
-
-The `Command` class provides a high-level, immutable API for executing system commands.
+`Command` is the recommended entry point for most use cases. It provides a high-level, immutable, fluent API that wraps `ProcessBuilder` with sensible defaults (30-second timeout, default pipes, current working directory).
 
 ### Creation
 
@@ -81,6 +75,9 @@ $cmd = Command::of('make')
 
 Executes the command and returns the full `Output` on success, or an error on failure.
 
+> [!IMPORTANT]
+> `run()` returns `Result<Output, Output|...>`. When the process exits with a non-zero code, the error variant contains the `Output` object itself (with stdout and stderr), allowing inspection of output even on failure.
+
 ```php
 $result = Command::of('echo')
     ->withArg('hello')
@@ -96,8 +93,18 @@ $result->match(
 );
 ```
 
-> [!IMPORTANT]
-> `run()` returns `Result<Output, Output|...>`. When the process exits with a non-zero code, the error variant contains the `Output` object itself (with stdout and stderr). This lets you inspect the output even on failure.
+Monadic composition on the result:
+
+```php
+// Chain on success: extract and transform output
+$lines = Command::of('ls')->withArg('-la')->run()
+    ->map(fn(Output $o) => $o->stdout())
+    ->map(fn(Str $s) => $s->lines());
+
+// andThen: run command then decode its output
+$config = Command::of('cat')->withArg('config.json')->output()
+    ->andThen(fn(Str $content) => Json::decode($content->toString()));
+```
 
 #### output()
 
@@ -111,9 +118,22 @@ if ($result->isOk()) {
 }
 ```
 
+Monadic composition:
+
+```php
+// Transform output
+$version = Command::of('php')->withArg('--version')->output()
+    ->map(fn(Str $s) => $s->lines()->first())
+    ->andThen(fn(Option $first) => $first->okOr(new \RuntimeException('No output')));
+
+// Fallback with orElse
+$content = Command::of('cat')->withArg('/etc/app.conf')->output()
+    ->orElse(fn() => Command::of('cat')->withArg('/etc/app.conf.default')->output());
+```
+
 #### spawn()
 
-Starts the process without waiting for completion. Returns a `Process` handle.
+Starts the process without waiting for completion. Returns a `Process` handle. Pipeline commands cannot use `spawn()`; use `run()` or `output()` instead.
 
 ```php
 $result = Command::of('sleep')
@@ -128,8 +148,14 @@ if ($result->isOk()) {
 }
 ```
 
-> [!NOTE]
-> `spawn()` cannot be used on pipeline commands. Use `run()` for pipelines.
+Monadic composition with spawn and output collection:
+
+```php
+$result = Command::of('grep')->withArg('-r')->withArg('TODO')->withArg('src/')
+    ->spawn()
+    ->andThen(fn(Process $p) => $p->output(Duration::fromSeconds(10)))
+    ->map(fn(Output $o) => $o->stdout()->lines()->size());
+```
 
 ### I/O Redirection
 
@@ -152,10 +178,7 @@ $cmd = Command::of('cat')->withStreams(ProcessStreams::defaults());
 
 ## ProcessBuilder
 
-> [!NOTE]
-> `ProcessBuilder` is the lower-level API used internally by `Command`. Use it directly when you need fine-grained control over process configuration.
-
-The `ProcessBuilder` class is an immutable builder for creating processes.
+`ProcessBuilder` is the lower-level API used internally by `Command`. Use it directly when you need fine-grained control over process configuration that `Command` does not expose.
 
 ### Creation and Configuration
 
@@ -197,6 +220,8 @@ $builder = ProcessBuilder::command('env')
 
 ### Spawning
 
+`ProcessBuilder` uses `bypass_shell => true` with array command format, executing the command directly without shell interpretation. This prevents shell injection attacks; arguments are passed as-is to the process.
+
 ```php
 $result = $builder->spawn();
 
@@ -210,15 +235,12 @@ $result->match(
 );
 ```
 
-> [!NOTE]
-> **Security**: `ProcessBuilder` uses `bypass_shell => true` with array command format. This means the command is executed directly without shell interpretation, preventing shell injection attacks. Arguments are passed as-is to the process.
-
 ## Process
 
 The `Process` class represents a running or finished OS process. It holds mutable resources (process handle, pipe file descriptors).
 
 > [!CAUTION]
-> `Process` wraps OS resources that must be explicitly released. Always call `close()` when done, even if the process has already finished. If using `output()`, stdout and stderr pipes are closed automatically, but `close()` should still be called to release the process handle.
+> `Process` wraps OS resources that must be explicitly released. Always call `close()` when done, even if the process has already finished. The `output()` method closes stdout and stderr pipes automatically, but `close()` must still be called to release the process handle itself.
 
 ### Lifecycle
 
@@ -247,13 +269,15 @@ $process->close();
 
 ### Reading Output
 
+The `output()` method closes stdin, reads stdout and stderr simultaneously using `stream_select()` for non-blocking I/O multiplexing, and waits for the process to exit.
+
 ```php
 $process = ProcessBuilder::command('echo')
     ->arg('hello')
     ->spawn()
     ->unwrap();
 
-// Collect all output (closes stdin, reads stdout+stderr, waits for exit)
+// Collect all output
 $output = $process->output(Duration::fromSeconds(5));
 
 if ($output->isOk()) {
@@ -264,9 +288,6 @@ if ($output->isOk()) {
 
 $process->close();
 ```
-
-> [!TIP]
-> `output()` uses `stream_select()` internally for efficient, non-blocking I/O multiplexing. It reads from both stdout and stderr simultaneously without busy-waiting.
 
 ### Writing to stdin
 
@@ -301,6 +322,9 @@ $result = $process->readStderr(); // Result<Str, StreamReadFailed>
 
 Pipelines connect the stdout of one command to the stdin of the next, similar to Unix pipes.
 
+> [!IMPORTANT]
+> Pipeline commands can only be executed with `run()` or `output()`. Calling `spawn()` on a pipeline returns a `PipelineSpawnFailed` error.
+
 ```php
 // Simple pipeline: echo | grep
 $result = Command::of('echo')
@@ -321,8 +345,16 @@ $result = Command::of('echo')
 // "apple\nbanana\ncherry\n"
 ```
 
-> [!IMPORTANT]
-> Pipeline commands can only be executed with `run()` or `output()`. Calling `spawn()` on a pipeline returns a `PipelineSpawnFailed` error.
+Monadic composition on pipeline results:
+
+```php
+// Chain pipeline result: count PHP files
+$count = Command::of('find')->withArg('.')->withArg('-name')->withArg('*.php')
+    ->pipe(Command::of('wc')->withArg('-l'))
+    ->output()
+    ->map(fn(Str $s) => $s->trim())
+    ->andThen(fn(Str $s) => $s->parseInteger());
+```
 
 ## Stream I/O
 
@@ -358,7 +390,7 @@ $reader->close();
 
 ### StreamWriter
 
-Stream writer with buffering, auto-flush, and chunked writing support.
+Stream writer with buffering, auto-flush, and chunked writing support. For interactive processes where data must be sent immediately, use `StreamWriter::createAutoFlushing()` -- this is what `Process::stdinWriter()` uses internally.
 
 ```php
 use Jsadaa\PhpCoreLibrary\Modules\Process\StreamWriter;
@@ -390,9 +422,6 @@ $writer = $writer
 // Flush manually
 $writer->flush(); // Result<null, StreamFlushFailed>
 ```
-
-> [!TIP]
-> Use `StreamWriter::createAutoFlushing()` for interactive processes where data must be sent immediately. This is what `Process::stdinWriter()` uses internally.
 
 ## Stream Configuration
 
@@ -505,6 +534,9 @@ $output->toString();
 
 Immutable snapshot of process state from `proc_get_status`.
 
+> [!CAUTION]
+> `proc_get_status()` only returns the correct exit code on the **first** call after process termination. Subsequent calls return `-1`. The `Status` object captures this snapshot, so always use it from the first call.
+
 ```php
 $process = ProcessBuilder::command('sleep')
     ->arg('1')
@@ -525,15 +557,9 @@ $status->isSuccess();  // bool (exitCode == 0)
 $status->isFailure();  // bool (exitCode != 0)
 ```
 
-> [!CAUTION]
-> `proc_get_status()` only returns the correct exit code on the **first** call after process termination. Subsequent calls return `-1`. The `Status` object captures this snapshot, so always use it from the first call.
-
 ## Error Handling
 
-> [!NOTE]
-> All error types extend standard PHP exception classes and follow the project's established pattern for typed errors.
-
-The Process module uses dedicated error classes in `Process\Error\`:
+All error types extend standard PHP exception classes and follow the project's established pattern for typed errors. The Process module uses dedicated error classes in `Process\Error\`:
 
 | Error Class | Extends | Description |
 |---|---|---|
@@ -562,4 +588,20 @@ $result->match(
         default => 'Error: ' . $error->getMessage(),
     },
 );
+```
+
+Monadic composition for error normalization and fallback:
+
+```php
+// mapErr to normalize errors
+$output = Command::of('make')->run()
+    ->mapErr(fn($e) => match(true) {
+        $e instanceof Output => new \RuntimeException($e->stderr()->toString()),
+        $e instanceof ProcessTimeout => new \RuntimeException('Build timed out'),
+        default => $e,
+    });
+
+// orElse for retry/fallback
+$result = Command::of('npm')->withArg('ci')->run()
+    ->orElse(fn() => Command::of('npm')->withArg('install')->run());
 ```

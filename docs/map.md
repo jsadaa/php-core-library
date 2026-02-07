@@ -138,11 +138,17 @@ $missing = $scores->get('Eve');   // Option::none()
 $bob = $scores->get('Bob')->unwrapOr(0);   // 78
 $eve = $scores->get('Eve')->unwrapOr(0);   // 0
 
-// Pattern matching
-$scores->get('Charlie')->match(
-    fn($score) => "Charlie scored: $score",
-    fn() => "Charlie not found"
-);
+// Chaining: get then transform
+$grade = $scores->get('Alice')
+    ->map(fn(int $score) => $score >= 90 ? 'A' : 'B'); // Option::some('A')
+
+// Chaining: get then validate (Option -> Option)
+$passing = $scores->get('Bob')
+    ->filter(fn(int $score) => $score >= 80); // Option::none() (78 < 80)
+
+// Convert to Result for error handling
+$result = $scores->get('Eve')
+    ->okOr(new \RuntimeException('Student not found')); // Result::err(...)
 ```
 
 ### Add
@@ -184,12 +190,14 @@ $topScorer = $scores->find(fn($name, $score) => $score > 90);
 $failing = $scores->find(fn($name, $score) => $score < 50);
 // Option::none()
 
-// Extract the pair
-$scores->find(fn($name, $score) => $score > 90)
-    ->match(
-        fn($pair) => "Top scorer: " . $pair->first() . " (" . $pair->second() . ")",
-        fn() => "No top scorers found"
-    );
+// Chaining: find and extract value
+$topName = $scores->find(fn($name, $score) => $score > 90)
+    ->map(fn($pair) => $pair->first()); // Option::some('Alice')
+
+// Chaining: find or provide default
+$winner = $scores->find(fn($name, $score) => $score === 100)
+    ->map(fn($pair) => $pair->first())
+    ->unwrapOr('No perfect score');
 ```
 
 ## Transformation
