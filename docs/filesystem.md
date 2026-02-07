@@ -219,7 +219,7 @@ if ($result->isOk()) {
     echo "File content:\n$content";
 
     // Count lines in the file
-    $lineCount = count(explode("\n", $content));
+    $lineCount = Str::of($content)->lines()->size()->toInt();
     echo "The file has $lineCount lines";
 } else {
     echo "Failed to read file: " . $result->unwrapErr()->getMessage();
@@ -364,9 +364,9 @@ if ($result->isOk()) {
 
 // Update a configuration file
 $configFile = File::from('/path/to/config.json')->unwrap();
-$config = json_decode($configFile->read()->unwrap()->toString(), true);
+$config = Json::decode($configFile->read()->unwrap()->toString())->unwrap();
 $config['debug'] = true;
-$configFile->write(json_encode($config, JSON_PRETTY_PRINT))->unwrap();
+$configFile->write(Json::encode($config, JSON_PRETTY_PRINT)->unwrap())->unwrap();
 ```
 
 #### Append
@@ -409,11 +409,11 @@ Writes data to the file atomically.
 ```php
 // Update a critical configuration file safely
 $configFile = File::from('/path/to/database-config.json')->unwrap();
-$config = json_decode($configFile->read()->unwrap()->toString(), true);
+$config = Json::decode($configFile->read()->unwrap()->toString())->unwrap();
 $config['password'] = 'new-secure-password';
 
 // Write atomically and sync to ensure durability
-$result = $configFile->writeAtomic(json_encode($config, JSON_PRETTY_PRINT), true);
+$result = $configFile->writeAtomic(Json::encode($config, JSON_PRETTY_PRINT)->unwrap(), true);
 
 if ($result->isOk()) {
     echo "Configuration updated safely";
@@ -858,14 +858,14 @@ if ($result->isOk()) {
 }
 
 // Create a configuration file
-$config = json_encode([
+$config = Json::encode([
     'database' => [
         'host' => 'localhost',
         'user' => 'app_user',
         'password' => 'secret',
     ],
     'debug' => true
-], JSON_PRETTY_PRINT);
+], JSON_PRETTY_PRINT)->unwrap();
 
 $writeResult = FileSystem::write('/path/to/config.json', $config);
 ```
@@ -1968,7 +1968,7 @@ $result->match(
 $result = File::from('/path/to/data.json')
     ->andThen(fn($file) => $file->read())
     ->map(fn($content) => $content->toString())
-    ->map(fn($json) => strtoupper($json))
+    ->map(fn($json) => Str::of($json)->toUppercase()->toString())
     ->andThen(fn($transformed) =>
         File::from('/path/to/data.json')
             ->andThen(fn($file) => $file->write($transformed))

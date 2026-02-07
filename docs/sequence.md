@@ -156,7 +156,7 @@ $seq = Sequence::of(1, 2, 3);
 $doubled = $seq->map(fn($n) => $n * 2); // Sequence [2, 4, 6]
 
 $seq = Sequence::of('a', 'b', 'c');
-$upper = $seq->map(fn($s) => strtoupper($s)); // Sequence [A, B, C]
+$upper = $seq->map(fn($s) => Str::of($s)->toUppercase()->toString()); // Sequence [A, B, C]
 ```
 
 ### Filter
@@ -168,7 +168,7 @@ $seq = Sequence::of(1, 2, 3, 4, 5);
 $evenNumbers = $seq->filter(fn($n) => $n % 2 === 0); // Sequence [2, 4]
 
 $seq = Sequence::of('apple', 'banana', 'cherry');
-$longWords = $seq->filter(fn($s) => strlen($s) > 5); // Sequence [banana, cherry]
+$longWords = $seq->filter(fn($s) => Str::of($s)->size()->gt(5)); // Sequence [banana, cherry]
 ```
 
 **Note:** Array keys are not preserved in the resulting collection.

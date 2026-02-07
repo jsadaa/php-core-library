@@ -245,13 +245,13 @@ Transforms the success value using a mapper function or computes a value from th
 $result = Result::ok(42);
 $doubled = $result->mapOrElse(
     fn($x) => $x * 2,
-    fn($e) => strlen($e)
+    fn($e) => Str::of($e)->size()->toInt()
 ); // 84
 
 $err = Result::err("Not found");
 $value = $err->mapOrElse(
     fn($x) => $x * 2,
-    fn($e) => strlen($e)
+    fn($e) => Str::of($e)->size()->toInt()
 ); // 9 (length of "Not found")
 ```
 
@@ -406,7 +406,7 @@ $result->match(
 ```php
 // Validation functions that return Result
 function validateUsername(string $username): Result {
-    return strlen($username) >= 3
+    return Str::of($username)->size()->ge(3)
         ? Result::ok($username)
         : Result::err("Username must be at least 3 characters");
 }
