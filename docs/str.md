@@ -390,10 +390,14 @@ Finds all matches of a regex pattern and returns their positions.
 
 ```php
 $str = Str::of('apple banana apple cherry');
-$indices = $str->matchIndices('/apple/'); // Sequence [[0, 5], [12, 5]]
+$indices = $str->matchIndices('/apple/');
+// Sequence<Pair<Integer, Str>> : [Pair(0, "apple"), Pair(13, "apple")]
+
+$indices->get(0)->unwrap()->first();  // Integer::of(0) -- position
+$indices->get(0)->unwrap()->second(); // Str::of("apple") -- match
 ```
 
-**Note:** Each match is returned as a Sequence with [start_position, length].
+**Note:** Each match is returned as a `Pair<Integer, Str>` where `first()` is the character position and `second()` is the matched substring.
 
 ## Padding and Trimming
 

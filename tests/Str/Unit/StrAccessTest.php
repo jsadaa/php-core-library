@@ -259,11 +259,9 @@ final class StrAccessTest extends TestCase
 
         $this->assertGreaterThan(0, $indices->size());
 
-        $firstMatch = $indices->get(0)->unwrapOr([]);
-        $this->assertIsArray($firstMatch);
-        $this->assertCount(2, $firstMatch);
+        $firstMatch = $indices->get(0)->unwrap();
 
-        $this->assertSame('apple', $firstMatch[1]->toString());
+        $this->assertSame('apple', $firstMatch->second()->toString());
     }
 
     public function testMatchIndicesWithComplexUtf8(): void
@@ -272,21 +270,22 @@ final class StrAccessTest extends TestCase
         $indices = $str->matchIndices('/😄|😁|😀/u');
 
         $this->assertSame(3, $indices->size()->toInt());
-        $matchesWithIndices = $indices->toArray();
 
-        $this->assertSame('😄', $matchesWithIndices[0][1]->toString());
-        $this->assertSame('😁', $matchesWithIndices[1][1]->toString());
-        $this->assertSame('😀', $matchesWithIndices[2][1]->toString());
-        $this->assertGreaterThan($matchesWithIndices[1][0], $matchesWithIndices[2][0]);
+        $this->assertSame('😄', $indices->get(0)->unwrap()->second()->toString());
+        $this->assertSame('😁', $indices->get(1)->unwrap()->second()->toString());
+        $this->assertSame('😀', $indices->get(2)->unwrap()->second()->toString());
+        $this->assertGreaterThan(
+            $indices->get(1)->unwrap()->first()->toInt(),
+            $indices->get(2)->unwrap()->first()->toInt(),
+        );
 
         $str2 = Str::of('en English, zh 中文, ar العربية, ru Русский');
         $indices2 = $str2->matchIndices("/[\p{Han}\p{Arabic}\p{Cyrillic}]+/u");
 
         $this->assertSame(3, $indices2->size()->toInt());
-        $matchesWithIndices2 = $indices2->toArray();
 
-        $this->assertSame('中文', $matchesWithIndices2[0][1]->toString());
-        $this->assertSame('العربية', $matchesWithIndices2[1][1]->toString());
-        $this->assertSame('Русский', $matchesWithIndices2[2][1]->toString());
+        $this->assertSame('中文', $indices2->get(0)->unwrap()->second()->toString());
+        $this->assertSame('العربية', $indices2->get(1)->unwrap()->second()->toString());
+        $this->assertSame('Русский', $indices2->get(2)->unwrap()->second()->toString());
     }
 }

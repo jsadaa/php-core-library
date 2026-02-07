@@ -7,6 +7,7 @@ namespace Jsadaa\PhpCoreLibrary\Primitives\Str;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
+use Jsadaa\PhpCoreLibrary\Modules\Collections\Pair;
 use Jsadaa\PhpCoreLibrary\Primitives\Char\Char;
 use Jsadaa\PhpCoreLibrary\Primitives\Double\Double;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
@@ -1005,10 +1006,8 @@ final readonly class Str implements \Stringable
     /**
      * Returns a Sequence over the indices of all matches of a pattern in the string
      *
-     * TODO : return a MAP
-     *
      * @param string|Str $pattern The regex pattern to match with "u" modifier for UTF-8
-     * @return Sequence<array{Integer, Str}> A Sequence with tuples of [index, match]
+     * @return Sequence<Pair<Integer, Str>> A Sequence of Pair(position, match)
      */
     public function matchIndices(string | self $pattern): Sequence
     {
@@ -1067,9 +1066,7 @@ final readonly class Str implements \Stringable
             $substring = \substr($this->value, 0, $byteOffset);
             $charOffset = \mb_strlen($substring, self::UTF8);
 
-            /** @var array{Integer, Str} $offset */
-            $offset = [Integer::of($charOffset), self::of($matchText)];
-            $offsets[] = $offset;
+            $offsets[] = Pair::of(Integer::of($charOffset), self::of($matchText));
         }
 
         return Sequence::ofArray($offsets);
