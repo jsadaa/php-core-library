@@ -182,39 +182,39 @@ final class File
     }
 
     /**
-     * Read the entire file as a Sequence of byte values (0-255).
+     * Read the entire file as a Sequence of native int byte values (0-255).
      *
-     * Rewinds to the start and reads all content.
+     * Rewinds to the start and reads all content. Returns native int values
+     * for performance. For small files where Integer wrappers are needed:
+     * `$file->bytes()->map(fn(Sequence $s) => $s->map(fn(int $b) => Integer::of($b)))`
      *
-     * @return Result<Sequence<Integer>, ReadFailed>
+     * @return Result<Sequence<int>, ReadFailed>
      */
     public function bytes(): Result
     {
         $readResult = $this->readAll();
 
         if ($readResult->isErr()) {
-            /** @var Result<Sequence<Integer>, ReadFailed> */
+            /** @var Result<Sequence<int>, ReadFailed> */
             return Result::err($readResult->unwrapErr());
         }
 
         $content = $readResult->unwrap()->toString();
 
         if ($content === '') {
-            /** @var Result<Sequence<Integer>, ReadFailed> */
+            /** @var Result<Sequence<int>, ReadFailed> */
             return Result::ok(Sequence::ofArray([]));
         }
 
         $bytes = \unpack('C*', $content);
 
         if ($bytes === false) {
-            /** @var Result<Sequence<Integer>, ReadFailed> */
+            /** @var Result<Sequence<int>, ReadFailed> */
             return Result::err(new ReadFailed(\sprintf('Failed to unpack bytes from: %s', $this->path->toString())));
         }
 
-        /** @var Result<Sequence<Integer>, ReadFailed> */
-        return Result::ok(
-            Sequence::ofArray($bytes)->map(static fn(int $byte) => Integer::of($byte)),
-        );
+        /** @var Result<Sequence<int>, ReadFailed> */
+        return Result::ok(Sequence::ofArray($bytes));
     }
 
     // --- Writing ---

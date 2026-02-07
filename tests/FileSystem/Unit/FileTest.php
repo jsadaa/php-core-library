@@ -212,10 +212,10 @@ final class FileTest extends TestCase
 
         $this->assertInstanceOf(Sequence::class, $bytes);
         $this->assertEquals(6, $bytes->size()->toInt());
-        $this->assertEquals(0x00, $bytes->get(0)->unwrap()->toInt());
-        $this->assertEquals(0x01, $bytes->get(1)->unwrap()->toInt());
-        $this->assertEquals(0xFF, $bytes->get(4)->unwrap()->toInt());
-        $this->assertEquals(0xFE, $bytes->get(5)->unwrap()->toInt());
+        $this->assertEquals(0x00, $bytes->get(0)->unwrap());
+        $this->assertEquals(0x01, $bytes->get(1)->unwrap());
+        $this->assertEquals(0xFF, $bytes->get(4)->unwrap());
+        $this->assertEquals(0xFE, $bytes->get(5)->unwrap());
 
         $file->close();
     }

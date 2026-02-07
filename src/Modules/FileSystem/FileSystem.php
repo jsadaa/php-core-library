@@ -22,7 +22,6 @@ use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\WriteFailed;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 use Jsadaa\PhpCoreLibrary\Primitives\Unit;
 
@@ -60,11 +59,12 @@ final readonly class FileSystem {
     /**
      * Read file contents as bytes
      *
-     * Reads the entire file as a Sequence of integers (bytes). This is useful when
-     * you need to process binary data or need the raw byte representation of a file.
+     * Reads the entire file as a Sequence of native int byte values (0-255).
+     * Returns native int values for performance. For small files where Integer
+     * wrappers are needed: `->map(fn(int $b) => Integer::of($b))`
      *
      * @param string|Path $path The path to the file to read
-     * @return Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> A Result containing a Sequence of bytes or an error
+     * @return Result<Sequence<int>, FileNotFound|ReadFailed|InvalidFileType> A Result containing a Sequence of bytes or an error
      */
     public static function readBytes(string | Path $path): Result
     {
@@ -72,38 +72,36 @@ final readonly class FileSystem {
         $pathStr = $pathObj->toString();
 
         if (!\file_exists($pathStr)) {
-            /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> */
+            /** @var Result<Sequence<int>, FileNotFound|ReadFailed|InvalidFileType> */
             return Result::err(new FileNotFound(\sprintf('File not found: %s', $pathStr)));
         }
 
         if (!\is_file($pathStr)) {
-            /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> */
+            /** @var Result<Sequence<int>, FileNotFound|ReadFailed|InvalidFileType> */
             return Result::err(new InvalidFileType(\sprintf('Not a regular file: %s', $pathStr)));
         }
 
         $content = @\file_get_contents($pathStr);
 
         if ($content === false) {
-            /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> */
+            /** @var Result<Sequence<int>, FileNotFound|ReadFailed|InvalidFileType> */
             return Result::err(new ReadFailed(\sprintf('Failed to read file: %s', $pathStr)));
         }
 
         if ($content === '') {
-            /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> */
+            /** @var Result<Sequence<int>, FileNotFound|ReadFailed|InvalidFileType> */
             return Result::ok(Sequence::ofArray([]));
         }
 
         $bytes = \unpack('C*', $content);
 
         if ($bytes === false) {
-            /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> */
+            /** @var Result<Sequence<int>, FileNotFound|ReadFailed|InvalidFileType> */
             return Result::err(new ReadFailed(\sprintf('Failed to unpack bytes from: %s', $pathStr)));
         }
 
-        /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> */
-        return Result::ok(
-            Sequence::ofArray($bytes)->map(static fn(int $byte) => Integer::of($byte)),
-        );
+        /** @var Result<Sequence<int>, FileNotFound|ReadFailed|InvalidFileType> */
+        return Result::ok(Sequence::ofArray($bytes));
     }
 
     /**
