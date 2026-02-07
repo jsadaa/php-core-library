@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Jsadaa\PhpCoreLibrary\Modules\FileSystem\File;
+namespace Jsadaa\PhpCoreLibrary\Modules\FileSystem;
 
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
@@ -20,7 +20,7 @@ use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
  *
  * @psalm-immutable
  */
-final readonly class Time
+final readonly class FileTimes
 {
     /**
      * @var Option<SystemTime> The access time to set
@@ -115,9 +115,6 @@ final readonly class Time
     /**
      * Get the access time, if it was set
      *
-     * Returns an Option that contains the access time if it was set,
-     * or None if no access time has been specified.
-     *
      * @return Option<SystemTime> The access time, or None if not set
      */
     public function accessed(): Option
@@ -128,9 +125,6 @@ final readonly class Time
     /**
      * Get the modified time, if it was set
      *
-     * Returns an Option that contains the modification time if it was set,
-     * or None if no modification time has been specified.
-     *
      * @return Option<SystemTime> The modified time, or None if not set
      */
     public function modified(): Option
@@ -140,9 +134,6 @@ final readonly class Time
 
     /**
      * Get the creation time, if it was set
-     *
-     * Returns an Option that contains the creation time if it was set,
-     * or None if no creation time has been specified.
      *
      * @return Option<SystemTime> The creation time, or None if not set
      */

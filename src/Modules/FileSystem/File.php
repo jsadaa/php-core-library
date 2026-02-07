@@ -14,45 +14,382 @@ use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\PermissionDenied;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\ReadFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\TimestampFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\WriteFailed;
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\File\Time;
+use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
 use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
+use Jsadaa\PhpCoreLibrary\Primitives\Unit;
 
 /**
- * File provides an interface for file operations, including reading, writing,
- * and metadata access. This class represents a file with various
- * methods to manipulate the file content and properties.
+ * Represents an open file handle for streaming and complex operations.
  *
- * It provides a safer, more ergonomic way to work with files compared to PHP's
- * built-in file functions, with proper error handling via Result types and true
- * immutability.
- *
- * This class does not keep an open file handle to ensure:
- * - Immutability (of the current instance, not the underlying filesystem)
- * - Filesystem operations are atomic and thread-safe
- * - File metadata is always up-to-date
- * - File operations are secure and prevent collisions
- *
- * @psalm-immutable
+ * This class wraps a mutable OS file handle and is intentionally NOT
+ * marked @psalm-immutable, following the same pattern as Process.
  */
-final readonly class File
+final class File
 {
+    /** @var resource */
+    private $handle;
     private Path $path;
 
-    public function __construct(Path $path)
+    /**
+     * @param resource $handle
+     */
+    private function __construct($handle, Path $path)
     {
+        $this->handle = $handle;
         $this->path = $path;
     }
 
+    // --- Factories ---
+
     /**
-     * Get the path of the file
+     * Open an existing file for reading and writing.
      *
-     * Returns the Path object associated with this file.
+     * The file must exist and be a regular file.
      *
-     * @return Path The path of the file
+     * @return Result<self, FileNotFound|InvalidFileType>
+     */
+    public static function open(string | Path $path): Result
+    {
+        $path = $path instanceof Path ? $path : Path::of($path);
+        $pathStr = $path->toString();
+
+        if (!\file_exists($pathStr)) {
+            /** @var Result<self, FileNotFound|InvalidFileType> */
+            return Result::err(new FileNotFound(\sprintf('File not found: %s', $pathStr)));
+        }
+
+        if (!\is_file($pathStr)) {
+            /** @var Result<self, FileNotFound|InvalidFileType> */
+            return Result::err(new InvalidFileType(\sprintf('Not a regular file: %s', $pathStr)));
+        }
+
+        $handle = @\fopen($pathStr, 'r+b');
+
+        if ($handle === false) {
+            /** @var Result<self, FileNotFound|InvalidFileType> */
+            return Result::err(new FileNotFound(\sprintf('Failed to open file: %s', $pathStr)));
+        }
+
+        /** @var Result<self, FileNotFound|InvalidFileType> */
+        return Result::ok(new self($handle, $path));
+    }
+
+    /**
+     * Create a new file for reading and writing.
+     *
+     * Fails if the file already exists.
+     *
+     * @return Result<self, AlreadyExists|CreateFailed>
+     */
+    public static function create(string | Path $path): Result
+    {
+        $path = $path instanceof Path ? $path : Path::of($path);
+        $pathStr = $path->toString();
+
+        // x+b: exclusive create, read+write, binary
+        $handle = @\fopen($pathStr, 'x+b');
+
+        if ($handle === false) {
+            if (\file_exists($pathStr)) {
+                /** @var Result<self, AlreadyExists|CreateFailed> */
+                return Result::err(new AlreadyExists(\sprintf('File already exists: %s', $pathStr)));
+            }
+
+            /** @var Result<self, AlreadyExists|CreateFailed> */
+            return Result::err(new CreateFailed(\sprintf('Failed to create file: %s', $pathStr)));
+        }
+
+        /** @var Result<self, AlreadyExists|CreateFailed> */
+        return Result::ok(new self($handle, $path));
+    }
+
+    // --- Reading ---
+
+    /**
+     * Read the entire file content from the beginning.
+     *
+     * Rewinds to the start, reads everything, then leaves the position at EOF.
+     *
+     * @return Result<Str, ReadFailed>
+     */
+    public function readAll(): Result
+    {
+        \rewind($this->handle);
+        $content = @\stream_get_contents($this->handle);
+
+        if ($content === false) {
+            /** @var Result<Str, ReadFailed> */
+            return Result::err(new ReadFailed(\sprintf('Failed to read file: %s', $this->path->toString())));
+        }
+
+        /** @var Result<Str, ReadFailed> */
+        return Result::ok(Str::of($content));
+    }
+
+    /**
+     * Read a single line from the current position.
+     *
+     * Returns None when EOF is reached.
+     *
+     * @return Result<Option<Str>, ReadFailed>
+     */
+    public function readLine(): Result
+    {
+        if (\feof($this->handle)) {
+            /** @var Result<Option<Str>, ReadFailed> */
+            return Result::ok(Option::none());
+        }
+
+        $line = @\fgets($this->handle);
+
+        if ($line === false) {
+            if (\feof($this->handle)) {
+                /** @var Result<Option<Str>, ReadFailed> */
+                return Result::ok(Option::none());
+            }
+
+            /** @var Result<Option<Str>, ReadFailed> */
+            return Result::err(new ReadFailed(\sprintf('Failed to read line from: %s', $this->path->toString())));
+        }
+
+        /** @var Result<Option<Str>, ReadFailed> */
+        return Result::ok(Option::some(Str::of($line)));
+    }
+
+    /**
+     * Read a chunk of bytes from the current position.
+     *
+     * May return fewer bytes than requested if EOF is reached.
+     *
+     * @return Result<Str, ReadFailed>
+     */
+    public function readChunk(int | Integer $size): Result
+    {
+        $size = $size instanceof Integer ? $size->toInt() : $size;
+        $data = @\fread($this->handle, $size);
+
+        if ($data === false) {
+            /** @var Result<Str, ReadFailed> */
+            return Result::err(new ReadFailed(\sprintf('Failed to read chunk from: %s', $this->path->toString())));
+        }
+
+        /** @var Result<Str, ReadFailed> */
+        return Result::ok(Str::of($data));
+    }
+
+    /**
+     * Read the entire file as a Sequence of byte values (0-255).
+     *
+     * Rewinds to the start and reads all content.
+     *
+     * @return Result<Sequence<Integer>, ReadFailed>
+     */
+    public function bytes(): Result
+    {
+        $readResult = $this->readAll();
+
+        if ($readResult->isErr()) {
+            /** @var Result<Sequence<Integer>, ReadFailed> */
+            return Result::err($readResult->unwrapErr());
+        }
+
+        $content = $readResult->unwrap()->toString();
+
+        if ($content === '') {
+            /** @var Result<Sequence<Integer>, ReadFailed> */
+            return Result::ok(Sequence::ofArray([]));
+        }
+
+        $bytes = \unpack('C*', $content);
+
+        if ($bytes === false) {
+            /** @var Result<Sequence<Integer>, ReadFailed> */
+            return Result::err(new ReadFailed(\sprintf('Failed to unpack bytes from: %s', $this->path->toString())));
+        }
+
+        /** @var Result<Sequence<Integer>, ReadFailed> */
+        return Result::ok(
+            Sequence::ofArray($bytes)->map(static fn(int $byte) => Integer::of($byte)),
+        );
+    }
+
+    // --- Writing ---
+
+    /**
+     * Write data at the current position.
+     *
+     * @return Result<Integer, WriteFailed>
+     */
+    public function write(string | Str $data): Result
+    {
+        $data = $data instanceof Str ? $data->toString() : $data;
+        $bytes = @\fwrite($this->handle, $data);
+
+        if ($bytes === false) {
+            /** @var Result<Integer, WriteFailed> */
+            return Result::err(new WriteFailed(\sprintf('Failed to write to: %s', $this->path->toString())));
+        }
+
+        /** @var Result<Integer, WriteFailed> */
+        return Result::ok(Integer::of($bytes));
+    }
+
+    /**
+     * Append data at the end of the file.
+     *
+     * Seeks to end, writes, then stays at the new position.
+     *
+     * @return Result<Integer, WriteFailed>
+     */
+    public function append(string | Str $data): Result
+    {
+        \fseek($this->handle, 0, \SEEK_END);
+
+        return $this->write($data);
+    }
+
+    /**
+     * Write data atomically using temp-file + rename.
+     *
+     * Replaces the entire file content. The handle is reopened after
+     * the rename to reflect the new file.
+     *
+     * @return Result<Unit, WriteFailed>
+     */
+    public function writeAtomic(string | Str $data, bool $sync = false): Result
+    {
+        $pathStr = $this->path->toString();
+        $tempPath = $pathStr . '.tmp.' . \uniqid();
+        $dataStr = $data instanceof Str ? $data->toString() : $data;
+
+        $result = @\file_put_contents($tempPath, $dataStr);
+
+        if ($result === false) {
+            @\unlink($tempPath);
+
+            /** @var Result<Unit, WriteFailed> */
+            return Result::err(new WriteFailed(\sprintf(
+                'Failed to write temp file during atomic write: %s',
+                $pathStr,
+            )));
+        }
+
+        if ($sync) {
+            $tmpHandle = @\fopen($tempPath, 'r+');
+
+            if ($tmpHandle !== false) {
+                @\fsync($tmpHandle);
+                \fclose($tmpHandle);
+            }
+        }
+
+        // Close current handle before rename
+        /** @psalm-suppress InvalidPropertyAssignmentValue Handle is immediately reassigned */
+        \fclose($this->handle);
+
+        if (!@\rename($tempPath, $pathStr)) {
+            @\unlink($tempPath);
+
+            // Attempt to reopen the original file
+            $reopen = @\fopen($pathStr, 'r+b');
+
+            if ($reopen !== false) {
+                $this->handle = $reopen;
+            }
+
+            /** @var Result<Unit, WriteFailed> */
+            return Result::err(new WriteFailed(\sprintf(
+                'Failed to rename temp file during atomic write: %s',
+                $pathStr,
+            )));
+        }
+
+        if ($sync) {
+            $dirPath = \dirname($pathStr);
+            $dirHandle = @\opendir($dirPath);
+
+            if ($dirHandle !== false) {
+                \closedir($dirHandle);
+            }
+        }
+
+        // Reopen the handle on the new file
+        $newHandle = @\fopen($pathStr, 'r+b');
+
+        if ($newHandle === false) {
+            /** @var Result<Unit, WriteFailed> */
+            return Result::err(new WriteFailed(\sprintf(
+                'Failed to reopen file after atomic write: %s',
+                $pathStr,
+            )));
+        }
+
+        $this->handle = $newHandle;
+
+        /** @var Result<Unit, WriteFailed> */
+        return Result::ok(Unit::new());
+    }
+
+    /**
+     * Flush buffered data to the OS.
+     *
+     * @return Result<Unit, WriteFailed>
+     */
+    public function flush(): Result
+    {
+        if (!@\fflush($this->handle)) {
+            /** @var Result<Unit, WriteFailed> */
+            return Result::err(new WriteFailed(\sprintf('Failed to flush: %s', $this->path->toString())));
+        }
+
+        /** @var Result<Unit, WriteFailed> */
+        return Result::ok(Unit::new());
+    }
+
+    // --- Navigation ---
+
+    /**
+     * Seek to a specific byte offset from the beginning.
+     *
+     * @return Result<Unit, ReadFailed>
+     */
+    public function seek(int | Integer $offset): Result
+    {
+        $offset = $offset instanceof Integer ? $offset->toInt() : $offset;
+
+        if (\fseek($this->handle, $offset) === -1) {
+            /** @var Result<Unit, ReadFailed> */
+            return Result::err(new ReadFailed(\sprintf('Failed to seek in: %s', $this->path->toString())));
+        }
+
+        /** @var Result<Unit, ReadFailed> */
+        return Result::ok(Unit::new());
+    }
+
+    /**
+     * Rewind to the beginning of the file.
+     *
+     * @return Result<Unit, ReadFailed>
+     */
+    public function rewind(): Result
+    {
+        if (!\rewind($this->handle)) {
+            /** @var Result<Unit, ReadFailed> */
+            return Result::err(new ReadFailed(\sprintf('Failed to rewind: %s', $this->path->toString())));
+        }
+
+        /** @var Result<Unit, ReadFailed> */
+        return Result::ok(Unit::new());
+    }
+
+    // --- Metadata ---
+
+    /**
+     * Get the path of this file.
      */
     public function path(): Path
     {
@@ -60,628 +397,140 @@ final readonly class File
     }
 
     /**
-     * Open an existing file
+     * Get a metadata snapshot for this file.
      *
-     * Returns an error if the file doesn't exist or if there's an error opening the file.
-     * The file must exist and be a regular file (not a directory or symlink).
-     *
-     * Note: This method does not check if the file is readable, writable, or executable.
-     * Permissions are only checked when side-effect methods are called (read(), write(), etc.)
-     *
-     * @param string|Path $path The path of the file to open
-     * @return Result<File, FileNotFound|InvalidFileType> A Result containing the opened File or an error
-     */
-    public static function from(string | Path $path): Result
-    {
-        if (\is_string($path)) {
-            $path = Path::of($path);
-        }
-
-        if (!$path->exists()) {
-            /** @var Result<File, FileNotFound|InvalidFileType> */
-            return Result::err(new FileNotFound(\sprintf(
-                'Failed to open file: %s (File not found or not readable)',
-                $path->toString(),
-            )));
-        }
-
-        if (!$path->isFile()) {
-            /** @var Result<File, FileNotFound|InvalidFileType> */
-            return Result::err(new InvalidFileType(\sprintf(
-                'Failed to open file: %s (Not a file)',
-                $path->toString(),
-            )));
-        }
-
-        /** @var Result<File, FileNotFound|InvalidFileType> */
-        return Result::ok(new self($path));
-    }
-
-    /**
-     * Create a new file
-     *
-     * Creates a new empty file at the specified path. The file must not already exist,
-     * and the parent directory must be writable.
-     *
-     * @param string|Path $path The path of the file to create
-     * @return Result<File, CreateFailed|AlreadyExists> A Result containing the created File or an error
-     */
-    public static function new(string | Path $path): Result
-    {
-        if (\is_string($path)) {
-            $path = Path::of($path);
-        }
-
-        if ($path->exists()) {
-            /** @var Result<File, CreateFailed|AlreadyExists> */
-            return Result::err(new AlreadyExists(\sprintf(
-                'Failed to create file: %s (The file already exists)',
-                $path,
-            )));
-        }
-
-        $result = @\file_put_contents($path->toString(), '');
-
-        if ($result === false) {
-            /** @var Result<File, CreateFailed|AlreadyExists> */
-            return Result::err(new CreateFailed(\sprintf(
-                'Failed to create file: %s',
-                $path,
-            )));
-        }
-
-        /** @var Result<File, CreateFailed|AlreadyExists> */
-        return Result::ok(new self($path));
-    }
-
-    /**
-     * Read the entire file as a Str
-     *
-     * Reads the entire content of the file into a Str object
-     *
-     * @return Result<Str, ReadFailed|PermissionDenied> A Result containing the file content or a read error
-     * @psalm-suppress ImpureFunctionCall
-     */
-    public function read(): Result
-    {
-        if (!Permissions::of($this->path)->isReadable()) {
-            /** @var Result<Str, ReadFailed|PermissionDenied> */
-            return Result::err(new PermissionDenied(\sprintf(
-                'Failed to read file: %s (Permission denied)',
-                $this->path->toString(),
-            )));
-        }
-
-        $content = @\file_get_contents($this->path->toString());
-
-        if ($content === false) {
-            /** @var Result<Str, ReadFailed|PermissionDenied> */
-            return Result::err(new ReadFailed(\sprintf(
-                'Failed to read file: %s',
-                $this->path->toString(),
-            )));
-        }
-
-        /** @var Result<Str, ReadFailed|PermissionDenied> */
-        return Result::ok(Str::of($content));
-    }
-
-    /**
-     * Read a specific range of bytes from the file
-     *
-     * Reads up to the specified number of bytes from the specified offset.
-     * This allows for reading specific portions of a file without loading the entire file into memory.
-     * May return fewer bytes than requested if EOF is reached.
-     *
-     * @param int|Integer $offset The byte offset to start reading from
-     * @param int|Integer $length The maximum number of bytes to read
-     * @return Result<Str, ReadFailed|PermissionDenied> A Result containing the read bytes or a read error
-     * @psalm-suppress ImpureFunctionCall
-     * @psalm-suppress ImpureMethodCall
-     */
-    public function readRange(int | Integer $offset, int | Integer $length): Result
-    {
-        $offset = $offset instanceof Integer ? $offset->toInt() : $offset;
-        $length = $length instanceof Integer ? $length->toInt() : $length;
-
-        if (!Permissions::of($this->path)->isReadable()) {
-            /** @var Result<Str,ReadFailed|PermissionDenied> */
-            return Result::err(new PermissionDenied(\sprintf(
-                'Failed to read file: %s (Permission denied)',
-                $this->path->toString(),
-            )));
-        }
-
-        $handle = @\fopen($this->path->toString(), 'r');
-
-        if ($handle === false) {
-            /** @var Result<Str,ReadFailed|PermissionDenied> */
-            return Result::err(new ReadFailed(\sprintf(
-                'Failed to open file for reading: %s',
-                $this->path->toString(),
-            )));
-        }
-
-        if (@\fseek($handle, $offset) === -1) {
-            \fclose($handle);
-
-            /** @var Result<Str,ReadFailed|PermissionDenied> */
-            return Result::err(new ReadFailed(\sprintf(
-                'Failed to seek in file: %s (invalid offset: %d)',
-                $this->path->toString(),
-                $offset,
-            )));
-        }
-
-        $content = @\fread($handle, $length);
-        \fclose($handle);
-
-        if ($content === false) {
-            /** @var Result<Str,ReadFailed|PermissionDenied> */
-            return Result::err(new ReadFailed(\sprintf(
-                'Failed to read from file: %s',
-                $this->path->toString(),
-            )));
-        }
-
-        /** @var Result<Str,ReadFailed|PermissionDenied> */
-        return Result::ok(Str::of($content));
-    }
-
-    /**
-     * Read bytes from a specific offset until EOF
-     *
-     * Reads the file content starting from the specified offset until EOF.
-     * This is useful for reading data from a specific point in a file without
-     * loading the entire file into memory first.
-     *
-     * @param int|Integer $offset The byte offset to start reading from
-     * @return Result<Str, ReadFailed|PermissionDenied> The bytes read or an error if reading fails
-     * @psalm-suppress ImpureFunctionCall
-     * @psalm-suppress ImpureMethodCall
-     */
-    public function readFrom(int | Integer $offset): Result
-    {
-        $offset = $offset instanceof Integer ? $offset->toInt() : $offset;
-
-        if (!Permissions::of($this->path)->isReadable()) {
-            /** @var Result<Str, ReadFailed|PermissionDenied> */
-            return Result::err(new PermissionDenied(\sprintf(
-                'Failed to read file: %s (Permission denied)',
-                $this->path->toString(),
-            )));
-        }
-
-        $content = @\file_get_contents($this->path->toString(), false, null, $offset);
-
-        if ($content === false) {
-            /** @var Result<Str, ReadFailed|PermissionDenied> */
-            return Result::err(new ReadFailed(\sprintf(
-                'Failed to read from file: %s at offset %d',
-                $this->path->toString(),
-                $offset,
-            )));
-        }
-
-        /** @var Result<Str, ReadFailed|PermissionDenied> */
-        return Result::ok(Str::of($content));
-    }
-
-    /**
-     * Read exactly the requested number of bytes from a specific offset
-     *
-     * This method reads the exact number of bytes required. If EOF is encountered before
-     * reading all requested bytes, an error is returned. This is different from the
-     * readRange() method, which will return fewer bytes if EOF is reached.
-     *
-     * @param int|Integer $offset The byte offset to start reading from
-     * @param int|Integer $length Exact number of bytes to read
-     * @return Result<Str, ReadFailed|PermissionDenied> The bytes read or an error if EOF is encountered before reading all requested bytes
-     */
-    public function readExact(int | Integer $offset, int | Integer $length): Result
-    {
-        $offset = $offset instanceof Integer ? $offset->toInt() : $offset;
-        $length = $length instanceof Integer ? $length->toInt() : $length;
-
-        $range = $this->readRange($offset, $length);
-
-        if ($range->isErr()) {
-            /** @var Result<Str, ReadFailed|PermissionDenied> */
-            return $range;
-        }
-
-        $data = $range->unwrap();
-
-        if ($data->size()->lt($length)) {
-            /** @var Result<Str, ReadFailed|PermissionDenied> */
-            return Result::err(new ReadFailed(\sprintf(
-                'Unexpected end of file: %s (requested %d bytes but got %d)',
-                $this->path->toString(),
-                $length,
-                $data->size()->toInt(),
-            )));
-        }
-
-        /** @var Result<Str, ReadFailed|PermissionDenied> */
-        return Result::ok($data);
-    }
-
-    /**
-     * Read the file as a Sequence of byte values
-     *
-     * Reads the entire file and returns its content as a Sequence of bytes (integers 0-255).
-     * This is useful for binary file processing or when you need to work with individual bytes.
-     *
-     * @return Result<Sequence<Integer>, ReadFailed|PermissionDenied> A Result containing a Sequence of bytes or a read error
-     * @psalm-suppress ImpureFunctionCall
-     */
-    public function bytes(): Result
-    {
-        if (!Permissions::of($this->path)->isReadable()) {
-            /** @var Result<Sequence<Integer>, ReadFailed|PermissionDenied> */
-            return Result::err(new PermissionDenied(\sprintf(
-                'Failed to read file: %s (Permission denied)',
-                $this->path->toString(),
-            )));
-        }
-
-        $content = @\file_get_contents($this->path->toString());
-
-        if ($content === false) {
-            /** @var Result<Sequence<Integer>, ReadFailed|PermissionDenied> */
-            return Result::err(new ReadFailed(\sprintf(
-                'Failed to read file: %s',
-                $this->path->toString(),
-            )));
-        }
-
-        $bytes = \unpack('C*', $content);
-
-        if ($bytes === false) {
-            /** @var Result<Sequence<Integer>, ReadFailed|PermissionDenied> */
-            return Result::err(new ReadFailed(\sprintf(
-                'Failed to unpack bytes from file: %s',
-                $this->path->toString(),
-            )));
-        }
-
-        /** @var Result<Sequence<Integer>, ReadFailed|PermissionDenied> */
-        return Result::ok(
-            Sequence::ofArray($bytes)->map(static fn(int $byte) => Integer::of($byte)),
-        );
-    }
-
-    /**
-     * Write data to the file
-     *
-     * Writes the supplied string to the file, replacing any existing content.
-     * If the file doesn't exist, it will be created.
-     *
-     * @param string|Str $data The data to write to the file
-     * @return Result<File, WriteFailed|PermissionDenied> A Result containing the File or a write error
-     * @psalm-suppress ImpureFunctionCall
-     */
-    public function write(string | Str $data): Result
-    {
-        if (!Permissions::of($this->path)->isWritable()) {
-            /** @var Result<File, WriteFailed|PermissionDenied> */
-            return Result::err(new PermissionDenied(\sprintf(
-                'Failed to write to file: %s (Permission denied)',
-                $this->path->toString(),
-            )));
-        }
-
-        $result = @\file_put_contents(
-            $this->path->toString(),
-            $data instanceof Str ? $data->toString() : $data,
-        );
-
-        if ($result === false) {
-            /** @var Result<File, WriteFailed|PermissionDenied> */
-            return Result::err(new WriteFailed(\sprintf(
-                'Failed to write to file: %s',
-                $this->path->toString(),
-            )));
-        }
-
-        /** @var Result<File, WriteFailed|PermissionDenied> */
-        return Result::ok(new self($this->path));
-    }
-
-    /**
-     * Append data to the file
-     *
-     * Adds the supplied string to the end of the file, preserving existing content.
-     * If the file doesn't exist, it will be created.
-     *
-     * @param string|Str $data The data to append to the file
-     * @return Result<File, WriteFailed|PermissionDenied> A Result containing the File or a write error
-     * @psalm-suppress ImpureFunctionCall
-     */
-    public function append(string | Str $data): Result
-    {
-        if (!Permissions::of($this->path)->isWritable()) {
-            /** @var Result<File, WriteFailed|PermissionDenied> */
-            return Result::err(new PermissionDenied(\sprintf(
-                'Failed to append to file: %s (Permission denied)',
-                $this->path->toString(),
-            )));
-        }
-
-        $result = @\file_put_contents(
-            $this->path->toString(),
-            $data instanceof Str ? $data->toString() : $data,
-            \FILE_APPEND,
-        );
-
-        if ($result === false) {
-            /** @var Result<File, WriteFailed|PermissionDenied> */
-            return Result::err(new WriteFailed(\sprintf(
-                'Failed to append to file: %s',
-                $this->path->toString(),
-            )));
-        }
-
-        /** @var Result<File, WriteFailed|PermissionDenied> */
-        return Result::ok(new self($this->path));
-    }
-
-    /**
-     * Set the size of the file
-     *
-     * Truncates or extends the file to the specified length. If the file is extended,
-     * the extended area is filled with null bytes. If the file is truncated, all data
-     * beyond the specified length is lost.
-     *
-     * @param int|Integer $length The new length of the file in bytes
-     * @return Result<File, WriteFailed|PermissionDenied> A Result containing the modified File or a write error
-     * @psalm-suppress ImpureFunctionCall
-     */
-    public function setSize(int | Integer $length): Result
-    {
-        if (!Permissions::of($this->path)->isWritable()) {
-            /** @var Result<File, WriteFailed|PermissionDenied> */
-            return Result::err(new PermissionDenied(\sprintf(
-                'Failed to set length of file: %s (Permission denied)',
-                $this->path->toString(),
-            )));
-        }
-
-        $handle = @\fopen($this->path->toString(), 'r+');
-
-        if ($handle === false) {
-            /** @var Result<File, WriteFailed|PermissionDenied> */
-            return Result::err(new WriteFailed(\sprintf(
-                'Failed to open file for truncation: %s',
-                $this->path->toString(),
-            )));
-        }
-
-        $result = @\ftruncate(
-            $handle,
-            $length instanceof Integer ? $length->toInt() : $length,
-        );
-        \fclose($handle);
-
-        if ($result === false) {
-            /** @var Result<File, WriteFailed|PermissionDenied> */
-            return Result::err(new WriteFailed(\sprintf(
-                'Failed to set length of file: %s',
-                $this->path->toString(),
-            )));
-        }
-
-        /** @var Result<File, WriteFailed|PermissionDenied> */
-        return Result::ok(new self($this->path));
-    }
-
-    /**
-     * Write data to the file atomically
-     *
-     * Writes the supplied string to the file using a safe technique that prevents data
-     * corruption if the process is interrupted during writing. The write operation uses
-     * a temporary file and atomic rename to ensure that the file is either completely
-     * updated or not changed at all.
-     *
-     * This method ensures atomicity at the filesystem level. Either the entire write
-     * succeeds or the original file remains unchanged. This is critical for configuration
-     * files or other data where partial writes could cause corruption.
-     *
-     * @param string|Str $data The data to write to the file
-     * @param bool $sync Whether to synchronize the data to disk to ensure durability (slower but safer)
-     * @return Result<File, WriteFailed|PermissionDenied> A Result containing the File or a write error
-     * @psalm-suppress ImpureFunctionCall
-     */
-    public function writeAtomic(string | Str $data, bool $sync = false): Result
-    {
-        $pathString = $this->path->toString();
-        $tempPath = $pathString . '.tmp.' . \uniqid();
-
-        if (!Permissions::of($this->path)->isWritable()) {
-            /** @var Result<File, WriteFailed|PermissionDenied> */
-            return Result::err(new PermissionDenied(\sprintf(
-                'Failed to write to file: %s (Permission denied)',
-                $pathString,
-            )));
-        }
-
-        $result = @\file_put_contents(
-            $tempPath,
-            $data instanceof Str ? $data->toString() : $data,
-        );
-
-        if ($result === false) {
-            @\unlink($tempPath);
-
-            /** @var Result<File, WriteFailed|PermissionDenied> */
-            return Result::err(new WriteFailed(\sprintf(
-                'Failed to write to temporary file during atomic write: %s',
-                $pathString,
-            )));
-        }
-
-        // Synchronize the temporary file if requested
-        if ($sync) {
-            $handle = @\fopen($tempPath, 'r+');
-
-            if ($handle === false) {
-                @\unlink($tempPath);
-
-                /** @var Result<File, WriteFailed|PermissionDenied> */
-                return Result::err(new WriteFailed(\sprintf(
-                    'Failed to open temporary file for syncing: %s',
-                    $tempPath,
-                )));
-            }
-
-            @\fsync($handle);
-            \fclose($handle);
-        }
-
-        // Perform atomic rename
-        if (!@\rename($tempPath, $pathString)) {
-            @\unlink($tempPath);
-
-            /** @var Result<File, WriteFailed|PermissionDenied> */
-            return Result::err(new WriteFailed(\sprintf(
-                'Failed to rename temporary file during atomic write: %s',
-                $pathString,
-            )));
-        }
-
-        // Sync directory if requested to ensure the rename is durable
-        if ($sync) {
-            $dirPath = \dirname($pathString);
-            $dirHandle = @\opendir($dirPath);
-
-            if ($dirHandle !== false) {
-                @\fsync($dirHandle);
-                \closedir($dirHandle);
-            }
-        }
-
-        /** @var Result<File, WriteFailed|PermissionDenied> */
-        return Result::ok(new self($this->path));
-    }
-
-    /**
-     * Get the size of the file in bytes
-     *
-     * @return Result<Integer, ReadFailed> The file size in bytes or a read error
-     */
-    public function size(): Result
-    {
-        $size = @\filesize($this->path->toString());
-
-        if ($size === false) {
-            /** @var Result<Integer, ReadFailed> */
-            return Result::err(new ReadFailed(\sprintf(
-                'Failed to get size of file: %s',
-                $this->path->toString(),
-            )));
-        }
-
-        /** @var Result<Integer, ReadFailed> */
-        return Result::ok(Integer::of($size));
-    }
-
-    /**
-     * Get metadata for this file
-     *
-     * Retrieves file metadata including size, permissions, timestamps, and type.
-     * This provides access to information about the file beyond its contents.
-     *
-     * @return Result<Metadata, InvalidMetadata> A Result containing the file metadata or an error
+     * @return Result<Metadata, FileNotFound|InvalidMetadata>
      */
     public function metadata(): Result
     {
-        /** @var Result<Metadata, InvalidMetadata> */
+        /** @var Result<Metadata, FileNotFound|InvalidMetadata> */
         return Metadata::of($this->path);
     }
 
     /**
-     * Apply permissions to this file
+     * Get the file size using the open handle.
      *
-     * Sets the permissions of the file according to the provided Permissions object.
-     * This can be used to change read, write, and execute permissions of the file.
+     * @return Result<Integer, ReadFailed>
+     */
+    public function size(): Result
+    {
+        $stat = @\fstat($this->handle);
+
+        if ($stat === false) {
+            /** @var Result<Integer, ReadFailed> */
+            return Result::err(new ReadFailed(\sprintf('Failed to get size of: %s', $this->path->toString())));
+        }
+
+        /** @var Result<Integer, ReadFailed> */
+        return Result::ok(Integer::of($stat['size']));
+    }
+
+    /**
+     * Apply permissions to this file.
      *
-     * @param Permissions $permissions The permissions to apply
-     * @return Result<File, PermissionDenied> A Result containing the File or a permissions error
+     * @return Result<Unit, PermissionDenied>
      */
     public function setPermissions(Permissions $permissions): Result
     {
-        $result = $permissions->apply($this->path);
-
-        if ($result->isErr()) {
-            /** @var Result<File, PermissionDenied> */
-            return $result;
-        }
-
-        /** @var Result<File, PermissionDenied> */
-        return Result::ok(new self($this->path));
+        return $permissions->apply($this->path);
     }
 
     /**
-     * Sets the last modification time of the file.
+     * Set the last modification time.
      *
-     * Updates the modification timestamp of the file to the specified time.
-     * This is a convenience method that creates a FileTimes object and calls setTimes.
-     *
-     * @param SystemTime $time The new modification time to set
-     * @return Result<File, TimestampFailed> Result containing the File or an error message
+     * @return Result<Unit, TimestampFailed>
      */
     public function setModified(SystemTime $time): Result
     {
-        return $this->setTimes(Time::new()->setModified($time));
+        return $this->setTimes(FileTimes::new()->setModified($time));
     }
 
     /**
-     * Changes the timestamps of the underlying file.
+     * Set multiple timestamps at once.
      *
-     * This method allows changing multiple timestamps at once, including access time,
-     * modification time, and (on certain platforms) creation time.
-     *
-     * @param Time $times The timestamps to set
-     * @return Result<File, TimestampFailed> Result containing the File or an error message
-     * @psalm-suppress ImpureFunctionCall
+     * @return Result<Unit, TimestampFailed>
      */
-    public function setTimes(Time $times): Result
+    public function setTimes(FileTimes $times): Result
     {
         $pathStr = $this->path->toString();
 
-        // Get current timestamps to use as defaults if not specified
         $currentAccessed = @\fileatime($pathStr);
         $currentModified = @\filemtime($pathStr);
 
         $currentAccessed = $currentAccessed === false ? \time() : $currentAccessed;
         $currentModified = $currentModified === false ? \time() : $currentModified;
 
-        // Extract timestamps from FileTimes object
         $accessed = $times->accessed();
         $modified = $times->modified();
 
-        // Convert to Unix timestamps (seconds)
+        if ($accessed->isNone() && $modified->isNone()) {
+            /** @var Result<Unit, TimestampFailed> */
+            return Result::ok(Unit::new());
+        }
+
         $accessedTimestamp = $accessed->isSome() ? $accessed->unwrap()->seconds()->toInt() : $currentAccessed;
         $modifiedTimestamp = $modified->isSome() ? $modified->unwrap()->seconds()->toInt() : $currentModified;
 
-        // If both timestamps are null, no changes needed
-        if ($accessed->isNone() && $modified->isNone()) {
-            /** @var Result<File, TimestampFailed> */
-            return Result::ok(new self($this->path));
+        if (!@\touch($pathStr, $modifiedTimestamp, $accessedTimestamp)) {
+            /** @var Result<Unit, TimestampFailed> */
+            return Result::err(new TimestampFailed(\sprintf('Failed to set timestamps for: %s', $pathStr)));
         }
 
-        // Apply timestamps
-        $success = @\touch($pathStr, $modifiedTimestamp, $accessedTimestamp);
+        /** @var Result<Unit, TimestampFailed> */
+        return Result::ok(Unit::new());
+    }
 
-        if ($success === false) {
-            /** @var Result<File, TimestampFailed> */
-            return Result::err(new TimestampFailed(\sprintf(
-                'Failed to set timestamps for file: %s',
-                $pathStr,
-            )));
+    // --- Lifecycle ---
+
+    /**
+     * Close the file handle.
+     */
+    public function close(): void
+    {
+        /**
+         * @psalm-suppress RedundantConditionGivenDocblockType
+         * @psalm-suppress InvalidPropertyAssignmentValue Handle becomes closed-resource
+         */
+        if (\is_resource($this->handle)) {
+            \fclose($this->handle);
+        }
+    }
+
+    /**
+     * Safety net: close the handle if not explicitly closed.
+     */
+    public function __destruct()
+    {
+        $this->close();
+    }
+
+    // --- Scoped pattern ---
+
+    /**
+     * Open a file, pass it to a callback, and close it automatically.
+     *
+     * @template T
+     * @param callable(File): T $callback
+     * @return Result<T, FileNotFound|InvalidFileType>
+     */
+    public static function withOpen(string | Path $path, callable $callback): Result
+    {
+        $fileResult = self::open($path);
+
+        if ($fileResult->isErr()) {
+            /** @var Result<T, FileNotFound|InvalidFileType> */
+            return $fileResult;
         }
 
-        /** @var Result<File, TimestampFailed> */
-        return Result::ok(new self($this->path));
+        $file = $fileResult->unwrap();
+
+        try {
+            $result = $callback($file);
+
+            /** @var Result<T, FileNotFound|InvalidFileType> */
+            return Result::ok($result);
+        } finally {
+            $file->close();
+        }
     }
 }

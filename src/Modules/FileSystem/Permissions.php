@@ -19,10 +19,8 @@ use Jsadaa\PhpCoreLibrary\Primitives\Unit;
  *
  * The class uses Unix-style octal permission modes (e.g., 0644, 0755).
  *
- * This class only manage theoric permissions (mode bits information)
+ * This class only manages theoretical permissions (mode bits information),
  * not contextual permissions (user, mountpoint, etc.).
- *
- * See Metadata class for contextual permissions checks.
  *
  * @psalm-immutable
  */

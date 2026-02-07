@@ -6,7 +6,6 @@ namespace Jsadaa\PhpCoreLibrary\Modules\FileSystem;
 
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\AlreadyExists;
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\CopyFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\CreateFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\DirectoryNotEmpty;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\DirectoryNotFound;
@@ -65,63 +64,86 @@ final readonly class FileSystem {
      * you need to process binary data or need the raw byte representation of a file.
      *
      * @param string|Path $path The path to the file to read
-     * @return Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType|PermissionDenied> A Result containing a Sequence of bytes or an error
+     * @return Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> A Result containing a Sequence of bytes or an error
      */
     public static function readBytes(string | Path $path): Result
     {
         $pathObj = \is_string($path) ? Path::of($path) : $path;
         $pathStr = $pathObj->toString();
 
-        $fileResult = File::from($pathStr);
-
-        if ($fileResult->isErr()) {
-            /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType|PermissionDenied> */
-            return $fileResult;
+        if (!\file_exists($pathStr)) {
+            /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> */
+            return Result::err(new FileNotFound(\sprintf('File not found: %s', $pathStr)));
         }
 
-        /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType|PermissionDenied> */
-        return $fileResult->unwrap()->bytes();
+        if (!\is_file($pathStr)) {
+            /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> */
+            return Result::err(new InvalidFileType(\sprintf('Not a regular file: %s', $pathStr)));
+        }
+
+        $content = @\file_get_contents($pathStr);
+
+        if ($content === false) {
+            /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> */
+            return Result::err(new ReadFailed(\sprintf('Failed to read file: %s', $pathStr)));
+        }
+
+        if ($content === '') {
+            /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> */
+            return Result::ok(Sequence::ofArray([]));
+        }
+
+        $bytes = \unpack('C*', $content);
+
+        if ($bytes === false) {
+            /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> */
+            return Result::err(new ReadFailed(\sprintf('Failed to unpack bytes from: %s', $pathStr)));
+        }
+
+        /** @var Result<Sequence<Integer>, FileNotFound|ReadFailed|InvalidFileType> */
+        return Result::ok(
+            Sequence::ofArray($bytes)->map(static fn(int $byte) => Integer::of($byte)),
+        );
     }
 
     /**
      * Read directory contents
      *
-     * Lists all entries in a directory, returning a Sequence of DirectoryEntry objects.
-     * This gives you access to all files and subdirectories within the specified directory.
+     * Lists all entries in a directory, returning a Sequence of Path objects.
      *
      * The directory path must be a valid directory.
      *
      * Note: The result does not include "." and ".." entries.
      *
      * @param string|Path $path The directory path to read
-     * @return Result<Sequence<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> A Result containing directory entries or an error
+     * @return Result<Sequence<Path>, DirectoryNotFound|ReadFailed|InvalidFileType> A Result containing directory paths or an error
      */
     public static function readDir(string | Path $path): Result
     {
         $path = \is_string($path) ? Path::of($path) : $path;
 
         if (!$path->exists()) {
-            /** @var Result<Sequence<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
+            /** @var Result<Sequence<Path>, DirectoryNotFound|ReadFailed|InvalidFileType> */
             return Result::err(new DirectoryNotFound(\sprintf('Path does not exist: %s', $path)));
         }
 
         if (!$path->isDir()) {
-            /** @var Result<Sequence<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
+            /** @var Result<Sequence<Path>, DirectoryNotFound|ReadFailed|InvalidFileType> */
             return Result::err(new InvalidFileType(\sprintf('Path is not a directory: %s', $path)));
         }
 
         $contents = @\scandir($path->toString());
 
         if ($contents === false) {
-            /** @var Result<Sequence<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
+            /** @var Result<Sequence<Path>, DirectoryNotFound|ReadFailed|InvalidFileType> */
             return Result::err(new ReadFailed(\sprintf('Failed to read directory: %s', $path)));
         }
 
-        /** @var Result<Sequence<DirectoryEntry>, DirectoryNotFound|ReadFailed|InvalidFileType> */
+        /** @var Result<Sequence<Path>, DirectoryNotFound|ReadFailed|InvalidFileType> */
         return Result::ok(
             Sequence::ofArray($contents)
                 ->filter(static fn(string $item) => $item !== '.' && $item !== '..')
-                ->map(static fn(string $item) => DirectoryEntry::of($path->join(Path::of($item)))),
+                ->map(static fn(string $item) => $path->join(Path::of($item))),
         );
     }
 
@@ -157,119 +179,97 @@ final readonly class FileSystem {
     /**
      * Read file contents as a Str
      *
-     * Reads the entire file content and returns it as a Str object
+     * Reads the entire file content and returns it as a Str object.
      *
      * @param string|Path $path The path to the file to read
-     * @return Result<Str, FileNotFound|ReadFailed|InvalidFileType|PermissionDenied> A Result containing the file contents as a Str or an error
+     * @return Result<Str, FileNotFound|ReadFailed|InvalidFileType> A Result containing the file contents as a Str or an error
      */
     public static function read(string | Path $path): Result
     {
-        $fileResult = File::from($path instanceof Path ? $path->toString() : $path);
+        $pathObj = $path instanceof Path ? $path : Path::of($path);
+        $pathStr = $pathObj->toString();
 
-        if ($fileResult->isErr()) {
-            /** @var Result<Str, FileNotFound|ReadFailed|InvalidFileType|PermissionDenied> */
-            return $fileResult;
+        if (!\file_exists($pathStr)) {
+            /** @var Result<Str, FileNotFound|ReadFailed|InvalidFileType> */
+            return Result::err(new FileNotFound(\sprintf('File not found: %s', $pathStr)));
         }
 
-        $file = $fileResult->unwrap();
+        if (!\is_file($pathStr)) {
+            /** @var Result<Str, FileNotFound|ReadFailed|InvalidFileType> */
+            return Result::err(new InvalidFileType(\sprintf('Not a regular file: %s', $pathStr)));
+        }
 
-        /** @var Result<Str, FileNotFound|ReadFailed|InvalidFileType|PermissionDenied> */
-        return $file->read();
+        $content = @\file_get_contents($pathStr);
+
+        if ($content === false) {
+            /** @var Result<Str, FileNotFound|ReadFailed|InvalidFileType> */
+            return Result::err(new ReadFailed(\sprintf('Failed to read file: %s', $pathStr)));
+        }
+
+        /** @var Result<Str, FileNotFound|ReadFailed|InvalidFileType> */
+        return Result::ok(Str::of($content));
     }
 
     /**
      * Write content to a file
      *
      * Writes a string to a file, creating the file if it doesn't exist or
-     * overwriting it if it does. To append content instead, use File::from('/some/path/to/file.txt')->append().
+     * overwriting it if it does.
      *
      * @param string|Path $path The path to the file to write
      * @param string|Str $contents The content to write to the file
-     * @return Result<Unit, CreateFailed|WriteFailed|PermissionDenied|InvalidFileType> A Result indicating success or an error
+     * @return Result<Unit, WriteFailed> A Result indicating success or an error
      */
     public static function write(string | Path $path, string | Str $contents): Result
     {
-        $path = $path instanceof Path ? $path : Path::of($path);
+        $pathStr = $path instanceof Path ? $path->toString() : $path;
+        $dataStr = $contents instanceof Str ? $contents->toString() : $contents;
 
-        $fileResult = $path->exists() === false ? File::new($path) : File::from($path);
+        $result = @\file_put_contents($pathStr, $dataStr);
 
-        if ($fileResult->isErr()) {
-            /** @var Result<Unit, CreateFailed|WriteFailed|PermissionDenied|InvalidFileType> */
-            return $fileResult;
+        if ($result === false) {
+            /** @var Result<Unit, WriteFailed> */
+            return Result::err(new WriteFailed(\sprintf('Failed to write to file: %s', $pathStr)));
         }
 
-        $file = $fileResult->unwrap();
-        $writeResult = $file->write($contents instanceof Str ? $contents->toString() : $contents);
-
-        if ($writeResult->isErr()) {
-            /** @var Result<Unit, CreateFailed|WriteFailed|PermissionDenied|InvalidFileType> */
-            return $writeResult;
-        }
-
-        /** @var Result<Unit, CreateFailed|WriteFailed|PermissionDenied|InvalidFileType> */
+        /** @var Result<Unit, WriteFailed> */
         return Result::ok(Unit::new());
     }
 
     /**
      * Copy a file
      *
-     * Copies a file from the source path to the destination path.
-     * This also copies the file permissions from the source to the destination.
-     * The destination file will be created if it doesn't exist.
+     * Copies a file from the source path to the destination path using PHP's
+     * native copy(), which handles streaming without loading the full content
+     * into memory.
      *
      * @param string|Path $source The source file path
      * @param string|Path $destination The destination file path
-     * @return Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> A Result indicating success or an error
+     * @return Result<Unit, FileNotFound|InvalidFileType|WriteFailed> A Result indicating success or an error
      */
     public static function copyFile(string | Path $source, string | Path $destination): Result
     {
         $sourcePath = \is_string($source) ? Path::of($source) : $source;
         $destPath = \is_string($destination) ? Path::of($destination) : $destination;
+        $sourceStr = $sourcePath->toString();
+        $destStr = $destPath->toString();
 
-        if (!$sourcePath->exists()) {
-            /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
-            return Result::err(new FileNotFound(\sprintf('Source file does not exist: %s', $sourcePath->toString())));
+        if (!\file_exists($sourceStr)) {
+            /** @var Result<Unit, FileNotFound|InvalidFileType|WriteFailed> */
+            return Result::err(new FileNotFound(\sprintf('Source file does not exist: %s', $sourceStr)));
         }
 
-        $fileResult = File::from($sourcePath->toString());
-
-        if ($fileResult->isErr()) {
-            /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
-            return $fileResult;
+        if (!\is_file($sourceStr)) {
+            /** @var Result<Unit, FileNotFound|InvalidFileType|WriteFailed> */
+            return Result::err(new InvalidFileType(\sprintf('Source is not a regular file: %s', $sourceStr)));
         }
 
-        $sourceFile = $fileResult->unwrap();
-        $contentResult = $sourceFile->read();
-
-        if ($contentResult->isErr()) {
-            /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
-            return $contentResult;
+        if (!@\copy($sourceStr, $destStr)) {
+            /** @var Result<Unit, FileNotFound|InvalidFileType|WriteFailed> */
+            return Result::err(new WriteFailed(\sprintf('Failed to copy %s to %s', $sourceStr, $destStr)));
         }
 
-        $destFileResult = File::new($destPath->toString());
-
-        if ($destFileResult->isErr()) {
-            /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
-            return $destFileResult;
-        }
-
-        $destFile = $destFileResult->unwrap();
-        $writeResult = $destFile->write($contentResult->unwrap());
-
-        if ($writeResult->isErr()) {
-            /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
-            return $writeResult;
-        }
-
-        $sourcePerm = Permissions::of($sourcePath);
-        $result = $sourcePerm->apply($destPath);
-
-        if ($result->isErr()) {
-            /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
-            return $result;
-        }
-
-        /** @var Result<Unit, AlreadyExists|FileNotFound|ReadFailed|CreateFailed|WriteFailed|CopyFailed|InvalidFileType|PermissionDenied> */
+        /** @var Result<Unit, FileNotFound|InvalidFileType|WriteFailed> */
         return Result::ok(Unit::new());
     }
 
@@ -331,7 +331,7 @@ final readonly class FileSystem {
      * @param Path $destPath The destination directory path
      * @return Result<Unit, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> A Result indicating success or an error
      */
-    public function renameDir(Path $sourcePath, Path $destPath): Result
+    public static function renameDir(Path $sourcePath, Path $destPath): Result
     {
         if (!$sourcePath->exists()) {
             /** @var Result<Unit, InvalidFileType|DirectoryNotFound|RenameFailed|PermissionDenied> */
@@ -466,43 +466,43 @@ final readonly class FileSystem {
      * Returns an error if the directory is not empty or cannot be removed.
      *
      * @param string|Path $path The directory to remove
-     * @return Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> A Result indicating success or an error
+     * @return Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound|InvalidFileType> A Result indicating success or an error
      */
     public static function removeDir(string | Path $path): Result
     {
         $pathObj = \is_string($path) ? Path::of($path) : $path;
 
         if (!$pathObj->exists()) {
-            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
+            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound|InvalidFileType> */
             return Result::err(new DirectoryNotFound(\sprintf('Directory does not exist: %s', $pathObj->toString())));
         }
 
         if (!$pathObj->isDir()) {
-            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
-            return Result::ok(Unit::new());
+            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound|InvalidFileType> */
+            return Result::err(new InvalidFileType(\sprintf('Path is not a directory: %s', $pathObj->toString())));
         }
 
         // Check if the directory is empty (including hidden files)
         $dirContent = \glob($pathObj->toString() . '/{*,.[!.]*,..?*}', \GLOB_BRACE | \GLOB_NOSORT);
 
         if ($dirContent === false) {
-            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
+            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound|InvalidFileType> */
             return Result::err(new RemoveFailed(\sprintf('Failed to check directory contents: %s', $pathObj->toString())));
         }
 
         if (!empty($dirContent)) {
-            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
+            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound|InvalidFileType> */
             return Result::err(new DirectoryNotEmpty(\sprintf('Directory is not empty: %s', $pathObj->toString())));
         }
 
         $result = @\rmdir($pathObj->toString());
 
         if ($result === false) {
-            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
+            /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound|InvalidFileType> */
             return Result::err(new RemoveFailed(\sprintf('Failed to remove directory: %s', $pathObj->toString())));
         }
 
-        /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound> */
+        /** @var Result<Unit, RemoveFailed|DirectoryNotEmpty|DirectoryNotFound|InvalidFileType> */
         return Result::ok(Unit::new());
     }
 
