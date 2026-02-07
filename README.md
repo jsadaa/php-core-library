@@ -27,6 +27,7 @@ This ecosystem provides a growing collection of types and modules that work toge
 ### Standard Library Modules
 
 - **FileSystem**: Complete file and directory manipulation with type-safe error handling
+- **Process**: Safe process spawning, pipeline execution, and stream I/O with typed errors
 - **Path**: Path manipulation and validation
 - **Time**: Precise time handling with `SystemTime` and `Duration` types
 
@@ -448,6 +449,65 @@ The FileSystem module includes:
 
 For complete documentation with examples, see [File Documentation](./docs/filesystem.md).
 
+### Process Module
+
+The Process module provides safe process spawning and execution, inspired by Rust's `std::process`. Commands are built immutably, shell interpretation is bypassed for security, and all I/O uses `Result` types with dedicated error classes:
+
+```php
+// Simple command execution
+$result = Command::of('echo')
+    ->withArg('hello')
+    ->output();
+
+echo $result->unwrap()->toString(); // "hello\n"
+
+// Pipeline: connect commands with pipes
+$result = Command::of('echo')
+    ->withArg('banana apple cherry apple')
+    ->pipe(Command::of('tr')->withArg(' ')->withArg("\n"))
+    ->pipe(Command::of('sort'))
+    ->pipe(Command::of('uniq'))
+    ->output();
+
+// "apple\nbanana\ncherry\n"
+
+// Full control with ProcessBuilder
+$process = ProcessBuilder::command('cat')
+    ->workingDirectory('/tmp')
+    ->env('LANG', 'en_US.UTF-8')
+    ->spawn()
+    ->unwrap();
+
+$process->writeStdin('Hello from PHP');
+$process->kill();
+$process->close();
+
+// Typed error handling
+$result = Command::of('sleep')
+    ->withArg('60')
+    ->withTimeout(Duration::fromMillis(100))
+    ->run();
+
+$result->match(
+    fn(Output $output) => $output->stdout()->toString(),
+    fn($error) => match (true) {
+        $error instanceof ProcessTimeout => 'Timed out',
+        $error instanceof Output => 'Failed: ' . $error->stderr()->toString(),
+        default => $error->getMessage(),
+    },
+);
+```
+
+The Process module includes:
+- `Command`: High-level fluent API with pipeline support and timeout
+- `ProcessBuilder`: Low-level immutable builder with environment and stream control
+- `Process`: Running process handle with stdin/stdout/stderr access
+- `StreamReader` / `StreamWriter`: Non-blocking I/O with `stream_select()`
+- `ProcessStreams` / `StreamDescriptor`: Configurable I/O (pipes, files, inherit, /dev/null)
+- Typed error classes: `ProcessTimeout`, `ProcessSpawnFailed`, `InvalidCommand`, etc.
+
+For complete documentation with examples, see [Process Documentation](./docs/process.md).
+
 ### Path Module
 
 The Path module provides cross-platform path manipulation and validation:
@@ -605,6 +665,7 @@ This library is designed as a cohesive ecosystem where modules complement each o
 
 - **Core Types** (`Sequence`, `Map`, `Set`, `Option`, `Result`, `Str`, `Integer`, `Double`) provide the foundation
 - **FileSystem** uses `Path`, `Result`, and core types for safe file operations
+- **Process** uses `Result`, `Option`, `Str`, `Duration`, and typed errors for safe process execution
 - **Path** integrates with `Option` and `Result` for path validation and manipulation
 - **Time** provides `SystemTime` and `Duration` with overflow-safe arithmetic using `Integer`
 
