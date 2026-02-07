@@ -183,7 +183,7 @@ class MapTest extends TestCase
         $b->role = 'guest';
 
         $map = Map::of($a, 100)->add($b, 10);
-        $filtered = $map->filter(fn($key, $value) => $value >= 50);
+        $filtered = $map->filter(static fn($key, $value) => $value >= 50);
 
         $this->assertEquals(1, $filtered->size()->toInt());
         $this->assertTrue($filtered->containsKey($a));
@@ -194,7 +194,7 @@ class MapTest extends TestCase
     {
         $obj = new \stdClass();
         $map = Map::of($obj, 5);
-        $doubled = $map->map(fn($key, $value) => $value * 2);
+        $doubled = $map->map(static fn($key, $value) => $value * 2);
 
         $this->assertEquals(10, $doubled->get($obj)->unwrap());
     }
@@ -205,7 +205,7 @@ class MapTest extends TestCase
         $b = new \stdClass();
         $map = Map::of($a, 10)->add($b, 20);
 
-        $sum = $map->fold(fn(int $carry, $key, int $value) => $carry + $value, 0);
+        $sum = $map->fold(static fn(int $carry, $key, int $value) => $carry + $value, 0);
         $this->assertEquals(30, $sum);
     }
 
@@ -216,7 +216,7 @@ class MapTest extends TestCase
         $map = Map::of($a, 3)->add($b, 7);
 
         $total = 0;
-        $map->forEach(function ($key, $value) use (&$total): void {
+        $map->forEach(static function($key, $value) use (&$total): void {
             $total += $value;
         });
 
@@ -245,14 +245,14 @@ class MapTest extends TestCase
         $b = new \stdClass();
         $map = Map::of($a, 5)->add($b, 15);
 
-        $found = $map->find(fn($key, $value) => $value > 10);
+        $found = $map->find(static fn($key, $value) => $value > 10);
         $this->assertTrue($found->isSome());
         $pair = $found->unwrap();
         $this->assertInstanceOf(Pair::class, $pair);
         $this->assertSame($b, $pair->first());
         $this->assertEquals(15, $pair->second());
 
-        $notFound = $map->find(fn($key, $value) => $value > 100);
+        $notFound = $map->find(static fn($key, $value) => $value > 100);
         $this->assertTrue($notFound->isNone());
     }
 
@@ -305,7 +305,7 @@ class MapTest extends TestCase
         $b = new \stdClass();
         $map = Map::of($a, 10)->add($b, 20);
 
-        $result = $map->flatMap(fn($key, $value) => Map::of($key, $value * 2));
+        $result = $map->flatMap(static fn($key, $value) => Map::of($key, $value * 2));
 
         $this->assertEquals(2, $result->size()->toInt());
         $this->assertEquals(20, $result->get($a)->unwrap());

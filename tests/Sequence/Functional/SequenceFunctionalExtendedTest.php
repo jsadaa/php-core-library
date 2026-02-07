@@ -76,7 +76,7 @@ final class SequenceFunctionalExtendedTest extends TestCase
         // Zip timestamps with temperature and humidity for a combined dataset
         $sensorData = $timestamps
             ->zip($temperatures) // Combine timestamps with temperatures
-            ->map(static function (Pair $pair) {
+            ->map(static function(Pair $pair) {
                 return [
                     'timestamp' => $pair->first(),
                     'temperature' => $pair->second(),
@@ -86,7 +86,7 @@ final class SequenceFunctionalExtendedTest extends TestCase
         // Add humidity data using a second zip operation
         $completeData = $sensorData
             ->zip($humidity)
-            ->map(static function (Pair $pair) {
+            ->map(static function(Pair $pair) {
                 $record = $pair->first();
                 $record['humidity'] = $pair->second();
 
