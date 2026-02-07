@@ -3,3 +3,5 @@ vendor
 package.xml
 _bmad
 .idea
+notes.txt
+.DS_Store
