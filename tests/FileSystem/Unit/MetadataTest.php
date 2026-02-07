@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Jsadaa\PhpCoreLibrary\Tests\FileSystem\Unit;
 
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\FileNotFound;
+use Jsadaa\PhpCoreLibrary\Modules\FileSystem\FileType;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Metadata;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Permissions;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
@@ -128,37 +129,25 @@ final class MetadataTest extends TestCase
         $this->assertLessThanOrEqual(\time(), $timestamp);
     }
 
-    public function testIsReadable(): void
+    public function testFileType(): void
     {
-        $path = Path::of($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::of($path)->unwrap();
-        $this->assertTrue($metadata->isReadable());
+        $filePath = Path::of($this->root->url() . '/testFile.txt');
+        $metadata = Metadata::of($filePath)->unwrap();
+        $this->assertSame(FileType::RegularFile, $metadata->fileType());
+        $this->assertTrue($metadata->isFile());
+        $this->assertFalse($metadata->isDir());
 
-        $readOnlyPath = Path::of($this->root->url() . '/readOnlyFile.txt');
-        $metadata = Metadata::of($readOnlyPath)->unwrap();
-        $this->assertTrue($metadata->isReadable());
-    }
+        $dirPath = Path::of($this->root->url() . '/emptyDir');
+        $metadata = Metadata::of($dirPath)->unwrap();
+        $this->assertSame(FileType::Directory, $metadata->fileType());
+        $this->assertTrue($metadata->isDir());
+        $this->assertFalse($metadata->isFile());
 
-    public function testIsWritable(): void
-    {
-        $path = Path::of($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::of($path)->unwrap();
-        $this->assertTrue($metadata->isWritable());
-
-        $readOnlyPath = Path::of($this->root->url() . '/readOnlyFile.txt');
-        $metadata = Metadata::of($readOnlyPath)->unwrap();
-        $this->assertFalse($metadata->isWritable());
-    }
-
-    public function testIsExecutable(): void
-    {
-        $path = Path::of($this->root->url() . '/testFile.txt');
-        $metadata = Metadata::of($path)->unwrap();
-        $this->assertFalse($metadata->isExecutable());
-
-        $execPath = Path::of($this->tempDir . '/executableFile.sh');
-        $metadata = Metadata::of($execPath)->unwrap();
-        $this->assertTrue($metadata->isExecutable());
+        $linkPath = Path::of($this->tempDir . '/testLink');
+        $metadata = Metadata::of($linkPath)->unwrap();
+        $this->assertSame(FileType::Symlink, $metadata->fileType());
+        $this->assertTrue($metadata->isSymLink());
+        $this->assertFalse($metadata->isFile());
     }
 
     public function testGetPermissions(): void

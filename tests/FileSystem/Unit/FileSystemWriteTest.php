@@ -4,10 +4,8 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\FileSystem\Unit;
 
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\AlreadyExists;
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\CreateFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\FileNotFound;
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\PermissionDenied;
+use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\WriteFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\FileSystem;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use org\bovigo\vfs\vfsStream;
@@ -76,7 +74,7 @@ final class FileSystemWriteTest extends TestCase
 
         $this->assertTrue($result->isErr());
         $error = $result->unwrapErr();
-        $this->assertInstanceOf(PermissionDenied::class, $error);
+        $this->assertInstanceOf(WriteFailed::class, $error);
 
         $this->assertSame('read only content', \file_get_contents($path->toString()));
     }
@@ -88,7 +86,7 @@ final class FileSystemWriteTest extends TestCase
         $result = FileSystem::write($path, $content);
 
         $this->assertTrue($result->isErr());
-        $this->assertInstanceOf(CreateFailed::class, $result->unwrapErr());
+        $this->assertInstanceOf(WriteFailed::class, $result->unwrapErr());
         $this->assertFalse(\file_exists($path->toString()));
     }
 
@@ -107,15 +105,21 @@ final class FileSystemWriteTest extends TestCase
         );
     }
 
-    public function testCopyToExistingDestination(): void
+    public function testCopyOverwritesExistingDestination(): void
     {
         $sourcePath = Path::of($this->root->url() . '/testFile.txt');
         $destPath = Path::of($this->root->url() . '/readOnlyFile.txt');
 
+        // Make destination writable so copy can succeed
+        \chmod($destPath->toString(), 0666);
+
         $result = FileSystem::copyFile($sourcePath, $destPath);
 
-        $this->assertTrue($result->isErr());
-        $this->assertInstanceOf(AlreadyExists::class, $result->unwrapErr());
+        $this->assertTrue($result->isOk());
+        $this->assertSame(
+            \file_get_contents($sourcePath->toString()),
+            \file_get_contents($destPath->toString()),
+        );
     }
 
     public function testCopyFromNonExistentSource(): void

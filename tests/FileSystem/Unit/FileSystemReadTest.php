@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Tests\FileSystem\Unit;
 
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\DirectoryEntry;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\FileNotFound;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\InvalidFileType;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\FileSystem;
@@ -93,10 +92,10 @@ final class FileSystemReadTest extends TestCase
         $this->assertEquals(5, $entries->size()->toInt()); // 5 entries in root
 
         $entries->forEach(function($entry) {
-            $this->assertInstanceOf(DirectoryEntry::class, $entry);
+            $this->assertInstanceOf(Path::class, $entry);
         });
 
-        $entryNames = $entries->map(static fn(DirectoryEntry $entry) => $entry->fileName()->unwrap()->toString());
+        $entryNames = $entries->map(static fn(Path $entry) => $entry->fileName()->unwrap()->toString());
 
         $this->assertTrue($entryNames->contains('testFile.txt'));
         $this->assertTrue($entryNames->contains('binaryFile.bin'));

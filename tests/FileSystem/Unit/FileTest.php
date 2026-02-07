@@ -9,86 +9,72 @@ use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\AlreadyExists;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\CreateFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\FileNotFound;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\InvalidFileType;
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\PermissionDenied;
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\ReadFailed;
+use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\WriteFailed;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\File;
-use Jsadaa\PhpCoreLibrary\Modules\FileSystem\File\Time;
+use Jsadaa\PhpCoreLibrary\Modules\FileSystem\FileTimes;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Metadata;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Permissions;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
+use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
-use org\bovigo\vfs\vfsStream;
-use org\bovigo\vfs\vfsStreamDirectory;
+use Jsadaa\PhpCoreLibrary\Primitives\Unit;
 use PHPUnit\Framework\TestCase;
 
 final class FileTest extends TestCase
 {
-    private vfsStreamDirectory $root;
-    private string $testContent = 'This is test content with multiple lines.\nLine 2\nLine 3';
-    private string $binaryContent;
     private string $tempDir;
     private string $tempFile;
+    private string $testContent = "Line 1\nLine 2\nLine 3\n";
+    private string $binaryContent;
 
     protected function setUp(): void
     {
         $this->binaryContent = \pack('C*', 0x00, 0x01, 0x02, 0x03, 0xFF, 0xFE);
 
-        $this->root = vfsStream::setup('root', 0777, [
-            'testFile.txt' => $this->testContent,
-            'binaryFile.bin' => $this->binaryContent,
-            'emptyFile.txt' => '',
-            'readOnlyFile.txt' => 'read only content',
-            'emptyDir' => [],
-            'nestedDir' => [
-                'nestedFile.txt' => 'nested content',
-            ],
-        ]);
-
-        // Make read-only file actually read-only
-        $this->root->getChild('readOnlyFile.txt')->chmod(0444);
-
-        // Create real temporary directory and file for operations not supported by vfsStream
         $this->tempDir = \sys_get_temp_dir() . '/php-core-library-test-' . \uniqid();
         \mkdir($this->tempDir);
+
         $this->tempFile = $this->tempDir . '/testFile.txt';
         \file_put_contents($this->tempFile, $this->testContent);
+
+        \file_put_contents($this->tempDir . '/binaryFile.bin', $this->binaryContent);
+        \file_put_contents($this->tempDir . '/emptyFile.txt', '');
+        \mkdir($this->tempDir . '/emptyDir');
     }
 
     protected function tearDown(): void
     {
-        if (\file_exists($this->tempFile)) {
-            @\chmod($this->tempFile, 0666); // Ensure we can delete it
-            \unlink($this->tempFile);
-        }
-
-        if (\is_dir($this->tempDir)) {
-            foreach (\glob($this->tempDir . '/*') as $file) {
-                if (\is_file($file)) {
-                    @\chmod($file, 0666);
-                    \unlink($file);
-                }
-            }
-            \rmdir($this->tempDir);
-        }
+        $this->cleanupDir($this->tempDir);
     }
+
+    // --- Factories ---
 
     public function testOpen(): void
     {
-        $path = Path::of($this->root->url() . '/testFile.txt');
-        $result = File::from($path->toString());
+        $result = File::open($this->tempFile);
 
         $this->assertTrue($result->isOk());
         $file = $result->unwrap();
-
         $this->assertInstanceOf(File::class, $file);
-        $this->assertEquals($path->toString(), $file->path()->toString());
+        $this->assertEquals($this->tempFile, $file->path()->toString());
+        $file->close();
+    }
+
+    public function testOpenWithPath(): void
+    {
+        $path = Path::of($this->tempFile);
+        $result = File::open($path);
+
+        $this->assertTrue($result->isOk());
+        $file = $result->unwrap();
+        $this->assertEquals($this->tempFile, $file->path()->toString());
+        $file->close();
     }
 
     public function testOpenNonExistentFile(): void
     {
-        $path = Path::of($this->root->url() . '/nonExistent.txt');
-        $result = File::from($path->toString());
+        $result = File::open($this->tempDir . '/nonExistent.txt');
 
         $this->assertTrue($result->isErr());
         $this->assertInstanceOf(FileNotFound::class, $result->unwrapErr());
@@ -96,8 +82,7 @@ final class FileTest extends TestCase
 
     public function testOpenDirectory(): void
     {
-        $path = Path::of($this->root->url() . '/emptyDir');
-        $result = File::from($path->toString());
+        $result = File::open($this->tempDir . '/emptyDir');
 
         $this->assertTrue($result->isErr());
         $this->assertInstanceOf(InvalidFileType::class, $result->unwrapErr());
@@ -105,113 +90,121 @@ final class FileTest extends TestCase
 
     public function testCreate(): void
     {
-        $path = Path::of($this->root->url() . '/newFile.txt');
-        $result = File::new($path->toString());
+        $path = $this->tempDir . '/newFile.txt';
+        $result = File::create($path);
 
         $this->assertTrue($result->isOk());
         $file = $result->unwrap();
-
         $this->assertInstanceOf(File::class, $file);
-        $this->assertEquals($path->toString(), $file->path()->toString());
-        $this->assertTrue(\file_exists($path->toString()));
-    }
-
-    public function testCreateFileInNonExistentDirectory(): void
-    {
-        $path = Path::of($this->root->url() . '/nonExistentDir/file.txt');
-        $result = File::new($path->toString());
-
-        $this->assertTrue($result->isErr());
-        $this->assertInstanceOf(CreateFailed::class, $result->unwrapErr());
+        $this->assertEquals($path, $file->path()->toString());
+        $this->assertTrue(\file_exists($path));
+        $file->close();
     }
 
     public function testCreateAlreadyExistingFile(): void
     {
-        $path = Path::of($this->root->url() . '/readOnlyFile.txt');
-        $result = File::new($path->toString());
+        $result = File::create($this->tempFile);
 
         $this->assertTrue($result->isErr());
         $this->assertInstanceOf(AlreadyExists::class, $result->unwrapErr());
     }
 
-    public function testCreateNew(): void
+    public function testCreateInNonExistentDirectory(): void
     {
-        // Use a real file for this test since vfsStream may not fully support r+ mode
-        $path = Path::of($this->tempDir . '/newFileRW.txt');
-        $result = File::new($path->toString());
-
-        $this->assertTrue($result->isOk());
-        $file = $result->unwrap();
-
-        $this->assertInstanceOf(File::class, $file);
-        $this->assertEquals($path->toString(), $file->path()->toString());
-        $this->assertTrue(\file_exists($path->toString()));
-
-        // Test read+write capability
-        $writeResult = $file->write('test data');
-        $this->assertTrue($writeResult->isOk());
-
-        $readResult = $file->read();
-        $this->assertTrue($readResult->isOk());
-        $this->assertEquals('test data', $readResult->unwrap());
-    }
-
-    public function testCreateNewInNonExistentDirectory(): void
-    {
-        $path = Path::of($this->root->url() . '/nonExistentDir/file.txt');
-        $result = File::new($path->toString());
+        $result = File::create($this->tempDir . '/nonExistentDir/file.txt');
 
         $this->assertTrue($result->isErr());
         $this->assertInstanceOf(CreateFailed::class, $result->unwrapErr());
     }
 
-    public function testRead(): void
+    // --- Reading ---
+
+    public function testReadAll(): void
     {
-        $path = Path::of($this->root->url() . '/testFile.txt');
-        $file = File::from($path->toString())->unwrap();
-        $result = $file->read();
+        $file = File::open($this->tempFile)->unwrap();
+        $result = $file->readAll();
 
         $this->assertTrue($result->isOk());
         $content = $result->unwrap();
-        $this->assertSame($this->testContent, $content->toString());
-    }
-
-    public function testReadToStr(): void
-    {
-        $path = Path::of($this->root->url() . '/testFile.txt');
-        $file = File::from($path->toString())->unwrap();
-        $result = $file->read();
-
-        $this->assertTrue($result->isOk());
-        $content = $result->unwrap();
-
         $this->assertInstanceOf(Str::class, $content);
         $this->assertSame($this->testContent, $content->toString());
+        $file->close();
     }
 
-    public function testTake(): void
+    public function testReadAllEmptyFile(): void
     {
-        $path = Path::of($this->root->url() . '/testFile.txt');
-        $file = File::from($path->toString())->unwrap();
-
-        // Take first 4 bytes
-        $result = $file->readRange(0, 4);
+        $file = File::open($this->tempDir . '/emptyFile.txt')->unwrap();
+        $result = $file->readAll();
 
         $this->assertTrue($result->isOk());
-        $content = $result->unwrap();
-        $this->assertSame('This', $content->toString());
+        $this->assertSame('', $result->unwrap()->toString());
+        $file->close();
+    }
 
-        // Take next 3 bytes
-        $result = $file->readRange(4, 3);
+    public function testReadLine(): void
+    {
+        $file = File::open($this->tempFile)->unwrap();
+
+        // First line
+        $result = $file->readLine();
         $this->assertTrue($result->isOk());
-        $content = $result->unwrap();
-        $this->assertSame(' is', $content->toString());
+        $line = $result->unwrap();
+        $this->assertTrue($line->isSome());
+        $this->assertSame("Line 1\n", $line->unwrap()->toString());
+
+        // Second line
+        $result = $file->readLine();
+        $this->assertTrue($result->isOk());
+        $line = $result->unwrap();
+        $this->assertTrue($line->isSome());
+        $this->assertSame("Line 2\n", $line->unwrap()->toString());
+
+        // Third line
+        $result = $file->readLine();
+        $this->assertTrue($result->isOk());
+        $line = $result->unwrap();
+        $this->assertTrue($line->isSome());
+        $this->assertSame("Line 3\n", $line->unwrap()->toString());
+
+        // EOF -> None
+        $result = $file->readLine();
+        $this->assertTrue($result->isOk());
+        $this->assertTrue($result->unwrap()->isNone());
+
+        $file->close();
+    }
+
+    public function testReadChunk(): void
+    {
+        $file = File::open($this->tempFile)->unwrap();
+
+        // Read first 6 bytes: "Line 1"
+        $result = $file->readChunk(6);
+        $this->assertTrue($result->isOk());
+        $this->assertSame('Line 1', $result->unwrap()->toString());
+
+        // Read next 1 byte: "\n"
+        $result = $file->readChunk(1);
+        $this->assertTrue($result->isOk());
+        $this->assertSame("\n", $result->unwrap()->toString());
+
+        $file->close();
+    }
+
+    public function testReadChunkWithInteger(): void
+    {
+        $file = File::open($this->tempFile)->unwrap();
+
+        $result = $file->readChunk(Integer::of(4));
+        $this->assertTrue($result->isOk());
+        $this->assertSame('Line', $result->unwrap()->toString());
+
+        $file->close();
     }
 
     public function testBytes(): void
     {
-        $path = Path::of($this->root->url() . '/binaryFile.bin');
-        $file = File::from($path->toString())->unwrap();
+        $file = File::open($this->tempDir . '/binaryFile.bin')->unwrap();
         $result = $file->bytes();
 
         $this->assertTrue($result->isOk());
@@ -220,102 +213,233 @@ final class FileTest extends TestCase
         $this->assertInstanceOf(Sequence::class, $bytes);
         $this->assertEquals(6, $bytes->size()->toInt());
         $this->assertEquals(0x00, $bytes->get(0)->unwrap()->toInt());
+        $this->assertEquals(0x01, $bytes->get(1)->unwrap()->toInt());
         $this->assertEquals(0xFF, $bytes->get(4)->unwrap()->toInt());
+        $this->assertEquals(0xFE, $bytes->get(5)->unwrap()->toInt());
+
+        $file->close();
     }
 
-    public function testSetSize(): void
+    public function testBytesEmptyFile(): void
     {
-        // Use real file since vfsStream may not support ftruncate properly
-        $path = Path::of($this->tempDir . '/setLenTest.txt');
-        $this->assertNotFalse(\file_put_contents($path->toString(), $this->testContent));
-        $file = File::from($path->toString())->unwrap(); // open in read write mode
-
-        // Truncate file to 10 bytes
-        $result = $file->setSize(10);
+        $file = File::open($this->tempDir . '/emptyFile.txt')->unwrap();
+        $result = $file->bytes();
 
         $this->assertTrue($result->isOk());
+        $this->assertEquals(0, $result->unwrap()->size()->toInt());
 
-        $file = $result->unwrap();
-        $content = $file->read()->unwrap();
-        $this->assertEquals(10, \strlen($content->toString()));
-        $this->assertEquals(\substr($this->testContent, 0, 10), $content);
+        $file->close();
     }
 
-    public function testReadExact(): void
-    {
-        $path = Path::of($this->root->url() . '/testFile.txt');
-        $file = File::from($path->toString())->unwrap();
-
-        // Read exactly 4 bytes
-        $result = $file->readExact(0, 4);
-
-        $this->assertTrue($result->isOk());
-        $this->assertEquals('This', $result->unwrap());
-
-        // Try to read more bytes than available at current position
-        $result = $file->readExact(10, 100);
-
-        $this->assertTrue($result->isErr());
-        $this->assertInstanceOf(ReadFailed::class, $result->unwrapErr());
-    }
-
-    public function testReadToEnd(): void
-    {
-        $path = Path::of($this->root->url() . '/testFile.txt');
-        $file = File::from($path->toString())->unwrap();
-
-        $result = $file->readFrom(5);
-
-        $this->assertTrue($result->isOk());
-        $this->assertEquals(\substr($this->testContent, 5), $result->unwrap());
-    }
+    // --- Writing ---
 
     public function testWrite(): void
     {
-        $path = Path::of($this->tempDir . '/writeTest.txt');
-        $file = File::new($path->toString())->unwrap();
+        $path = $this->tempDir . '/writeTest.txt';
+        $file = File::create($path)->unwrap();
 
-        $writeContent = 'Hello, world!';
-        $result = $file->write($writeContent);
+        $result = $file->write('Hello, world!');
+
+        $this->assertTrue($result->isOk());
+        $bytesWritten = $result->unwrap();
+        $this->assertInstanceOf(Integer::class, $bytesWritten);
+        $this->assertEquals(13, $bytesWritten->toInt());
+
+        // Verify content via readAll
+        $content = $file->readAll()->unwrap();
+        $this->assertSame('Hello, world!', $content->toString());
+
+        $file->close();
+    }
+
+    public function testWriteWithStr(): void
+    {
+        $path = $this->tempDir . '/writeStrTest.txt';
+        $file = File::create($path)->unwrap();
+
+        $result = $file->write(Str::of('typed content'));
+
+        $this->assertTrue($result->isOk());
+        $this->assertEquals(13, $result->unwrap()->toInt());
+
+        $file->close();
+    }
+
+    public function testAppend(): void
+    {
+        $file = File::open($this->tempFile)->unwrap();
+
+        $result = $file->append('Appended line');
+
+        $this->assertTrue($result->isOk());
+        $bytesWritten = $result->unwrap();
+        $this->assertInstanceOf(Integer::class, $bytesWritten);
+        $this->assertEquals(13, $bytesWritten->toInt());
+
+        // Verify content
+        $content = $file->readAll()->unwrap();
+        $this->assertSame($this->testContent . 'Appended line', $content->toString());
+
+        $file->close();
+    }
+
+    public function testWriteAtomic(): void
+    {
+        $path = $this->tempDir . '/atomicTest.txt';
+        $file = File::create($path)->unwrap();
+
+        $content = 'Atomic write content';
+        $result = $file->writeAtomic($content);
+
+        $this->assertTrue($result->isOk());
+        $this->assertInstanceOf(Unit::class, $result->unwrap());
+
+        // Verify content via readAll (handle has been reopened)
+        $readContent = $file->readAll()->unwrap();
+        $this->assertSame($content, $readContent->toString());
+
+        $file->close();
+    }
+
+    public function testWriteAtomicWithSync(): void
+    {
+        $path = $this->tempDir . '/atomicSyncTest.txt';
+        $file = File::create($path)->unwrap();
+
+        $content = 'Atomic write with sync';
+        $result = $file->writeAtomic($content, true);
 
         $this->assertTrue($result->isOk());
 
-        $file = $result->unwrap();
-        $content = $file->read()->unwrap();
-        $this->assertEquals($writeContent, $content);
+        $readContent = $file->readAll()->unwrap();
+        $this->assertSame($content, $readContent->toString());
+
+        $file->close();
     }
 
-    public function testWriteToReadOnlyFile(): void
+    public function testFlush(): void
     {
-        $path = $this->tempDir . '/readonlyTest.txt';
-        \file_put_contents($path, 'initial content');
-        \chmod($path, 0444); // Make read-only
+        $path = $this->tempDir . '/flushTest.txt';
+        $file = File::create($path)->unwrap();
 
-        $file = File::from($path)->unwrap();
-        $result = $file->write('new content');
+        $file->write('data to flush')->unwrap();
+        $result = $file->flush();
 
-        $this->assertTrue($result->isErr());
-        $this->assertInstanceOf(PermissionDenied::class, $result->unwrapErr());
+        $this->assertTrue($result->isOk());
+        $this->assertInstanceOf(Unit::class, $result->unwrap());
+
+        $file->close();
+    }
+
+    // --- Navigation ---
+
+    public function testSeek(): void
+    {
+        $file = File::open($this->tempFile)->unwrap();
+
+        // Seek to offset 7 ("Line 2\n...")
+        $result = $file->seek(7);
+        $this->assertTrue($result->isOk());
+
+        // Read a chunk from that position
+        $chunk = $file->readChunk(6)->unwrap();
+        $this->assertSame('Line 2', $chunk->toString());
+
+        $file->close();
+    }
+
+    public function testSeekWithInteger(): void
+    {
+        $file = File::open($this->tempFile)->unwrap();
+
+        $result = $file->seek(Integer::of(7));
+        $this->assertTrue($result->isOk());
+
+        $chunk = $file->readChunk(6)->unwrap();
+        $this->assertSame('Line 2', $chunk->toString());
+
+        $file->close();
+    }
+
+    public function testRewind(): void
+    {
+        $file = File::open($this->tempFile)->unwrap();
+
+        // Read some data to advance position
+        $file->readChunk(10)->unwrap();
+
+        // Rewind
+        $result = $file->rewind();
+        $this->assertTrue($result->isOk());
+
+        // Read from beginning
+        $chunk = $file->readChunk(6)->unwrap();
+        $this->assertSame('Line 1', $chunk->toString());
+
+        $file->close();
+    }
+
+    // --- Metadata ---
+
+    public function testPath(): void
+    {
+        $file = File::open($this->tempFile)->unwrap();
+
+        $this->assertEquals($this->tempFile, $file->path()->toString());
+
+        $file->close();
     }
 
     public function testMetadata(): void
     {
-        $path = Path::of($this->root->url() . '/testFile.txt');
-        $file = File::from($path->toString())->unwrap();
-
+        $file = File::open($this->tempFile)->unwrap();
         $result = $file->metadata();
-        $this->assertTrue($result->isOk());
 
+        $this->assertTrue($result->isOk());
         $metadata = $result->unwrap();
         $this->assertInstanceOf(Metadata::class, $metadata);
         $this->assertTrue($metadata->isFile());
         $this->assertEquals(\strlen($this->testContent), $metadata->size()->toInt());
+
+        $file->close();
+    }
+
+    public function testSize(): void
+    {
+        $file = File::open($this->tempFile)->unwrap();
+        $result = $file->size();
+
+        $this->assertTrue($result->isOk());
+        $this->assertEquals(\strlen($this->testContent), $result->unwrap()->toInt());
+
+        $file->close();
+    }
+
+    public function testSizeEmptyFile(): void
+    {
+        $file = File::open($this->tempDir . '/emptyFile.txt')->unwrap();
+        $result = $file->size();
+
+        $this->assertTrue($result->isOk());
+        $this->assertEquals(0, $result->unwrap()->toInt());
+
+        $file->close();
+    }
+
+    public function testSizeBinaryFile(): void
+    {
+        $file = File::open($this->tempDir . '/binaryFile.bin')->unwrap();
+        $result = $file->size();
+
+        $this->assertTrue($result->isOk());
+        $this->assertEquals(6, $result->unwrap()->toInt());
+
+        $file->close();
     }
 
     public function testSetPermissions(): void
     {
-        $path = Path::of($this->tempFile);
-        $file = File::from($path->toString())->unwrap();
+        $file = File::open($this->tempFile)->unwrap();
 
         $permissions = Permissions::create(0644);
         $result = $file->setPermissions($permissions);
@@ -324,15 +448,14 @@ final class FileTest extends TestCase
 
         $filePerms = \fileperms($this->tempFile) & 0777;
         $this->assertEquals(0644, $filePerms);
+
+        $file->close();
     }
 
     public function testSetModified(): void
     {
-        // Use real file for timestamp testing
-        $path = Path::of($this->tempFile);
-        $file = File::from($path->toString())->unwrap();
+        $file = File::open($this->tempFile)->unwrap();
 
-        // Set modified time to a specific time (2000-01-01)
         $timestamp = \mktime(0, 0, 0, 1, 1, 2000);
         $time = SystemTime::fromDateTimeImmutable(
             (new \DateTimeImmutable())->setTimestamp($timestamp),
@@ -341,15 +464,16 @@ final class FileTest extends TestCase
         $result = $file->setModified($time);
         $this->assertTrue($result->isOk());
 
+        \clearstatcache(true, $this->tempFile);
         $modTime = \filemtime($this->tempFile);
         $this->assertEquals($timestamp, $modTime);
+
+        $file->close();
     }
 
     public function testSetTimes(): void
     {
-        // Use real file for timestamp testing
-        $path = Path::of($this->tempFile);
-        $file = File::from($path->toString())->unwrap();
+        $file = File::open($this->tempFile)->unwrap();
 
         $modTimestamp = \mktime(0, 0, 0, 1, 1, 2000);
         $accessTimestamp = \mktime(0, 0, 0, 1, 2, 2000);
@@ -361,128 +485,118 @@ final class FileTest extends TestCase
             (new \DateTimeImmutable())->setTimestamp($accessTimestamp),
         )->unwrap();
 
-        $times = Time::new()
+        $times = FileTimes::new()
             ->setModified($modTime)
             ->setAccessed($accessTime);
 
         $result = $file->setTimes($times);
-
         $this->assertTrue($result->isOk());
 
-        $actualModTime = \filemtime($this->tempFile);
-        $actualAccessTime = \fileatime($this->tempFile);
+        \clearstatcache(true, $this->tempFile);
+        $this->assertEquals($modTimestamp, \filemtime($this->tempFile));
+        $this->assertEquals($accessTimestamp, \fileatime($this->tempFile));
 
-        $this->assertEquals($modTimestamp, $actualModTime);
-        $this->assertEquals($accessTimestamp, $actualAccessTime);
+        $file->close();
     }
 
-    public function testAppend(): void
+    // --- Lifecycle ---
+
+    public function testClose(): void
     {
-        $path = Path::of($this->tempDir . '/appendTest.txt');
-        $file = File::new($path->toString())->unwrap();
+        $file = File::open($this->tempFile)->unwrap();
+        $file->close();
 
-        $initialContent = 'Initial content';
-        $file->write($initialContent)->unwrap();
+        // Calling close again should not throw
+        $file->close();
+        $this->assertTrue(true);
+    }
 
-        $appendedContent = '\nAppended content';
-        $result = $file->append($appendedContent);
+    public function testDestructClosesHandle(): void
+    {
+        $path = $this->tempDir . '/destructTest.txt';
+        \file_put_contents($path, 'test');
+
+        $file = File::open($path)->unwrap();
+        unset($file);
+
+        // File should still be accessible (handle was closed, not deleted)
+        $this->assertTrue(\file_exists($path));
+        $this->assertSame('test', \file_get_contents($path));
+    }
+
+    // --- Scoped pattern ---
+
+    public function testWithOpen(): void
+    {
+        $result = File::withOpen($this->tempFile, function (File $file): string {
+            return $file->readAll()->unwrap()->toString();
+        });
 
         $this->assertTrue($result->isOk());
-
-        $file = $result->unwrap();
-        $finalContent = $file->read()->unwrap();
-        $this->assertEquals($initialContent . $appendedContent, $finalContent->toString());
+        $this->assertSame($this->testContent, $result->unwrap());
     }
 
-    public function testAppendToReadOnlyFile(): void
+    public function testWithOpenNonExistentFile(): void
     {
-        $path = $this->tempDir . '/readonlyAppendTest.txt';
-        \file_put_contents($path, 'initial content');
-        \chmod($path, 0444); // Make read-only
-
-        $file = File::from($path)->unwrap();
-        $result = $file->append('new content');
+        $result = File::withOpen($this->tempDir . '/nonExistent.txt', function (File $file): string {
+            return $file->readAll()->unwrap()->toString();
+        });
 
         $this->assertTrue($result->isErr());
-        $this->assertInstanceOf(PermissionDenied::class, $result->unwrapErr());
+        $this->assertInstanceOf(FileNotFound::class, $result->unwrapErr());
     }
 
-    public function testWriteAtomic(): void
+    public function testWithOpenWriteAndRead(): void
     {
-        $path = Path::of($this->tempDir . '/atomicTest.txt');
-        $file = File::new($path->toString())->unwrap();
+        $path = $this->tempDir . '/withOpenWrite.txt';
+        \file_put_contents($path, '');
 
-        $content = 'Atomic write content';
-        $result = $file->writeAtomic($content);
+        $result = File::withOpen($path, function (File $file): string {
+            $file->write('written via withOpen')->unwrap();
+
+            return $file->readAll()->unwrap()->toString();
+        });
 
         $this->assertTrue($result->isOk());
-
-        $file = $result->unwrap();
-        $readContent = $file->read()->unwrap();
-        $this->assertEquals($content, $readContent->toString());
+        $this->assertSame('written via withOpen', $result->unwrap());
     }
 
-    public function testWriteAtomicWithSync(): void
+    // --- Integration: create + write + read ---
+
+    public function testCreateWriteRead(): void
     {
-        $path = Path::of($this->tempDir . '/atomicSyncTest.txt');
-        $file = File::new($path->toString())->unwrap();
+        $path = $this->tempDir . '/createWriteRead.txt';
+        $file = File::create($path)->unwrap();
 
-        $content = 'Atomic write with sync content';
-        $result = $file->writeAtomic($content, true);
+        $file->write('test data')->unwrap();
+        $content = $file->readAll()->unwrap();
 
-        $this->assertTrue($result->isOk());
+        $this->assertSame('test data', $content->toString());
 
-        $file = $result->unwrap();
-        $readContent = $file->read()->unwrap();
-        $this->assertEquals($content, $readContent->toString());
+        $file->close();
     }
 
-    public function testWriteAtomicToReadOnlyFile(): void
+    private function cleanupDir(string $dir): void
     {
-        $path = $this->tempDir . '/readonlyAtomicTest.txt';
-        \file_put_contents($path, 'initial content');
-        \chmod($path, 0444); // Make read-only
+        if (!\is_dir($dir)) {
+            return;
+        }
 
-        $file = File::from($path)->unwrap();
-        $result = $file->writeAtomic('new content');
+        $files = \scandir($dir);
 
-        $this->assertTrue($result->isErr());
-        $this->assertInstanceOf(PermissionDenied::class, $result->unwrapErr());
-    }
+        foreach ($files as $file) {
+            if ($file !== '.' && $file !== '..') {
+                $path = $dir . '/' . $file;
 
-    public function testSize(): void
-    {
-        $path = Path::of($this->root->url() . '/testFile.txt');
-        $file = File::from($path->toString())->unwrap();
+                if (\is_dir($path)) {
+                    $this->cleanupDir($path);
+                } else {
+                    @\chmod($path, 0666);
+                    @\unlink($path);
+                }
+            }
+        }
 
-        $result = $file->size();
-
-        $this->assertTrue($result->isOk());
-        $size = $result->unwrap();
-        $this->assertEquals(\strlen($this->testContent), $size->toInt());
-    }
-
-    public function testSizeEmptyFile(): void
-    {
-        $path = Path::of($this->root->url() . '/emptyFile.txt');
-        $file = File::from($path->toString())->unwrap();
-
-        $result = $file->size();
-
-        $this->assertTrue($result->isOk());
-        $size = $result->unwrap();
-        $this->assertEquals(0, $size->toInt());
-    }
-
-    public function testSizeBinaryFile(): void
-    {
-        $path = Path::of($this->root->url() . '/binaryFile.bin');
-        $file = File::from($path->toString())->unwrap();
-
-        $result = $file->size();
-
-        $this->assertTrue($result->isOk());
-        $size = $result->unwrap();
-        $this->assertEquals(6, $size->toInt()); // Binary content length
+        @\rmdir($dir);
     }
 }

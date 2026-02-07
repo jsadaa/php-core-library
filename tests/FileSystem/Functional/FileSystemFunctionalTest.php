@@ -91,14 +91,16 @@ final class FileSystemFunctionalTest extends TestCase
 
         foreach ($logEntries as $entry) {
             $file = $currentLogFile->exists()
-                ? File::from($currentLogFile)->unwrap()
-                : File::new($currentLogFile)->unwrap();
+                ? File::open($currentLogFile)->unwrap()
+                : File::create($currentLogFile)->unwrap();
 
             $file->append($entry . "\n")->unwrap();
+            $file->close();
         }
 
-        $logFile = File::from($currentLogFile)->unwrap();
+        $logFile = File::open($currentLogFile)->unwrap();
         $size = $logFile->size()->unwrap();
+        $logFile->close();
         $this->assertGreaterThan(100, $size->toInt());
 
         // Simulate log rotation when file gets too large
@@ -111,7 +113,8 @@ final class FileSystemFunctionalTest extends TestCase
             // Move current log to rotated file
             FileSystem::renameFile($currentLogFile, $rotatedLogFile)->unwrap();
 
-            File::new($currentLogFile)->unwrap();
+            $newLog = File::create($currentLogFile)->unwrap();
+            $newLog->close();
 
             // Verify rotation
             $this->assertTrue($rotatedLogFile->exists());
@@ -134,8 +137,9 @@ final class FileSystemFunctionalTest extends TestCase
         ];
 
         $configJson = Json::encode($initialConfig, \JSON_PRETTY_PRINT)->unwrap();
-        $file = File::new($configFile)->unwrap();
+        $file = File::create($configFile)->unwrap();
         $file->writeAtomic($configJson, true)->unwrap();
+        $file->close();
 
         $currentConfig = FileSystem::read($configFile)->unwrap();
         $config = Json::decode($currentConfig->toString())->unwrap();
@@ -147,8 +151,9 @@ final class FileSystemFunctionalTest extends TestCase
         $config['features'][] = 'logging';
 
         $updatedJson = Json::encode($config, \JSON_PRETTY_PRINT)->unwrap();
-        $file = File::from($configFile)->unwrap();
+        $file = File::open($configFile)->unwrap();
         $file->writeAtomic($updatedJson, true)->unwrap();
+        $file->close();
 
         $verifyContent = FileSystem::read($configFile)->unwrap();
         $verifyConfig = Json::decode($verifyContent->toString())->unwrap();
@@ -279,12 +284,11 @@ final class FileSystemFunctionalTest extends TestCase
         $sourceEntries = FileSystem::readDir($sourceDir)->unwrap();
 
         foreach ($sourceEntries->iter() as $entry) {
-            if ($entry->path()->isFile()) {
+            if ($entry->isFile()) {
                 $fileName = $entry->fileName()->unwrap();
-                $sourcePath = $entry->path();
                 $backupPath = $backupDir->join(Path::of($fileName));
 
-                FileSystem::copyFile($sourcePath, $backupPath)->unwrap();
+                FileSystem::copyFile($entry, $backupPath)->unwrap();
             }
         }
 
@@ -429,8 +433,9 @@ final class FileSystemFunctionalTest extends TestCase
         ];
 
         foreach ($entries as $entry) {
-            $file = File::from($sharedFile)->unwrap();
+            $file = File::open($sharedFile)->unwrap();
             $file->append($entry . "\n")->unwrap();
+            $file->close();
         }
 
         $finalContent = FileSystem::read($sharedFile)->unwrap();
@@ -446,10 +451,11 @@ final class FileSystemFunctionalTest extends TestCase
         ];
 
         $configFile = Path::of($this->tempDir . '/config.json');
-        $file = File::new($configFile)->unwrap();
+        $file = File::create($configFile)->unwrap();
 
         $jsonContent = Json::encode($configData, \JSON_PRETTY_PRINT)->unwrap();
         $file->writeAtomic($jsonContent, true)->unwrap();
+        $file->close();
 
         $readConfig = FileSystem::read($configFile)->unwrap();
         $decodedConfig = Json::decode($readConfig->toString())->unwrap();
@@ -477,7 +483,7 @@ final class FileSystemFunctionalTest extends TestCase
         $totalSize = 0;
 
         foreach ($files as $filePath) {
-            $size = File::from($filePath)->unwrap()->size()->unwrap();
+            $size = File::open($filePath)->unwrap()->size()->unwrap();
             $totalSize += $size->toInt();
         }
 
