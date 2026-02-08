@@ -19,6 +19,9 @@
     <testsuite name="Time">
       <directory>tests/Time</directory>
     </testsuite>
+    <testsuite name="IO">
+      <directory>tests/IO</directory>
+    </testsuite>
   </testsuites>
   <source restrictNotices="true" restrictWarnings="true" ignoreIndirectDeprecations="true">
     <include>
