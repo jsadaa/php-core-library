@@ -13,12 +13,18 @@ use Jsadaa\PhpCoreLibrary\Primitives\Integer\Error\IntegerOverflow;
  *
  * @psalm-immutable
  */
-final readonly class Integer {
+final readonly class Integer implements \Stringable {
     private int $value;
 
     private function __construct(int $value)
     {
         $this->value = $value;
+    }
+
+    #[\Override]
+    public function __toString(): string
+    {
+        return (string) $this->value;
     }
 
     /**

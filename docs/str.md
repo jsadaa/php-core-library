@@ -5,6 +5,7 @@ The `Str` class is an immutable UTF-8 string type that provides a rich set of op
 ## Table of Contents
 
 - [Creation](#creation)
+- [Formatting](#formatting)
 - [Basic Operations](#basic-operations)
 - [Inspection](#inspection)
 - [Modification](#modification)
@@ -54,6 +55,72 @@ Returns a new empty Str instance.
 ```php
 $str = Str::of('Hello');
 $emptyStr = $str->clear(); // Creates a new empty string
+```
+
+## Formatting
+
+### format()
+
+Formats a string template with positional or named arguments, inspired by Rust's `format!` macro. Returns a new `Str` instance.
+
+```php
+// Positional placeholders — {} consumes arguments in order
+$greeting = Str::format('Hello, {}!', 'Alice');
+// Str('Hello, Alice!')
+
+$sum = Str::format('{} + {} = {}', 1, 2, 3);
+// Str('1 + 2 = 3')
+
+// Named placeholders — via PHP 8.3 named arguments
+$dsn = Str::format('{host}:{port}/{db}', host: 'localhost', port: 5432, db: 'myapp');
+// Str('localhost:5432/myapp')
+
+// Mix positional and named
+$log = Str::format('{} at {location}', 'Event', location: 'Paris');
+// Str('Event at Paris')
+
+// Stringable objects resolved via __toString()
+$path = Str::format('Config: {}', Path::of('/etc/app.conf'));
+// Str('Config: /etc/app.conf')
+
+// Escaped braces
+$tpl = Str::format('Use {{}} for placeholders');
+// Str('Use {} for placeholders')
+```
+
+### Argument resolution
+
+| Argument type | Resolution |
+|---|---|
+| `\Stringable` (Str, Path, Char, Integer, Double...) | Calls `__toString()` |
+| `string`, `int`, `float` | Cast to string |
+| `bool` | `'true'` or `'false'` |
+| `null` | `'null'` |
+| Other | `\InvalidArgumentException` |
+
+All library types implement `\Stringable` and work directly:
+
+```php
+Str::format('Count: {}', Integer::of(42));
+// Str('Count: 42')
+
+Str::format('Ratio: {}', Double::of(3.14));
+// Str('Ratio: 3.14')
+
+Str::format('Path: {}', Path::of('/tmp'));
+// Str('Path: /tmp')
+```
+
+### Error cases
+
+```php
+// Not enough positional arguments
+Str::format('{} and {}', 'only one');
+// throws \InvalidArgumentException
+
+// Non-Stringable object
+Str::format('{}', new \stdClass());
+// throws \InvalidArgumentException
 ```
 
 ## Basic Operations

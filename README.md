@@ -29,6 +29,7 @@ This ecosystem provides a growing collection of types and modules that work toge
 
 - **FileSystem**: Complete file and directory manipulation with type-safe error handling
 - **Process**: Safe process spawning, pipeline execution, and stream I/O with typed errors
+- **IO**: Standard input/output operations with `Result` types and Rust-like formatting
 - **Json**: Safe JSON encoding, decoding, and validation with `Result` types
 - **Path**: Path manipulation and validation
 - **Time**: Precise time handling with `SystemTime` and `Duration` types
@@ -782,6 +783,61 @@ $result = FileSystem::read('/app/settings.json')
 
 For complete documentation with examples, see [Json Documentation](./docs/json.md).
 
+### IO Module
+
+The IO module provides type-safe standard I/O with Rust-inspired formatting. All operations return `Result` types, and messages support `{}` placeholders via `Str::format()`:
+
+```php
+use Jsadaa\PhpCoreLibrary\Modules\IO\IO;
+use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
+
+// Write to stdout (with newline)
+IO::println('Hello, world!');
+
+// Rust-like formatting with positional placeholders
+IO::println('Hello, {}!', 'Alice');
+IO::println('{} + {} = {}', 1, 2, 3);
+
+// Named placeholders via PHP named arguments
+IO::println('Connecting to {host}:{port}', host: 'localhost', port: 5432);
+
+// Write to stderr
+IO::eprintln('Error: {}', 'file not found');
+
+// Read from stdin with prompt
+$result = IO::readLine(Str::of('Enter name: '));
+
+// andThen chaining — read, parse, validate in one pipeline
+$port = IO::readLine(Str::of('Port: '))
+    ->andThen(fn(Str $s) => $s->trim()->parseInteger())
+    ->andThen(fn(Integer $n) => $n->gt(0) && $n->lt(65536)
+        ? Result::ok($n)
+        : Result::err(new \InvalidArgumentException('Invalid port'))
+    );
+
+$port->match(
+    fn(Integer $p) => IO::println('Starting on port {}', $p),
+    fn($e) => IO::eprintln('Error: {}', $e->getMessage()),
+);
+
+// Str::format — the formatting engine behind IO
+$dsn = Str::format('{host}:{port}/{db}', host: 'localhost', port: 5432, db: 'myapp');
+// Str('localhost:5432/myapp')
+
+// Stringable objects resolved via __toString()
+$msg = Str::format('Config: {}', Path::of('/etc/app.conf'));
+// Str('Config: /etc/app.conf')
+```
+
+The IO module includes:
+- `IO::println` / `IO::print`: Write to stdout with optional formatting
+- `IO::eprintln` / `IO::eprint`: Write to stderr with optional formatting
+- `IO::readLine`: Read from stdin with optional prompt
+- `Str::format`: Rust-inspired string formatting with `{}` and `{name}` placeholders
+- Typed error classes: `WriteFailed`, `ReadFailed`
+
+For complete documentation with examples, see [IO Documentation](./docs/io.md).
+
 ### Path Module
 
 The Path module provides cross-platform path manipulation and validation:
@@ -1067,6 +1123,7 @@ This library is designed as a cohesive ecosystem where modules complement each o
 - **Core Types** (`Sequence`, `Map`, `Set`, `Option`, `Result`, `Str`, `Char`, `Integer`, `Double`) provide the foundation
 - **FileSystem** uses `Path`, `Result`, and core types for safe file operations
 - **Process** uses `Result`, `Option`, `Str`, `Duration`, and typed errors for safe process execution
+- **IO** uses `Result`, `Str`, and `Str::format()` for type-safe standard I/O
 - **Json** wraps PHP native JSON functions with `Result` and `Str` integration
 - **Path** integrates with `Option` and `Result` for path validation and manipulation
 - **Time** provides `SystemTime` and `Duration` with overflow-safe arithmetic using `Integer`

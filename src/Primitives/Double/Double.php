@@ -13,13 +13,19 @@ use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
  *
  * @psalm-immutable
  */
-final readonly class Double
+final readonly class Double implements \Stringable
 {
     private float $value;
 
     private function __construct(float $value)
     {
         $this->value = $value;
+    }
+
+    #[\Override]
+    public function __toString(): string
+    {
+        return (string) $this->value;
     }
 
     /**
