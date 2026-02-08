@@ -80,6 +80,102 @@ final readonly class Str implements \Stringable
     }
 
     /**
+     * Formats a string template with positional or named arguments.
+     *
+     * Positional placeholders `{}` consume arguments in order.
+     * Named placeholders `{name}` use PHP named arguments.
+     * Literal braces are escaped as `{{` and `}}`.
+     *
+     * Arguments must be scalar types or implement \Stringable.
+     *
+     * @param string $template The format template
+     * @param mixed ...$args The values to interpolate (positional and/or named)
+     * @return self A new Str instance with placeholders replaced
+     *
+     * @throws \InvalidArgumentException If a placeholder cannot be resolved or not enough positional arguments
+     */
+    public static function format(string $template, mixed ...$args): self
+    {
+        // Protect escaped braces with sentinel values
+        $sentinelOpen = "\x00OPEN_BRACE\x00";
+        $sentinelClose = "\x00CLOSE_BRACE\x00";
+        $result = \str_replace(['{{', '}}'], [$sentinelOpen, $sentinelClose], $template);
+
+        // Replace named placeholders {name} first
+        /** @psalm-suppress MixedAssignment */
+        foreach ($args as $key => $value) {
+            if (\is_string($key)) {
+                $placeholder = '{' . $key . '}';
+                if (\str_contains($result, $placeholder)) {
+                    $result = \str_replace($placeholder, self::resolveArg($value), $result);
+                }
+            }
+        }
+
+        // Replace positional placeholders {} in order
+        /** @var list<mixed> $positionalArgs */
+        $positionalArgs = \array_values(\array_filter($args, static fn(mixed $_, int|string $key): bool => \is_int($key), \ARRAY_FILTER_USE_BOTH));
+        $positionalIndex = 0;
+
+        /** @psalm-suppress ImpureFunctionCall */
+        $result = \preg_replace_callback('/\{\}/', static function () use ($positionalArgs, &$positionalIndex): string {
+            /** @var int $positionalIndex */
+            if ($positionalIndex >= \count($positionalArgs)) {
+                throw new \InvalidArgumentException(
+                    \sprintf('Not enough positional arguments: placeholder at index %d has no matching argument', $positionalIndex),
+                );
+            }
+
+            /** @psalm-suppress MixedAssignment */
+            $value = $positionalArgs[$positionalIndex];
+            $positionalIndex++;
+
+            return self::resolveArg($value);
+        }, $result);
+
+        if ($result === null) {
+            return new self($template);
+        }
+
+        // Restore escaped braces
+        $result = \str_replace([$sentinelOpen, $sentinelClose], ['{', '}'], $result);
+
+        return new self($result);
+    }
+
+    /**
+     * Resolve a format argument to its string representation.
+     *
+     * @param mixed $value The value to resolve
+     * @return string The string representation
+     *
+     * @throws \InvalidArgumentException If the value cannot be converted to string
+     */
+    private static function resolveArg(mixed $value): string
+    {
+        if ($value instanceof \Stringable) {
+            /** @psalm-suppress ImpureMethodCall */
+            return (string) $value;
+        }
+
+        if (\is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if ($value === null) {
+            return 'null';
+        }
+
+        if (\is_scalar($value)) {
+            return (string) $value;
+        }
+
+        throw new \InvalidArgumentException(
+            \sprintf('Cannot format value of type %s: must be scalar or implement \\Stringable', \get_debug_type($value)),
+        );
+    }
+
+    /**
      * Returns a new empty Str instance
      *
      */
