@@ -90,9 +90,9 @@ final readonly class Str implements \Stringable
      *
      * @param string $template The format template
      * @param mixed ...$args The values to interpolate (positional and/or named)
+     * @throws \InvalidArgumentException If a placeholder cannot be resolved or not enough positional arguments
      * @return self A new Str instance with placeholders replaced
      *
-     * @throws \InvalidArgumentException If a placeholder cannot be resolved or not enough positional arguments
      */
     public static function format(string $template, mixed ...$args): self
     {
@@ -106,6 +106,7 @@ final readonly class Str implements \Stringable
         foreach ($args as $key => $value) {
             if (\is_string($key)) {
                 $placeholder = '{' . $key . '}';
+
                 if (\str_contains($result, $placeholder)) {
                     $result = \str_replace($placeholder, self::resolveArg($value), $result);
                 }
@@ -114,11 +115,11 @@ final readonly class Str implements \Stringable
 
         // Replace positional placeholders {} in order
         /** @var list<mixed> $positionalArgs */
-        $positionalArgs = \array_values(\array_filter($args, static fn(mixed $_, int|string $key): bool => \is_int($key), \ARRAY_FILTER_USE_BOTH));
+        $positionalArgs = \array_values(\array_filter($args, static fn(mixed $_, int | string $key): bool => \is_int($key), \ARRAY_FILTER_USE_BOTH));
         $positionalIndex = 0;
 
         /** @psalm-suppress ImpureFunctionCall */
-        $result = \preg_replace_callback('/\{\}/', static function () use ($positionalArgs, &$positionalIndex): string {
+        $result = \preg_replace_callback('/\{\}/', static function() use ($positionalArgs, &$positionalIndex): string {
             /** @var int $positionalIndex */
             if ($positionalIndex >= \count($positionalArgs)) {
                 throw new \InvalidArgumentException(
@@ -141,38 +142,6 @@ final readonly class Str implements \Stringable
         $result = \str_replace([$sentinelOpen, $sentinelClose], ['{', '}'], $result);
 
         return new self($result);
-    }
-
-    /**
-     * Resolve a format argument to its string representation.
-     *
-     * @param mixed $value The value to resolve
-     * @return string The string representation
-     *
-     * @throws \InvalidArgumentException If the value cannot be converted to string
-     */
-    private static function resolveArg(mixed $value): string
-    {
-        if ($value instanceof \Stringable) {
-            /** @psalm-suppress ImpureMethodCall */
-            return (string) $value;
-        }
-
-        if (\is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-
-        if ($value === null) {
-            return 'null';
-        }
-
-        if (\is_scalar($value)) {
-            return (string) $value;
-        }
-
-        throw new \InvalidArgumentException(
-            \sprintf('Cannot format value of type %s: must be scalar or implement \\Stringable', \get_debug_type($value)),
-        );
     }
 
     /**
@@ -1451,6 +1420,38 @@ final readonly class Str implements \Stringable
 
         /** @var Result<Str, EncodingError> */
         return $result->map(static fn(string $encoded) => Str::of($encoded));
+    }
+
+    /**
+     * Resolve a format argument to its string representation.
+     *
+     * @param mixed $value The value to resolve
+     * @throws \InvalidArgumentException If the value cannot be converted to string
+     * @return string The string representation
+     *
+     */
+    private static function resolveArg(mixed $value): string
+    {
+        if ($value instanceof \Stringable) {
+            /** @psalm-suppress ImpureMethodCall */
+            return (string) $value;
+        }
+
+        if (\is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if ($value === null) {
+            return 'null';
+        }
+
+        if (\is_scalar($value)) {
+            return (string) $value;
+        }
+
+        throw new \InvalidArgumentException(
+            \sprintf('Cannot format value of type %s: must be scalar or implement \\Stringable', \get_debug_type($value)),
+        );
     }
 
     /**

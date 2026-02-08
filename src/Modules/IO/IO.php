@@ -29,7 +29,7 @@ final readonly class IO
      * @param mixed ...$args Optional format arguments (positional and/or named)
      * @return Result<Unit, WriteFailed>
      */
-    public static function println(Str|string $message, mixed ...$args): Result
+    public static function println(Str | string $message, mixed ...$args): Result
     {
         return self::writeToStream(\STDOUT, $message, true, ...$args);
     }
@@ -41,7 +41,7 @@ final readonly class IO
      * @param mixed ...$args Optional format arguments (positional and/or named)
      * @return Result<Unit, WriteFailed>
      */
-    public static function print(Str|string $message, mixed ...$args): Result
+    public static function print(Str | string $message, mixed ...$args): Result
     {
         return self::writeToStream(\STDOUT, $message, false, ...$args);
     }
@@ -53,7 +53,7 @@ final readonly class IO
      * @param mixed ...$args Optional format arguments (positional and/or named)
      * @return Result<Unit, WriteFailed>
      */
-    public static function eprintln(Str|string $message, mixed ...$args): Result
+    public static function eprintln(Str | string $message, mixed ...$args): Result
     {
         return self::writeToStream(\STDERR, $message, true, ...$args);
     }
@@ -65,7 +65,7 @@ final readonly class IO
      * @param mixed ...$args Optional format arguments (positional and/or named)
      * @return Result<Unit, WriteFailed>
      */
-    public static function eprint(Str|string $message, mixed ...$args): Result
+    public static function eprint(Str | string $message, mixed ...$args): Result
     {
         return self::writeToStream(\STDERR, $message, false, ...$args);
     }
@@ -118,7 +118,7 @@ final readonly class IO
      * @param mixed ...$args Format arguments
      * @return Result<Unit, WriteFailed>
      */
-    private static function writeToStream(mixed $stream, Str|string $message, bool $newline, mixed ...$args): Result
+    private static function writeToStream(mixed $stream, Str | string $message, bool $newline, mixed ...$args): Result
     {
         $output = $message instanceof Str ? $message->toString() : $message;
 

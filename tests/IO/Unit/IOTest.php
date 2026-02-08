@@ -7,7 +7,6 @@ namespace Jsadaa\PhpCoreLibrary\Tests\IO\Unit;
 use Jsadaa\PhpCoreLibrary\Modules\IO\Error\ReadFailed;
 use Jsadaa\PhpCoreLibrary\Modules\IO\Error\WriteFailed;
 use Jsadaa\PhpCoreLibrary\Modules\IO\IO;
-use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 use Jsadaa\PhpCoreLibrary\Primitives\Unit;
 use PHPUnit\Framework\TestCase;
 
@@ -25,7 +24,7 @@ final class IOTest extends TestCase
     {
         $this->runInSubprocess(
             'IO::println("Hello");',
-            function (string $stdout): void {
+            function(string $stdout): void {
                 $this->assertSame('Hello' . \PHP_EOL, $stdout);
             },
         );
@@ -35,7 +34,7 @@ final class IOTest extends TestCase
     {
         $this->runInSubprocess(
             'IO::println(Str::of("Hello Str"));',
-            function (string $stdout): void {
+            function(string $stdout): void {
                 $this->assertSame('Hello Str' . \PHP_EOL, $stdout);
             },
         );
@@ -45,7 +44,7 @@ final class IOTest extends TestCase
     {
         $this->runInSubprocess(
             'IO::println("Hello, {}!", "world");',
-            function (string $stdout): void {
+            function(string $stdout): void {
                 $this->assertSame('Hello, world!' . \PHP_EOL, $stdout);
             },
         );
@@ -55,7 +54,7 @@ final class IOTest extends TestCase
     {
         $this->runInSubprocess(
             'IO::println("{} + {} = {}", 1, 2, 3);',
-            function (string $stdout): void {
+            function(string $stdout): void {
                 $this->assertSame('1 + 2 = 3' . \PHP_EOL, $stdout);
             },
         );
@@ -65,7 +64,7 @@ final class IOTest extends TestCase
     {
         $this->runInSubprocess(
             'IO::println("Hello, {name}!", name: "Alice");',
-            function (string $stdout): void {
+            function(string $stdout): void {
                 $this->assertSame('Hello, Alice!' . \PHP_EOL, $stdout);
             },
         );
@@ -75,7 +74,7 @@ final class IOTest extends TestCase
     {
         $this->runInSubprocess(
             'IO::println("");',
-            function (string $stdout): void {
+            function(string $stdout): void {
                 $this->assertSame(\PHP_EOL, $stdout);
             },
         );
@@ -95,7 +94,7 @@ final class IOTest extends TestCase
     {
         $this->runInSubprocess(
             'IO::print("Hello");',
-            function (string $stdout): void {
+            function(string $stdout): void {
                 $this->assertSame('Hello', $stdout);
             },
         );
@@ -105,7 +104,7 @@ final class IOTest extends TestCase
     {
         $this->runInSubprocess(
             'IO::print("Count: {}", 42);',
-            function (string $stdout): void {
+            function(string $stdout): void {
                 $this->assertSame('Count: 42', $stdout);
             },
         );
@@ -126,7 +125,7 @@ final class IOTest extends TestCase
         $this->runInSubprocess(
             'IO::eprintln("Error occurred");',
             null,
-            function (string $stderr): void {
+            function(string $stderr): void {
                 $this->assertSame('Error occurred' . \PHP_EOL, $stderr);
             },
         );
@@ -137,7 +136,7 @@ final class IOTest extends TestCase
         $this->runInSubprocess(
             'IO::eprintln("Error: {}", "not found");',
             null,
-            function (string $stderr): void {
+            function(string $stderr): void {
                 $this->assertSame('Error: not found' . \PHP_EOL, $stderr);
             },
         );
@@ -158,7 +157,7 @@ final class IOTest extends TestCase
         $this->runInSubprocess(
             'IO::eprint("Warning");',
             null,
-            function (string $stderr): void {
+            function(string $stderr): void {
                 $this->assertSame('Warning', $stderr);
             },
         );
@@ -169,7 +168,7 @@ final class IOTest extends TestCase
         $this->runInSubprocess(
             'IO::eprint("Level: {level}", level: "WARN");',
             null,
-            function (string $stderr): void {
+            function(string $stderr): void {
                 $this->assertSame('Level: WARN', $stderr);
             },
         );
