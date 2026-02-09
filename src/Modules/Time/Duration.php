@@ -9,7 +9,6 @@ use Jsadaa\PhpCoreLibrary\Modules\Time\Error\DurationCalculationInvalid;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Error\DurationOverflow;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Error\ZeroDuration;
 use Jsadaa\PhpCoreLibrary\Primitives\Double\Double;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 
 /**
  * An immutable duration type representing a span of time.
@@ -52,184 +51,282 @@ final readonly class Duration
     /** @var int Maximum nanoseconds (less than a second) */
     public const MAX_NANOS = 999_999_999;
 
-    /** @var Integer The whole seconds component of the duration */
-    private Integer $seconds;
+    /** @var int The whole seconds component of the duration */
+    private int $seconds;
 
-    /** @var Integer The nanoseconds component of the duration (always 0 <= nanos < 1_000_000_000) */
-    private Integer $nanos;
+    /** @var int The nanoseconds component of the duration (always 0 <= nanos < 1_000_000_000) */
+    private int $nanos;
 
     /**
      * Creates a new Duration instance from seconds and nanoseconds.
      *
-     * @param int|Integer $seconds The number of whole seconds
-     * @param int|Integer $nanos The number of nanoseconds (should be less than 1 billion)
+     * @param int $seconds The number of whole seconds
+     * @param int $nanos The number of nanoseconds (should be less than 1 billion)
      */
-    private function __construct(int | Integer $seconds, int | Integer $nanos)
+    private function __construct(int $seconds, int $nanos)
     {
-        $this->seconds = $seconds instanceof Integer ? $seconds : Integer::of($seconds);
-        $this->nanos = $nanos instanceof Integer ? $nanos : Integer::of($nanos);
+        $this->seconds = $seconds;
+        $this->nanos = $nanos;
     }
+
+    // --- Overflow helpers ---
+
+    /**
+     * @return Result<int, DurationOverflow>
+     * @psalm-pure
+     * @psalm-suppress ImpureMethodCall
+     */
+    private static function checkedAdd(int $a, int $b): Result
+    {
+        if (($b > 0 && $a > \PHP_INT_MAX - $b) || ($b < 0 && $a < \PHP_INT_MIN - $b)) {
+            /** @var Result<int, DurationOverflow> */
+            return Result::err(new DurationOverflow('Overflow on addition'));
+        }
+
+        /** @var Result<int, DurationOverflow> */
+        return Result::ok($a + $b);
+    }
+
+    /**
+     * @return Result<int, DurationOverflow>
+     * @psalm-pure
+     * @psalm-suppress ImpureMethodCall
+     */
+    private static function checkedSub(int $a, int $b): Result
+    {
+        if (($b > 0 && $a < \PHP_INT_MIN + $b) || ($b < 0 && $a > \PHP_INT_MAX + $b)) {
+            /** @var Result<int, DurationOverflow> */
+            return Result::err(new DurationOverflow('Overflow on subtraction'));
+        }
+
+        /** @var Result<int, DurationOverflow> */
+        return Result::ok($a - $b);
+    }
+
+    /**
+     * @return Result<int, DurationOverflow>
+     * @psalm-pure
+     * @psalm-suppress ImpureMethodCall
+     */
+    private static function checkedMul(int $a, int $b): Result
+    {
+        $result = $a * $b;
+
+        /** @psalm-suppress TypeDoesNotContainType PHP promotes int*int to float on overflow */
+        if (\is_float($result)) {
+            /** @var Result<int, DurationOverflow> */
+            return Result::err(new DurationOverflow('Overflow on multiplication'));
+        }
+
+        /** @var Result<int, DurationOverflow> */
+        return Result::ok($result);
+    }
+
+    // --- Factory methods ---
 
     /**
      * Creates a new Duration from the specified number of seconds and nanoseconds.
      *
-     * @param int|Integer $seconds The number of whole seconds
-     * @param int|Integer $nanos The number of nanoseconds (should be less than 1 billion)
+     * @param int $seconds The number of whole seconds
+     * @param int $nanos The number of nanoseconds (should be less than 1 billion)
      * @return self A new Duration instance
      * @psalm-pure
      */
-    public static function new(int | Integer $seconds, int | Integer $nanos): self
+    public static function new(int $seconds, int $nanos): self
     {
-        $seconds = $seconds instanceof Integer ? $seconds : Integer::of($seconds);
-        $nanos = $nanos instanceof Integer ? $nanos : Integer::of($nanos);
-
         return new self($seconds, $nanos);
     }
 
     /**
-     * Computes the absolute difference between two durations.
+     * Creates a new Duration from the specified number of milliseconds.
      *
-     * @param self $other The other duration to compare with
-     * @return self A new Duration representing the absolute difference
+     * @param int $millis The number of milliseconds
+     * @return self A new Duration instance
+     * @psalm-pure
      */
-    public function absDiff(self $other): self
+    public static function fromMillis(int $millis): self
     {
-        $seconds = $this->seconds->absDiff($other->seconds);
-        $nanos = $this->nanos->absDiff($other->nanos);
+        $secs = \intdiv($millis, self::MILLIS_PER_SECOND);
+        $nanos = ($millis - $secs * self::MILLIS_PER_SECOND) * self::NANOS_PER_MILLI;
 
-        return self::new($seconds, $nanos);
+        return new self($secs, $nanos);
     }
 
     /**
-     * Returns the total number of microseconds contained by this Duration.
+     * Creates a new Duration from the specified number of microseconds.
      *
-     * @return Integer The total microseconds (may exceed u64::MAX)
+     * @param int $micros The number of microseconds
+     * @return self A new Duration instance
+     * @psalm-pure
      */
-    public function toMicros(): Integer
+    public static function fromMicros(int $micros): self
     {
-        return $this
-            ->seconds
-            ->mul(self::MICROS_PER_SECOND)
-            ->add(
-                $this
-                    ->nanos
-                    ->div(self::NANOS_PER_MICRO)
-                    ->unwrap(),
-            );
+        $secs = \intdiv($micros, self::MICROS_PER_SECOND);
+        $nanos = ($micros - $secs * self::MICROS_PER_SECOND) * self::NANOS_PER_MICRO;
+
+        return new self($secs, $nanos);
+    }
+
+    /**
+     * Creates a new Duration from the specified number of nanoseconds.
+     *
+     * @param int $nanos The number of nanoseconds
+     * @return self A new Duration instance
+     * @psalm-pure
+     */
+    public static function fromNanos(int $nanos): self
+    {
+        $secs = \intdiv($nanos, self::NANOS_PER_SECOND);
+        $nanosPart = $nanos - $secs * self::NANOS_PER_SECOND;
+
+        return new self($secs, $nanosPart);
+    }
+
+    /**
+     * Creates a new Duration from the specified number of days.
+     *
+     * @param int $days The number of days
+     * @return self A new Duration instance
+     * @psalm-pure
+     */
+    public static function fromDays(int $days): self
+    {
+        return new self($days * self::SECONDS_PER_DAY, 0);
+    }
+
+    /**
+     * Creates a new Duration from the specified number of hours.
+     *
+     * @param int $hours The number of hours
+     * @return self A new Duration instance
+     * @psalm-pure
+     */
+    public static function fromHours(int $hours): self
+    {
+        return new self($hours * self::SECONDS_PER_HOUR, 0);
+    }
+
+    /**
+     * Creates a new Duration from the specified number of minutes.
+     *
+     * @param int $minutes The number of minutes
+     * @return self A new Duration instance
+     * @psalm-pure
+     */
+    public static function fromMins(int $minutes): self
+    {
+        return new self($minutes * self::SECONDS_PER_MINUTE, 0);
+    }
+
+    /**
+     * Creates a new Duration from the specified number of seconds.
+     *
+     * @param int $seconds The number of seconds
+     * @return self A new Duration instance
+     * @psalm-pure
+     */
+    public static function fromSeconds(int $seconds): self
+    {
+        return new self($seconds, 0);
+    }
+
+    /**
+     * Creates a new Duration from the specified number of weeks.
+     *
+     * @param int $weeks The number of weeks
+     * @return self A new Duration instance
+     * @psalm-pure
+     */
+    public static function fromWeeks(int $weeks): self
+    {
+        return new self($weeks * self::SECONDS_PER_WEEK, 0);
+    }
+
+    // --- Conversion ---
+
+    /**
+     * Returns the total number of whole seconds contained by this Duration.
+     *
+     * @return int The total seconds
+     */
+    public function toSeconds(): int
+    {
+        return $this->seconds + \intdiv($this->nanos, self::NANOS_PER_SECOND);
     }
 
     /**
      * Returns the total number of milliseconds contained by this Duration.
      *
-     * @return Integer The total milliseconds (may exceed u64::MAX)
+     * @return int The total milliseconds
      */
-    public function toMillis(): Integer
+    public function toMillis(): int
     {
-        return $this
-            ->seconds
-            ->mul(self::MILLIS_PER_SECOND)
-            ->add(
-                $this
-                    ->nanos
-                    ->div(self::NANOS_PER_MILLI)
-                    ->unwrap(),
-            );
+        return $this->seconds * self::MILLIS_PER_SECOND + \intdiv($this->nanos, self::NANOS_PER_MILLI);
+    }
+
+    /**
+     * Returns the total number of microseconds contained by this Duration.
+     *
+     * @return int The total microseconds
+     */
+    public function toMicros(): int
+    {
+        return $this->seconds * self::MICROS_PER_SECOND + \intdiv($this->nanos, self::NANOS_PER_MICRO);
     }
 
     /**
      * Returns the total number of nanoseconds contained by this Duration.
      *
-     * @return Integer The total nanoseconds (may exceed u64::MAX)
+     * @return int The total nanoseconds
      */
-    public function toNanos(): Integer
+    public function toNanos(): int
     {
-        return $this
-            ->seconds
-            ->mul(self::NANOS_PER_SECOND)
-            ->add($this->nanos);
+        return $this->seconds * self::NANOS_PER_SECOND + $this->nanos;
     }
 
     /**
-     * Returns the total number of whole seconds contained by this Duration.
+     * Returns the fractional part of this Duration, in whole microseconds.
      *
-     * The result is rounded towards zero (truncated).
+     * This method does **not** return the length of the duration when
+     * represented by microseconds. The returned number always represents a
+     * fractional portion of a second (i.e., it is less than one million).
      *
-     * @return Integer The total seconds
+     * @return int The microseconds part (always less than 1 million)
      */
-    public function toSeconds(): Integer
+    public function subsecMicros(): int
     {
-        return $this
-            ->seconds
-            ->add(
-                $this
-                    ->nanos
-                    ->div(self::NANOS_PER_SECOND)
-                    ->unwrap(),
-            );
+        return \intdiv($this->nanos, self::NANOS_PER_MICRO);
     }
 
     /**
-     * Divides this duration by another duration, returning a scalar.
+     * Returns the fractional part of this Duration, in whole milliseconds.
      *
-     * This represents how many times the `other` duration fits within the current duration.
-     * The result is a floating-point number that can represent fractional relationships.
+     * This method does **not** return the length of the duration when
+     * represented by milliseconds. The returned number always represents a
+     * fractional portion of a second (i.e., it is less than one thousand).
      *
-     * @param self $other The duration to divide by
-     * @return Result<Double, ZeroDuration|DurationCalculationInvalid> A scalar representing the quotient
+     * @return int The milliseconds part (always less than 1 thousand)
      */
-    public function divDuration(self $other): Result
+    public function subsecMillis(): int
     {
-        if ($other->isZero()) {
-            /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
-            return Result::err(new ZeroDuration('Cannot divide by a zero duration'));
-        }
-
-        // Protect against potential floating point issues with extreme values
-        if ($this->isZero()) {
-            /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
-            return Result::ok(Double::of(0.0));
-        }
-
-        // Handle cases where overflow could occur with large numbers
-        if ($this->seconds->eq(Integer::maximum()) && $other->seconds->eq(Integer::of(1)) && $other->nanos->eq(Integer::of(0))) {
-            /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
-            return Result::ok(Double::of((float)$this->seconds->toInt()));
-        }
-
-        // Convert to total nanoseconds as float for calculation
-        $selfSecondsFloat = (float)$this->seconds->toInt();
-        $selfNanosFloat = (float)$this->nanos->toInt();
-        $otherSecondsFloat = (float)$other->seconds->toInt();
-        $otherNanosFloat = (float)$other->nanos->toInt();
-
-        // For extremely large values, use a different approach to avoid floating point overflow
-        if ($selfSecondsFloat > \PHP_FLOAT_MAX / (float)self::NANOS_PER_SECOND ||
-            $otherSecondsFloat > \PHP_FLOAT_MAX / (float)self::NANOS_PER_SECOND) {
-            // Calculate seconds ratio first
-            $secRatio = $this->seconds->toFloat() / $other->seconds->toFloat();
-            // Adjust for nanoseconds as a small correction
-            $nanoAdjustment = 0.0;
-
-            if ($other->seconds->gt(Integer::of(0))) {
-                $nanoAdjustment = ($this->nanos->toFloat() - ($secRatio * $other->nanos->toFloat()))
-                                / ($other->seconds->toFloat() * (float)self::NANOS_PER_SECOND);
-            }
-            $quotient = $secRatio + $nanoAdjustment;
-        } else {
-            $selfTotal = ($selfSecondsFloat * (float)self::NANOS_PER_SECOND) + $selfNanosFloat;
-            $otherTotal = ($otherSecondsFloat * (float)self::NANOS_PER_SECOND) + $otherNanosFloat;
-            $quotient = $selfTotal / $otherTotal;
-        }
-
-        // Check if result is valid
-        if (!\is_finite($quotient)) {
-            /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
-            return Result::err(new DurationCalculationInvalid('Division resulted in an invalid value (infinity or NaN)'));
-        }
-
-        /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
-        return Result::ok(Double::of($quotient));
+        return \intdiv($this->nanos, self::NANOS_PER_MILLI);
     }
+
+    /**
+     * Returns the fractional part of this Duration, in nanoseconds.
+     *
+     * This method does **not** return the length of the duration when
+     * represented by nanoseconds. The returned number always represents a
+     * fractional portion of a second (i.e., it is less than one billion).
+     *
+     * @return int The nanoseconds part (always less than 1 billion)
+     */
+    public function subsecNanos(): int
+    {
+        return $this->nanos;
+    }
+
+    // --- Arithmetic ---
 
     /**
      * Checked Duration addition. Computes `self + other`, returning an error if overflow occurred.
@@ -239,54 +336,36 @@ final readonly class Duration
      */
     public function add(self $other): Result
     {
-        // Add seconds
-        $seconds = $this->seconds->overflowingAdd($other->seconds);
+        $secsResult = self::checkedAdd($this->seconds, $other->seconds);
 
-        if ($seconds->isErr()) {
+        if ($secsResult->isErr()) {
             /** @var Result<self, DurationOverflow> */
-            return Result::err(new DurationOverflow(
-                'Overflow occurred while adding seconds',
-            ));
+            return Result::err(new DurationOverflow('Overflow occurred while adding seconds'));
         }
 
-        // Add nanoseconds
-        $nanos = $this->nanos->overflowingAdd($other->nanos);
-
-        if ($nanos->isErr()) {
-            /** @var Result<self, DurationOverflow> */
-            return Result::err(new DurationOverflow(
-                'Overflow occurred while adding nanoseconds',
-            ));
-        }
-
-        $secondsResult = $seconds->unwrap();
-        $nanosResult = $nanos->unwrap();
+        $secs = $secsResult->unwrap();
+        $nanos = $this->nanos + $other->nanos;
 
         // Handle overflow of nanoseconds to seconds
-        if ($nanosResult->ge(self::NANOS_PER_SECOND)) {
-            $nanosResult = $nanosResult->sub(self::NANOS_PER_SECOND);
-            $secondsAdd = $secondsResult->overflowingAdd(1);
+        if ($nanos >= self::NANOS_PER_SECOND) {
+            $nanos -= self::NANOS_PER_SECOND;
+            $secsResult = self::checkedAdd($secs, 1);
 
-            if ($secondsAdd->isErr()) {
+            if ($secsResult->isErr()) {
                 /** @var Result<self, DurationOverflow> */
-                return Result::err(new DurationOverflow(
-                    'Overflow occurred while adding seconds',
-                ));
+                return Result::err(new DurationOverflow('Overflow occurred while adding seconds'));
             }
 
-            $secondsResult = $secondsAdd->unwrap();
+            $secs = $secsResult->unwrap();
         }
 
         /** @var Result<self, DurationOverflow> */
-        return Result::ok(self::new($secondsResult, $nanosResult));
+        return Result::ok(new self($secs, $nanos));
     }
 
     /**
      * Saturating Duration addition. Computes `self + other`, returning `Duration::maximum()`
      * if overflow occurred.
-     *
-     * Unlike `add()`, this method never returns an error. Instead, it clamps the result
-     * to the maximum possible duration value on overflow.
      *
      * @param self $other The duration to add
      * @return self A new Duration representing the sum or maximum duration if overflow
@@ -310,44 +389,38 @@ final readonly class Duration
      */
     public function sub(self $other): Result
     {
-        if ($this->seconds->lt($other->seconds) ||
-            ($this->seconds->eq($other->seconds) && $this->nanos->lt($other->nanos))) {
+        if ($this->seconds < $other->seconds ||
+            ($this->seconds === $other->seconds && $this->nanos < $other->nanos)) {
             /** @var Result<self, DurationOverflow> */
             return Result::err(new DurationOverflow('Subtraction would result in negative duration'));
         }
 
-        // Subtract seconds
-        $seconds = $this->seconds->overflowingSub($other->seconds);
+        $secsResult = self::checkedSub($this->seconds, $other->seconds);
 
-        if ($seconds->isErr()) {
+        if ($secsResult->isErr()) {
             /** @var Result<self, DurationOverflow> */
             return Result::err(new DurationOverflow('Overflow occurred while subtracting durations'));
         }
 
-        $secondsResult = $seconds->unwrap();
+        $secs = $secsResult->unwrap();
 
-        // Handle nanoseconds
-        if ($this->nanos->ge($other->nanos)) {
-            // Simple case: no need to borrow
-            $nanosResult = $this->nanos->sub($other->nanos);
+        if ($this->nanos >= $other->nanos) {
+            $nanos = $this->nanos - $other->nanos;
         } else {
             // Need to borrow a second
-            $secondsSub = $secondsResult->overflowingSub(1);
+            $secsResult = self::checkedSub($secs, 1);
 
-            if ($secondsSub->isErr()) {
+            if ($secsResult->isErr()) {
                 /** @var Result<self, DurationOverflow> */
                 return Result::err(new DurationOverflow('Overflow occurred while subtracting durations'));
             }
 
-            $secondsResult = $secondsSub->unwrap();
-            $nanosResult = $this
-                ->nanos
-                ->add(self::NANOS_PER_SECOND)
-                ->sub($other->nanos);
+            $secs = $secsResult->unwrap();
+            $nanos = $this->nanos + self::NANOS_PER_SECOND - $other->nanos;
         }
 
         /** @var Result<self, DurationOverflow> */
-        return Result::ok(self::new($secondsResult, $nanosResult));
+        return Result::ok(new self($secs, $nanos));
     }
 
     /**
@@ -371,28 +444,25 @@ final readonly class Duration
     /**
      * Checked Duration multiplication. Computes `self * other`, returning an error if overflow occurred.
      *
-     * @param int|Integer $other The value to multiply by
+     * @param int $other The value to multiply by
      * @return Result<self, DurationOverflow> The result of the multiplication or an error if overflow occurred.
      */
-    public function mul(int | Integer $other): Result
+    public function mul(int $other): Result
     {
-        $other = $other instanceof Integer ? $other : Integer::of($other);
-
         // Convert nanoseconds to a larger number to avoid overflow
-        $totalNanos = $this->nanos->mul($other);
-        $extraSecs = $totalNanos->div(self::NANOS_PER_SECOND)->unwrap();
-        $nanosResult = $totalNanos->sub($extraSecs->mul(self::NANOS_PER_SECOND));
+        $totalNanos = $this->nanos * $other;
+        $extraSecs = \intdiv($totalNanos, self::NANOS_PER_SECOND);
+        $nanosResult = $totalNanos - $extraSecs * self::NANOS_PER_SECOND;
 
         // Multiply seconds and add extra seconds from nanoseconds
-        $secsResult = $this->seconds->overflowingMul($other);
+        $secsResult = self::checkedMul($this->seconds, $other);
 
         if ($secsResult->isErr()) {
             /** @var Result<self, DurationOverflow> */
             return Result::err(new DurationOverflow('Overflow occurred while multiplying seconds'));
         }
 
-        $secondsResult = $secsResult->unwrap();
-        $secondsPlusExtra = $secondsResult->overflowingAdd($extraSecs);
+        $secondsPlusExtra = self::checkedAdd($secsResult->unwrap(), $extraSecs);
 
         if ($secondsPlusExtra->isErr()) {
             /** @var Result<self, DurationOverflow> */
@@ -400,17 +470,17 @@ final readonly class Duration
         }
 
         /** @var Result<self, DurationOverflow> */
-        return Result::ok(self::new($secondsPlusExtra->unwrap(), $nanosResult));
+        return Result::ok(new self($secondsPlusExtra->unwrap(), $nanosResult));
     }
 
     /**
      * Saturating Duration multiplication. Computes `self * other`, returning
      * `Duration::max()` if overflow occurred.
      *
-     * @param int|Integer $rhs The value to multiply by
+     * @param int $rhs The value to multiply by
      * @return self A new Duration representing the product or max duration if overflow
      */
-    public function saturatingMul(int | Integer $rhs): self
+    public function saturatingMul(int $rhs): self
     {
         $result = $this->mul($rhs);
 
@@ -425,51 +495,112 @@ final readonly class Duration
      * Checked Duration division. Computes `self / rhs`, returning an error
      * if `rhs == 0` or if the operation would overflow.
      *
-     * @param positive-int|Integer $rhs The divisor
+     * @param positive-int $rhs The divisor
      * @return Result<self, ZeroDuration> The result of the division or an error
      */
-    public function div(int | Integer $rhs): Result
+    public function div(int $rhs): Result
     {
-        if ($rhs instanceof Integer) {
-            $rhs = $rhs->toInt();
-        }
-
+        /** @psalm-suppress DocblockTypeContradiction Runtime guard for non-positive values */
         if ($rhs <= 0) {
             /** @var Result<self, ZeroDuration> */
             return Result::err(new ZeroDuration('Division by zero'));
         }
 
-        $secs = $this->seconds->div($rhs)->unwrap();
-        $extraSecs = $this->seconds->sub($secs->mul($rhs));
+        $secs = \intdiv($this->seconds, $rhs);
+        $extraSecs = $this->seconds - $secs * $rhs;
 
         // Convert remaining seconds to nanoseconds and add to existing nanoseconds
-        $extraNanos = $extraSecs
-            ->mul(self::NANOS_PER_SECOND)
-            ->div($rhs)
-            ->unwrap();
-
-        $nanos = $this->nanos->div($rhs)->unwrap();
-        $nanos = $nanos->add($extraNanos);
+        $extraNanos = \intdiv($extraSecs * self::NANOS_PER_SECOND, $rhs);
+        $nanos = \intdiv($this->nanos, $rhs) + $extraNanos;
 
         /** @var Result<self, ZeroDuration> */
-        return Result::ok(self::new($secs, $nanos));
+        return Result::ok(new self($secs, $nanos));
     }
+
+    /**
+     * Divides this duration by another duration, returning a scalar.
+     *
+     * This represents how many times the `other` duration fits within the current duration.
+     * The result is a floating-point number that can represent fractional relationships.
+     *
+     * @param self $other The duration to divide by
+     * @return Result<Double, ZeroDuration|DurationCalculationInvalid> A scalar representing the quotient
+     */
+    public function divDuration(self $other): Result
+    {
+        if ($other->isZero()) {
+            /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
+            return Result::err(new ZeroDuration('Cannot divide by a zero duration'));
+        }
+
+        if ($this->isZero()) {
+            /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
+            return Result::ok(Double::of(0.0));
+        }
+
+        // Handle cases where overflow could occur with large numbers
+        if ($this->seconds === \PHP_INT_MAX && $other->seconds === 1 && $other->nanos === 0) {
+            /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
+            return Result::ok(Double::of((float)$this->seconds));
+        }
+
+        // Convert to total nanoseconds as float for calculation
+        $selfSecondsFloat = (float)$this->seconds;
+        $selfNanosFloat = (float)$this->nanos;
+        $otherSecondsFloat = (float)$other->seconds;
+        $otherNanosFloat = (float)$other->nanos;
+
+        // For extremely large values, use a different approach to avoid floating point overflow
+        if ($selfSecondsFloat > \PHP_FLOAT_MAX / (float)self::NANOS_PER_SECOND ||
+            $otherSecondsFloat > \PHP_FLOAT_MAX / (float)self::NANOS_PER_SECOND) {
+            $secRatio = (float)$this->seconds / (float)$other->seconds;
+            $nanoAdjustment = 0.0;
+
+            if ($other->seconds > 0) {
+                $nanoAdjustment = ((float)$this->nanos - ($secRatio * (float)$other->nanos))
+                                / ((float)$other->seconds * (float)self::NANOS_PER_SECOND);
+            }
+            $quotient = $secRatio + $nanoAdjustment;
+        } else {
+            $selfTotal = ($selfSecondsFloat * (float)self::NANOS_PER_SECOND) + $selfNanosFloat;
+            $otherTotal = ($otherSecondsFloat * (float)self::NANOS_PER_SECOND) + $otherNanosFloat;
+            $quotient = $selfTotal / $otherTotal;
+        }
+
+        if (!\is_finite($quotient)) {
+            /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
+            return Result::err(new DurationCalculationInvalid('Division resulted in an invalid value (infinity or NaN)'));
+        }
+
+        /** @var Result<Double, ZeroDuration|DurationCalculationInvalid> */
+        return Result::ok(Double::of($quotient));
+    }
+
+    /**
+     * Computes the absolute difference between two durations.
+     *
+     * @param self $other The other duration to compare with
+     * @return self A new Duration representing the absolute difference
+     */
+    public function absDiff(self $other): self
+    {
+        $seconds = \abs($this->seconds - $other->seconds);
+        $nanos = \abs($this->nanos - $other->nanos);
+
+        return new self($seconds, $nanos);
+    }
+
+    // --- Comparisons ---
 
     /**
      * Compares two Durations.
      *
      * @param self $other The Duration to compare with.
-     * @return Integer The result of the comparison.
+     * @return int -1, 0, or 1
      */
-    public function cmp(self $other): Integer
+    public function cmp(self $other): int
     {
-        $cmp = $this->seconds->cmp($other->seconds);
-
-        if ($cmp->toInt() !== 0) {
-            return $cmp;
-        }
-
-        return $this->nanos->cmp($other->nanos);
+        return $this->seconds <=> $other->seconds ?: $this->nanos <=> $other->nanos;
     }
 
     /**
@@ -480,7 +611,7 @@ final readonly class Duration
      */
     public function max(self $other): self
     {
-        return $this->cmp($other)->ge(0) ? new self($this->seconds, $this->nanos) : new self($other->seconds, $other->nanos);
+        return $this->cmp($other) >= 0 ? new self($this->seconds, $this->nanos) : new self($other->seconds, $other->nanos);
     }
 
     /**
@@ -491,7 +622,7 @@ final readonly class Duration
      */
     public function min(self $other): self
     {
-        return $this->cmp($other)->le(0) ? new self($this->seconds, $this->nanos) : new self($other->seconds, $other->nanos);
+        return $this->cmp($other) <= 0 ? new self($this->seconds, $this->nanos) : new self($other->seconds, $other->nanos);
     }
 
     /**
@@ -514,7 +645,7 @@ final readonly class Duration
      */
     public function eq(self $other): bool
     {
-        return $this->seconds->eq($other->seconds) && $this->nanos->eq($other->nanos);
+        return $this->seconds === $other->seconds && $this->nanos === $other->nanos;
     }
 
     /**
@@ -536,212 +667,43 @@ final readonly class Duration
      */
     public function lt(self $other): bool
     {
-        return $this->seconds->lt($other->seconds) || ($this->seconds->eq($other->seconds) && $this->nanos->lt($other->nanos));
+        return $this->seconds < $other->seconds || ($this->seconds === $other->seconds && $this->nanos < $other->nanos);
     }
 
     /**
      * Checks if this Duration is less than or equal to another Duration.
      *
      * @param self $other The Duration to compare with.
-     *
      * @return bool True if this Duration is less than or equal to the other Duration, false otherwise.
      */
     public function le(self $other): bool
     {
-        return $this->seconds->lt($other->seconds) || ($this->seconds->eq($other->seconds) && $this->nanos->le($other->nanos));
+        return $this->seconds < $other->seconds || ($this->seconds === $other->seconds && $this->nanos <= $other->nanos);
     }
 
     /**
      * Checks if this Duration is greater than another Duration.
      *
      * @param self $other The Duration to compare with.
-     *
      * @return bool True if this Duration is greater than the other Duration, false otherwise.
      */
     public function gt(self $other): bool
     {
-        return $this->seconds->gt($other->seconds) || ($this->seconds->eq($other->seconds) && $this->nanos->gt($other->nanos));
+        return $this->seconds > $other->seconds || ($this->seconds === $other->seconds && $this->nanos > $other->nanos);
     }
 
     /**
      * Checks if this Duration is greater than or equal to another Duration.
      *
      * @param self $other The Duration to compare with.
-     *
      * @return bool True if this Duration is greater than or equal to the other Duration, false otherwise.
      */
     public function ge(self $other): bool
     {
-        return $this->seconds->gt($other->seconds) || ($this->seconds->eq($other->seconds) && $this->nanos->ge($other->nanos));
+        return $this->seconds > $other->seconds || ($this->seconds === $other->seconds && $this->nanos >= $other->nanos);
     }
 
-    /**
-     * Returns the fractional part of this Duration, in whole microseconds.
-     *
-     * This method does **not** return the length of the duration when
-     * represented by microseconds. The returned number always represents a
-     * fractional portion of a second (i.e., it is less than one million).
-     *
-     * @return Integer The microseconds part (always less than 1 million)
-     */
-    public function subsecMicros(): Integer
-    {
-        return $this->nanos->div(self::NANOS_PER_MICRO)->unwrap();
-    }
-
-    /**
-     * Returns the fractional part of this Duration, in whole milliseconds.
-     *
-     * This method does **not** return the length of the duration when
-     * represented by milliseconds. The returned number always represents a
-     * fractional portion of a second (i.e., it is less than one thousand).
-     *
-     * @return Integer The milliseconds part (always less than 1 thousand)
-     */
-    public function subsecMillis(): Integer
-    {
-        return $this->nanos->div(self::NANOS_PER_MILLI)->unwrap();
-    }
-
-    /**
-     * Returns the fractional part of this Duration, in nanoseconds.
-     *
-     * This method does **not** return the length of the duration when
-     * represented by nanoseconds. The returned number always represents a
-     * fractional portion of a second (i.e., it is less than one billion).
-     *
-     * @return Integer The nanoseconds part (always less than 1 billion)
-     */
-    public function subsecNanos(): Integer
-    {
-        return $this->nanos;
-    }
-
-    /**
-     * Creates a new Duration from the specified number of milliseconds.
-     *
-     * @param int|Integer $millis The number of milliseconds
-     * @return self A new Duration instance
-     * @psalm-pure
-     */
-    public static function fromMillis(int | Integer $millis): self
-    {
-        $millis = $millis instanceof Integer ? $millis : Integer::of($millis);
-        $secs = $millis->div(self::MILLIS_PER_SECOND)->unwrap();
-        $nanos = $millis
-            ->sub($secs->mul(self::MILLIS_PER_SECOND))
-            ->mul(self::NANOS_PER_MILLI);
-
-        return self::new($secs, $nanos);
-    }
-
-    /**
-     * Creates a new Duration from the specified number of microseconds.
-     *
-     * @param int|Integer $micros The number of microseconds
-     * @return self A new Duration instance
-     * @psalm-pure
-     */
-    public static function fromMicros(int | Integer $micros): self
-    {
-        $micros = $micros instanceof Integer ? $micros : Integer::of($micros);
-        $secs = $micros->div(self::MICROS_PER_SECOND)->unwrap();
-        $nanos = $micros
-            ->sub($secs->mul(self::MICROS_PER_SECOND))
-            ->mul(self::NANOS_PER_MICRO);
-
-        return self::new($secs, $nanos);
-    }
-
-    /**
-     * Creates a new Duration from the specified number of nanoseconds.
-     *
-     * @param int|Integer $nanos The number of nanoseconds
-     * @return self A new Duration instance
-     * @psalm-pure
-     */
-    public static function fromNanos(int | Integer $nanos): self
-    {
-        $nanos = $nanos instanceof Integer ? $nanos : Integer::of($nanos);
-        $secs = $nanos->div(self::NANOS_PER_SECOND)->unwrap();
-        $nanosPart = $nanos->sub($secs->mul(self::NANOS_PER_SECOND));
-
-        return self::new($secs, $nanosPart);
-    }
-
-    /**
-     * Creates a new Duration from the specified number of days.
-     *
-     * @param int|Integer $days The number of days
-     * @return self A new Duration instance
-     * @psalm-pure
-     */
-    public static function fromDays(int | Integer $days): self
-    {
-        $days = $days instanceof Integer ? $days : Integer::of($days);
-        $secs = $days->mul(self::SECONDS_PER_DAY);
-
-        return self::new($secs, 0);
-    }
-
-    /**
-     * Creates a new Duration from the specified number of hours.
-     *
-     * @param int|Integer $hours The number of hours
-     * @return self A new Duration instance
-     * @psalm-pure
-     */
-    public static function fromHours(int | Integer $hours): self
-    {
-        $hours = $hours instanceof Integer ? $hours : Integer::of($hours);
-        $secs = $hours->mul(self::SECONDS_PER_HOUR);
-
-        return self::new($secs, 0);
-    }
-
-    /**
-     * Creates a new Duration from the specified number of minutes.
-     *
-     * @param int|Integer $minutes The number of minutes
-     * @return self A new Duration instance
-     * @psalm-pure
-     */
-    public static function fromMins(int | Integer $minutes): self
-    {
-        $minutes = $minutes instanceof Integer ? $minutes : Integer::of($minutes);
-        $secs = $minutes->mul(self::SECONDS_PER_MINUTE);
-
-        return self::new($secs, 0);
-    }
-
-    /**
-     * Creates a new Duration from the specified number of seconds.
-     *
-     * @param int|Integer $seconds The number of seconds
-     * @return self A new Duration instance
-     * @psalm-pure
-     */
-    public static function fromSeconds(int | Integer $seconds): self
-    {
-        $seconds = $seconds instanceof Integer ? $seconds : Integer::of($seconds);
-
-        return self::new($seconds, 0);
-    }
-
-    /**
-     * Creates a new Duration from the specified number of weeks.
-     *
-     * @param int|Integer $weeks The number of weeks
-     * @return self A new Duration instance
-     * @psalm-pure
-     */
-    public static function fromWeeks(int | Integer $weeks): self
-    {
-        $weeks = $weeks instanceof Integer ? $weeks : Integer::of($weeks);
-        $secs = $weeks->mul(self::SECONDS_PER_WEEK);
-
-        return self::new($secs, 0);
-    }
+    // --- Constants & predicates ---
 
     /**
      * Returns true if this Duration spans no time.
@@ -750,7 +712,7 @@ final readonly class Duration
      */
     public function isZero(): bool
     {
-        return $this->seconds->eq(0) && $this->nanos->eq(0);
+        return $this->seconds === 0 && $this->nanos === 0;
     }
 
     /**
@@ -761,7 +723,7 @@ final readonly class Duration
      */
     public static function zero(): self
     {
-        return self::new(0, 0);
+        return new self(0, 0);
     }
 
     /**
@@ -772,7 +734,7 @@ final readonly class Duration
      */
     public static function maximum(): self
     {
-        return self::new(\PHP_INT_MAX, self::MAX_NANOS);
+        return new self(\PHP_INT_MAX, self::MAX_NANOS);
     }
 
     /**
@@ -783,20 +745,18 @@ final readonly class Duration
      */
     public static function microsecond(): self
     {
-        return self::new(0, self::NANOS_PER_MICRO);
+        return new self(0, self::NANOS_PER_MICRO);
     }
 
     /**
      * Creates a Duration representing one nanosecond.
-     *
-     * This represents the smallest possible non-zero Duration that can be created.
      *
      * @return self A Duration of one nanosecond
      * @psalm-pure
      */
     public static function nanosecond(): self
     {
-        return self::new(0, 1);
+        return new self(0, 1);
     }
 
     /**
@@ -807,7 +767,7 @@ final readonly class Duration
      */
     public static function millisecond(): self
     {
-        return self::new(0, self::NANOS_PER_MILLI);
+        return new self(0, self::NANOS_PER_MILLI);
     }
 
     /**
@@ -818,6 +778,6 @@ final readonly class Duration
      */
     public static function second(): self
     {
-        return self::new(1, 0);
+        return new self(1, 0);
     }
 }

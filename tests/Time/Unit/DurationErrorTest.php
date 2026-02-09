@@ -8,7 +8,6 @@ use Jsadaa\PhpCoreLibrary\Modules\Time\Duration;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Error\DurationCalculationInvalid;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Error\DurationOverflow;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Error\ZeroDuration;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use PHPUnit\Framework\TestCase;
 
 final class DurationErrorTest extends TestCase
@@ -68,17 +67,6 @@ final class DurationErrorTest extends TestCase
         $this->assertInstanceOf(DurationOverflow::class, $result->unwrapErr());
     }
 
-    public function testMulOverflowWithInteger(): void
-    {
-        $largeDuration = Duration::new((int)(\PHP_INT_MAX / 2), 0);
-        $multiplier = Integer::of(3);
-
-        $result = $largeDuration->mul($multiplier);
-
-        $this->assertTrue($result->isErr());
-        $this->assertInstanceOf(DurationOverflow::class, $result->unwrapErr());
-    }
-
     public function testMulNanosecondOverflow(): void
     {
         $duration = Duration::new(\PHP_INT_MAX, 500_000_000);
@@ -110,16 +98,6 @@ final class DurationErrorTest extends TestCase
         $this->assertTrue($result->isErr());
         $this->assertInstanceOf(ZeroDuration::class, $result->unwrapErr());
         $this->assertEquals('Division by zero', $result->unwrapErr()->getMessage());
-    }
-
-    public function testDivByZeroInteger(): void
-    {
-        $duration = Duration::fromSeconds(10);
-
-        $result = $duration->div(Integer::of(0));
-
-        $this->assertTrue($result->isErr());
-        $this->assertInstanceOf(ZeroDuration::class, $result->unwrapErr());
     }
 
     public function testDivDurationByZero(): void
@@ -218,8 +196,8 @@ final class DurationErrorTest extends TestCase
         $this->assertTrue($result->isOk());
 
         $sum = $result->unwrap();
-        $this->assertEquals(2, $sum->toSeconds()->toInt());
-        $this->assertEquals(0, $sum->subsecNanos()->toInt());
+        $this->assertEquals(2, $sum->toSeconds());
+        $this->assertEquals(0, $sum->subsecNanos());
 
         $maxSeconds = Duration::new(\PHP_INT_MAX, 999_999_999);
         $overflowResult = $maxSeconds->add($oneNano);

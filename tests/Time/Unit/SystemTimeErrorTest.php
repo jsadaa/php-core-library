@@ -199,12 +199,12 @@ final class SystemTimeErrorTest extends TestCase
     public function testErrorRecovery(): void
     {
         $originalTime = SystemTime::fromTimestamp(1640995200);
-        $originalTimestamp = $originalTime->seconds()->toInt();
+        $originalTimestamp = $originalTime->seconds();
 
         $result = $originalTime->sub(Duration::fromSeconds(2000000000));
 
         $this->assertTrue($result->isErr());
-        $this->assertEquals($originalTimestamp, $originalTime->seconds()->toInt());
+        $this->assertEquals($originalTimestamp, $originalTime->seconds());
 
         $validResult = $originalTime->add(Duration::fromSeconds(60));
         $this->assertTrue($validResult->isOk());

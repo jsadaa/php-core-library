@@ -29,13 +29,13 @@ final class TimeFunctionalTest extends TestCase
             $duration = $end->durationSince($start)->unwrap();
             $results[$name] = $duration;
 
-            $this->assertGreaterThan(0, $duration->toNanos()->toInt());
-            $this->assertLessThan(100_000_000, $duration->toNanos()->toInt()); // Less than 100ms
+            $this->assertGreaterThan(0, $duration->toNanos());
+            $this->assertLessThan(100_000_000, $duration->toNanos()); // Less than 100ms
         }
 
-        $fastMs = $results['fast']->toNanos()->toInt() / 1_000_000;
-        $mediumMs = $results['medium']->toNanos()->toInt() / 1_000_000;
-        $slowMs = $results['slow']->toNanos()->toInt() / 1_000_000;
+        $fastMs = $results['fast']->toNanos() / 1_000_000;
+        $mediumMs = $results['medium']->toNanos() / 1_000_000;
+        $slowMs = $results['slow']->toNanos() / 1_000_000;
 
         $this->assertLessThan($slowMs, $fastMs); // fast should be much less than slow
         $this->assertLessThan($slowMs, $mediumMs); // medium should be less than slow
@@ -77,7 +77,7 @@ final class TimeFunctionalTest extends TestCase
 
         // Should be approximately the same (allowing for small precision differences)
         $diff = $totalDelay->absDiff($expectedDelay);
-        $this->assertLessThan(1000, $diff->toNanos()->toInt()); // Less than 1 microsecond difference
+        $this->assertLessThan(1000, $diff->toNanos()); // Less than 1 microsecond difference
     }
 
     public function testRateLimitingSimulation(): void
@@ -178,7 +178,7 @@ final class TimeFunctionalTest extends TestCase
         foreach ($benchmarkResults as $name => $duration) {
             $this->assertLessThan(
                 1_000_000_000,
-                $duration->toNanos()->toInt(),
+                $duration->toNanos(),
                 "$name should complete in less than 1 second on average",
             );
         }
@@ -227,18 +227,18 @@ final class TimeFunctionalTest extends TestCase
         $totalTime = $workDayEnd->durationSince($workDayStart)->unwrap();
         $actualWorkTime = $totalTime->sub($totalBreakTime)->unwrap();
 
-        $this->assertEquals(9 * 3600, $totalTime->toSeconds()->toInt()); // 9 hours total
-        $this->assertEquals((15 + 60 + 15) * 60, $totalBreakTime->toSeconds()->toInt()); // 1.5 hours breaks
-        $this->assertEquals((9 * 60 - 90) * 60, $actualWorkTime->toSeconds()->toInt()); // 7.5 hours work
+        $this->assertEquals(9 * 3600, $totalTime->toSeconds()); // 9 hours total
+        $this->assertEquals((15 + 60 + 15) * 60, $totalBreakTime->toSeconds()); // 1.5 hours breaks
+        $this->assertEquals((9 * 60 - 90) * 60, $actualWorkTime->toSeconds()); // 7.5 hours work
 
         $standardWorkDay = Duration::fromHours(8);
 
         if ($actualWorkTime->gt($standardWorkDay)) {
             $overtime = $actualWorkTime->sub($standardWorkDay)->unwrap();
-            $this->assertEquals(0, $overtime->toSeconds()->toInt()); // No overtime in this case
+            $this->assertEquals(0, $overtime->toSeconds()); // No overtime in this case
         } else {
             $shortfall = $standardWorkDay->sub($actualWorkTime)->unwrap();
-            $this->assertEquals(30 * 60, $shortfall->toSeconds()->toInt()); // 30 minutes short
+            $this->assertEquals(30 * 60, $shortfall->toSeconds()); // 30 minutes short
         }
     }
 
@@ -255,12 +255,12 @@ final class TimeFunctionalTest extends TestCase
 
         // Calculate years (approximately)
         $yearsInSeconds = 365.25 * 24 * 3600; // Account for leap years
-        $ageInYears = $age->toSeconds()->toFloat() / $yearsInSeconds;
+        $ageInYears = (float)$age->toSeconds() / $yearsInSeconds;
 
         $this->assertGreaterThan(32, $ageInYears);
         $this->assertLessThan(34, $ageInYears);
 
-        $totalDays = $age->toSeconds()->toInt() / (24 * 3600);
+        $totalDays = $age->toSeconds() / (24 * 3600);
         $this->assertGreaterThan(12000, $totalDays); // More than 12000 days
         $this->assertLessThan(13000, $totalDays); // Less than 13000 days
     }
@@ -348,7 +348,7 @@ final class TimeFunctionalTest extends TestCase
         }
 
         $totalDuration = $events[\count($events)-1]['relative_time'];
-        $this->assertEquals(2, $totalDuration->toSeconds()->toInt());
+        $this->assertEquals(2, $totalDuration->toSeconds());
 
         $earlyEvents = \array_filter($events, static function($event) {
             return $event['relative_time']->lt(Duration::fromMillis(500));
@@ -413,24 +413,24 @@ final class TimeFunctionalTest extends TestCase
             $totalDuration = $totalDuration->add($duration)->unwrap();
         }
 
-        $this->assertEquals(3 * 24 * 3600, $tasks['analysis']->toSeconds()->toInt());
-        $this->assertEquals(5 * 24 * 3600, $tasks['design']->toSeconds()->toInt());
-        $this->assertEquals(14 * 24 * 3600, $tasks['development']->toSeconds()->toInt());
-        $this->assertEquals(4 * 24 * 3600, $tasks['testing']->toSeconds()->toInt());
-        $this->assertEquals(8 * 3600, $tasks['deployment']->toSeconds()->toInt());
+        $this->assertEquals(3 * 24 * 3600, $tasks['analysis']->toSeconds());
+        $this->assertEquals(5 * 24 * 3600, $tasks['design']->toSeconds());
+        $this->assertEquals(14 * 24 * 3600, $tasks['development']->toSeconds());
+        $this->assertEquals(4 * 24 * 3600, $tasks['testing']->toSeconds());
+        $this->assertEquals(8 * 3600, $tasks['deployment']->toSeconds());
 
         // Total should be 26 days and 8 hours
         $expectedSeconds = (26 * 24 + 8) * 3600;
-        $this->assertEquals($expectedSeconds, $totalDuration->toSeconds()->toInt());
+        $this->assertEquals($expectedSeconds, $totalDuration->toSeconds());
 
         // Calculate with 20% buffer
-        $bufferSeconds = (int)($totalDuration->toSeconds()->toFloat() * 0.2); // 20% buffer
+        $bufferSeconds = (int)((float)$totalDuration->toSeconds() * 0.2); // 20% buffer
         $bufferDuration = Duration::fromSeconds($bufferSeconds);
         $totalWithBuffer = $totalDuration->add($bufferDuration)->unwrap();
 
         // Should be 120% of original (approximately)
         $expectedWithBuffer = ($expectedSeconds * 1.2);
-        $actualWithBuffer = $totalWithBuffer->toSeconds()->toFloat();
+        $actualWithBuffer = (float)$totalWithBuffer->toSeconds();
         $this->assertEqualsWithDelta($expectedWithBuffer, $actualWithBuffer, $expectedSeconds * 0.1); // Allow 10% tolerance
     }
 
@@ -449,15 +449,15 @@ final class TimeFunctionalTest extends TestCase
         $end = SystemTime::now();
         $duration = $end->durationSince($start)->unwrap();
 
-        $this->assertGreaterThan(0, $duration->toNanos()->toInt());
-        $this->assertLessThan(1_000_000, $duration->toNanos()->toInt()); // Less than 1ms
+        $this->assertGreaterThan(0, $duration->toNanos());
+        $this->assertLessThan(1_000_000, $duration->toNanos()); // Less than 1ms
 
         $nano1 = Duration::fromNanos(123_456_789);
         $nano2 = Duration::fromNanos(987_654_321);
         $sum = $nano1->add($nano2)->unwrap();
 
-        $this->assertEquals(123_456_789 + 987_654_321, $sum->toNanos()->toInt());
-        $this->assertEquals(1, $sum->toSeconds()->toInt());
-        $this->assertEquals(111_111_110, $sum->subsecNanos()->toInt());
+        $this->assertEquals(123_456_789 + 987_654_321, $sum->toNanos());
+        $this->assertEquals(1, $sum->toSeconds());
+        $this->assertEquals(111_111_110, $sum->subsecNanos());
     }
 }

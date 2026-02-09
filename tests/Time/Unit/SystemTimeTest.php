@@ -9,7 +9,6 @@ use Jsadaa\PhpCoreLibrary\Modules\Time\Error\TimeBeforeUnixEpoch;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Error\TimeReversal;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Error\TimeUnderflow;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use PHPUnit\Framework\TestCase;
 
 final class SystemTimeTest extends TestCase
@@ -19,17 +18,8 @@ final class SystemTimeTest extends TestCase
         $timestamp = 1640995200; // 2022-01-01 00:00:00 UTC
         $time = SystemTime::fromTimestamp($timestamp);
 
-        $this->assertEquals($timestamp, $time->seconds()->toInt());
-        $this->assertEquals(0, $time->nanos()->toInt());
-    }
-
-    public function testFromTimestampWithInteger(): void
-    {
-        $timestamp = Integer::of(1640995200);
-        $time = SystemTime::fromTimestamp($timestamp);
-
-        $this->assertEquals(1640995200, $time->seconds()->toInt());
-        $this->assertEquals(0, $time->nanos()->toInt());
+        $this->assertEquals($timestamp, $time->seconds());
+        $this->assertEquals(0, $time->nanos());
     }
 
     public function testFromTimestampWithNegative(): void
@@ -37,8 +27,8 @@ final class SystemTimeTest extends TestCase
         // Negative timestamps should be converted to absolute value
         $time = SystemTime::fromTimestamp(-1640995200);
 
-        $this->assertEquals(1640995200, $time->seconds()->toInt());
-        $this->assertEquals(0, $time->nanos()->toInt());
+        $this->assertEquals(1640995200, $time->seconds());
+        $this->assertEquals(0, $time->nanos());
     }
 
     public function testNow(): void
@@ -47,12 +37,12 @@ final class SystemTimeTest extends TestCase
         $systemTime = SystemTime::now();
         $after = \time();
 
-        $seconds = $systemTime->seconds()->toInt();
+        $seconds = $systemTime->seconds();
         $this->assertGreaterThanOrEqual($before, $seconds);
         $this->assertLessThanOrEqual($after, $seconds);
 
         // Nanoseconds should be >= 0 and < 1 billion
-        $nanos = $systemTime->nanos()->toInt();
+        $nanos = $systemTime->nanos();
         $this->assertGreaterThanOrEqual(0, $nanos);
         $this->assertLessThan(1_000_000_000, $nanos);
     }
@@ -61,16 +51,16 @@ final class SystemTimeTest extends TestCase
     {
         $epoch = SystemTime::unixEpoch();
 
-        $this->assertEquals(0, $epoch->seconds()->toInt());
-        $this->assertEquals(0, $epoch->nanos()->toInt());
+        $this->assertEquals(0, $epoch->seconds());
+        $this->assertEquals(0, $epoch->nanos());
     }
 
     public function testMax(): void
     {
         $max = SystemTime::max();
 
-        $this->assertEquals(\PHP_INT_MAX, $max->seconds()->toInt());
-        $this->assertEquals(999_999_999, $max->nanos()->toInt());
+        $this->assertEquals(\PHP_INT_MAX, $max->seconds());
+        $this->assertEquals(999_999_999, $max->nanos());
     }
 
     public function testDurationSince(): void
@@ -82,7 +72,7 @@ final class SystemTimeTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $duration = $result->unwrap();
-        $this->assertEquals(60, $duration->toSeconds()->toInt());
+        $this->assertEquals(60, $duration->toSeconds());
     }
 
     public function testDurationSinceWithNanoseconds(): void
@@ -94,7 +84,7 @@ final class SystemTimeTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $duration = $result->unwrap();
-        $this->assertEquals(1, $duration->toSeconds()->toInt());
+        $this->assertEquals(1, $duration->toSeconds());
     }
 
     public function testDurationSinceSameTime(): void
@@ -128,8 +118,8 @@ final class SystemTimeTest extends TestCase
         if ($result->isOk()) {
             $duration = $result->unwrap();
             // Should be approximately 1 second, allow some tolerance
-            $this->assertGreaterThanOrEqual(0, $duration->toSeconds()->toInt());
-            $this->assertLessThanOrEqual(5, $duration->toSeconds()->toInt()); // Allow up to 5 seconds tolerance
+            $this->assertGreaterThanOrEqual(0, $duration->toSeconds());
+            $this->assertLessThanOrEqual(5, $duration->toSeconds()); // Allow up to 5 seconds tolerance
         } else {
             $this->assertInstanceOf(TimeReversal::class, $result->unwrapErr());
         }
@@ -154,7 +144,7 @@ final class SystemTimeTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $newTime = $result->unwrap();
-        $this->assertEquals(1640995200 + 3600, $newTime->seconds()->toInt());
+        $this->assertEquals(1640995200 + 3600, $newTime->seconds());
     }
 
     public function testAddWithNanoseconds(): void
@@ -166,8 +156,8 @@ final class SystemTimeTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $newTime = $result->unwrap();
-        $this->assertEquals(1640995201, $newTime->seconds()->toInt());
-        $this->assertEquals(500_000_000, $newTime->nanos()->toInt());
+        $this->assertEquals(1640995201, $newTime->seconds());
+        $this->assertEquals(500_000_000, $newTime->nanos());
     }
 
     public function testAddWithNanosecondOverflow(): void
@@ -179,8 +169,8 @@ final class SystemTimeTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $newTime = $result->unwrap();
-        $this->assertEquals(1640995201, $newTime->seconds()->toInt());
-        $this->assertEquals(1, $newTime->nanos()->toInt());
+        $this->assertEquals(1640995201, $newTime->seconds());
+        $this->assertEquals(1, $newTime->nanos());
     }
 
     public function testSub(): void
@@ -192,7 +182,7 @@ final class SystemTimeTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $newTime = $result->unwrap();
-        $this->assertEquals(1640995200 - 3600, $newTime->seconds()->toInt());
+        $this->assertEquals(1640995200 - 3600, $newTime->seconds());
     }
 
     public function testSubWithNanoseconds(): void
@@ -204,8 +194,8 @@ final class SystemTimeTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $newTime = $result->unwrap();
-        $this->assertEquals(1640995200, $newTime->seconds()->toInt());
-        $this->assertEquals(500_000_000, $newTime->nanos()->toInt());
+        $this->assertEquals(1640995200, $newTime->seconds());
+        $this->assertEquals(500_000_000, $newTime->nanos());
     }
 
     public function testSubBeforeEpoch(): void
@@ -295,8 +285,8 @@ final class SystemTimeTest extends TestCase
         $this->assertTrue($result->isOk());
         $systemTime = $result->unwrap();
 
-        $this->assertEquals(1640995200, $systemTime->seconds()->toInt());
-        $this->assertEquals(0, $systemTime->nanos()->toInt());
+        $this->assertEquals(1640995200, $systemTime->seconds());
+        $this->assertEquals(0, $systemTime->nanos());
     }
 
     public function testFromDateTimeImmutableWithMicroseconds(): void
@@ -309,8 +299,8 @@ final class SystemTimeTest extends TestCase
         $this->assertTrue($result->isOk());
         $systemTime = $result->unwrap();
 
-        $this->assertEquals(1640995200, $systemTime->seconds()->toInt());
-        $this->assertEquals(123_456_000, $systemTime->nanos()->toInt()); // 123456 microseconds = 123,456,000 nanoseconds
+        $this->assertEquals(1640995200, $systemTime->seconds());
+        $this->assertEquals(123_456_000, $systemTime->nanos()); // 123456 microseconds = 123,456,000 nanoseconds
     }
 
     public function testFromDateTimeImmutableWithTimezone(): void
@@ -325,7 +315,7 @@ final class SystemTimeTest extends TestCase
         $expectedUtc = $dateTime->setTimezone(new \DateTimeZone('UTC'));
         $expectedTimestamp = (int)$expectedUtc->format('U');
 
-        $this->assertEquals($expectedTimestamp, $systemTime->seconds()->toInt());
+        $this->assertEquals($expectedTimestamp, $systemTime->seconds());
     }
 
     public function testFromDateTimeImmutableBeforeEpoch(): void
@@ -358,11 +348,11 @@ final class SystemTimeTest extends TestCase
     {
         $time = SystemTime::fromTimestamp(1640995200);
 
-        $this->assertInstanceOf(Integer::class, $time->seconds());
-        $this->assertInstanceOf(Integer::class, $time->nanos());
+        $this->assertIsInt($time->seconds());
+        $this->assertIsInt($time->nanos());
 
-        $this->assertEquals(1640995200, $time->seconds()->toInt());
-        $this->assertEquals(0, $time->nanos()->toInt());
+        $this->assertEquals(1640995200, $time->seconds());
+        $this->assertEquals(0, $time->nanos());
     }
 
     public function testNowHasMicrosecondPrecision(): void
@@ -380,8 +370,8 @@ final class SystemTimeTest extends TestCase
 
         $duration = $durationResult->unwrap();
         // Should be at least 1 millisecond but less than 1 second
-        $this->assertGreaterThanOrEqual(1_000_000, $duration->toNanos()->toInt()); // At least 1ms in nanos
-        $this->assertLessThan(1_000_000_000, $duration->toNanos()->toInt()); // Less than 1s in nanos
+        $this->assertGreaterThanOrEqual(1_000_000, $duration->toNanos()); // At least 1ms in nanos
+        $this->assertLessThan(1_000_000_000, $duration->toNanos()); // Less than 1s in nanos
     }
 
     public function testTimeArithmetic(): void
@@ -394,16 +384,16 @@ final class SystemTimeTest extends TestCase
         $oneDay = Duration::fromDays(1);
 
         $plusSecond = $baseTime->add($oneSecond)->unwrap();
-        $this->assertEquals(1640995201, $plusSecond->seconds()->toInt());
+        $this->assertEquals(1640995201, $plusSecond->seconds());
 
         $plusMinute = $baseTime->add($oneMinute)->unwrap();
-        $this->assertEquals(1640995200 + 60, $plusMinute->seconds()->toInt());
+        $this->assertEquals(1640995200 + 60, $plusMinute->seconds());
 
         $plusHour = $baseTime->add($oneHour)->unwrap();
-        $this->assertEquals(1640995200 + 3600, $plusHour->seconds()->toInt());
+        $this->assertEquals(1640995200 + 3600, $plusHour->seconds());
 
         $plusDay = $baseTime->add($oneDay)->unwrap();
-        $this->assertEquals(1640995200 + 86400, $plusDay->seconds()->toInt());
+        $this->assertEquals(1640995200 + 86400, $plusDay->seconds());
 
         $backToBase = $plusDay->sub($oneDay)->unwrap();
         $this->assertTrue($baseTime->eq($backToBase));
@@ -413,8 +403,8 @@ final class SystemTimeTest extends TestCase
     {
         $maxTime = SystemTime::max();
 
-        $this->assertEquals(\PHP_INT_MAX, $maxTime->seconds()->toInt());
-        $this->assertEquals(999_999_999, $maxTime->nanos()->toInt());
+        $this->assertEquals(\PHP_INT_MAX, $maxTime->seconds());
+        $this->assertEquals(999_999_999, $maxTime->nanos());
 
         $now = SystemTime::now();
         $this->assertTrue($maxTime->gt($now));

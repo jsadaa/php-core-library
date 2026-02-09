@@ -6,7 +6,6 @@ namespace Jsadaa\PhpCoreLibrary\Tests\Time\Unit;
 
 use Jsadaa\PhpCoreLibrary\Modules\Time\Duration;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Error\ZeroDuration;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use PHPUnit\Framework\TestCase;
 
 final class DurationTest extends TestCase
@@ -14,133 +13,74 @@ final class DurationTest extends TestCase
     public function testNew(): void
     {
         $duration = Duration::new(5, 500_000_000);
-        $this->assertEquals(5, $duration->toSeconds()->toInt());
-        $this->assertEquals(500_000_000, $duration->subsecNanos()->toInt());
-    }
-
-    public function testNewWithInteger(): void
-    {
-        $duration = Duration::new(Integer::of(3), Integer::of(250_000_000));
-        $this->assertEquals(3, $duration->toSeconds()->toInt());
-        $this->assertEquals(250_000_000, $duration->subsecNanos()->toInt());
+        $this->assertEquals(5, $duration->toSeconds());
+        $this->assertEquals(500_000_000, $duration->subsecNanos());
     }
 
     public function testFromSeconds(): void
     {
         $duration = Duration::fromSeconds(10);
-        $this->assertEquals(10, $duration->toSeconds()->toInt());
-        $this->assertEquals(0, $duration->subsecNanos()->toInt());
-    }
-
-    public function testFromSecondsWithInteger(): void
-    {
-        $duration = Duration::fromSeconds(Integer::of(15));
-        $this->assertEquals(15, $duration->toSeconds()->toInt());
-        $this->assertEquals(0, $duration->subsecNanos()->toInt());
+        $this->assertEquals(10, $duration->toSeconds());
+        $this->assertEquals(0, $duration->subsecNanos());
     }
 
     public function testFromMillis(): void
     {
         $duration = Duration::fromMillis(2500);
-        $this->assertEquals(2, $duration->toSeconds()->toInt());
-        $this->assertEquals(500, $duration->subsecMillis()->toInt());
-        $this->assertEquals(500_000_000, $duration->subsecNanos()->toInt());
-    }
-
-    public function testFromMillisWithInteger(): void
-    {
-        $duration = Duration::fromMillis(Integer::of(1500));
-        $this->assertEquals(1, $duration->toSeconds()->toInt());
-        $this->assertEquals(500, $duration->subsecMillis()->toInt());
+        $this->assertEquals(2, $duration->toSeconds());
+        $this->assertEquals(500, $duration->subsecMillis());
+        $this->assertEquals(500_000_000, $duration->subsecNanos());
     }
 
     public function testFromMicros(): void
     {
         $duration = Duration::fromMicros(1_500_000);
-        $this->assertEquals(1, $duration->toSeconds()->toInt());
-        $this->assertEquals(500_000, $duration->subsecMicros()->toInt());
-        $this->assertEquals(500_000_000, $duration->subsecNanos()->toInt());
-    }
-
-    public function testFromMicrosWithInteger(): void
-    {
-        $duration = Duration::fromMicros(Integer::of(2_750_000));
-        $this->assertEquals(2, $duration->toSeconds()->toInt());
-        $this->assertEquals(750_000, $duration->subsecMicros()->toInt());
+        $this->assertEquals(1, $duration->toSeconds());
+        $this->assertEquals(500_000, $duration->subsecMicros());
+        $this->assertEquals(500_000_000, $duration->subsecNanos());
     }
 
     public function testFromNanos(): void
     {
         $duration = Duration::fromNanos(2_500_000_000);
-        $this->assertEquals(2, $duration->toSeconds()->toInt());
-        $this->assertEquals(500_000_000, $duration->subsecNanos()->toInt());
-    }
-
-    public function testFromNanosWithInteger(): void
-    {
-        $duration = Duration::fromNanos(Integer::of(3_250_000_000));
-        $this->assertEquals(3, $duration->toSeconds()->toInt());
-        $this->assertEquals(250_000_000, $duration->subsecNanos()->toInt());
+        $this->assertEquals(2, $duration->toSeconds());
+        $this->assertEquals(500_000_000, $duration->subsecNanos());
     }
 
     public function testFromMins(): void
     {
         $duration = Duration::fromMins(2);
-        $this->assertEquals(120, $duration->toSeconds()->toInt());
-        $this->assertEquals(0, $duration->subsecNanos()->toInt());
-    }
-
-    public function testFromMinsWithInteger(): void
-    {
-        $duration = Duration::fromMins(Integer::of(5));
-        $this->assertEquals(300, $duration->toSeconds()->toInt());
+        $this->assertEquals(120, $duration->toSeconds());
+        $this->assertEquals(0, $duration->subsecNanos());
     }
 
     public function testFromHours(): void
     {
         $duration = Duration::fromHours(2);
-        $this->assertEquals(7200, $duration->toSeconds()->toInt());
-        $this->assertEquals(0, $duration->subsecNanos()->toInt());
-    }
-
-    public function testFromHoursWithInteger(): void
-    {
-        $duration = Duration::fromHours(Integer::of(1));
-        $this->assertEquals(3600, $duration->toSeconds()->toInt());
+        $this->assertEquals(7200, $duration->toSeconds());
+        $this->assertEquals(0, $duration->subsecNanos());
     }
 
     public function testFromDays(): void
     {
         $duration = Duration::fromDays(1);
-        $this->assertEquals(86400, $duration->toSeconds()->toInt());
-        $this->assertEquals(0, $duration->subsecNanos()->toInt());
-    }
-
-    public function testFromDaysWithInteger(): void
-    {
-        $duration = Duration::fromDays(Integer::of(2));
-        $this->assertEquals(172800, $duration->toSeconds()->toInt());
+        $this->assertEquals(86400, $duration->toSeconds());
+        $this->assertEquals(0, $duration->subsecNanos());
     }
 
     public function testFromWeeks(): void
     {
         $duration = Duration::fromWeeks(1);
-        $this->assertEquals(604800, $duration->toSeconds()->toInt());
-        $this->assertEquals(0, $duration->subsecNanos()->toInt());
-    }
-
-    public function testFromWeeksWithInteger(): void
-    {
-        $duration = Duration::fromWeeks(Integer::of(2));
-        $this->assertEquals(1209600, $duration->toSeconds()->toInt());
+        $this->assertEquals(604800, $duration->toSeconds());
+        $this->assertEquals(0, $duration->subsecNanos());
     }
 
     public function testZero(): void
     {
         $duration = Duration::zero();
         $this->assertTrue($duration->isZero());
-        $this->assertEquals(0, $duration->toSeconds()->toInt());
-        $this->assertEquals(0, $duration->subsecNanos()->toInt());
+        $this->assertEquals(0, $duration->toSeconds());
+        $this->assertEquals(0, $duration->subsecNanos());
     }
 
     public function testIsZero(): void
@@ -158,57 +98,57 @@ final class DurationTest extends TestCase
     public function testMaximum(): void
     {
         $max = Duration::maximum();
-        $this->assertEquals(\PHP_INT_MAX, $max->toSeconds()->toInt());
-        $this->assertEquals(999_999_999, $max->subsecNanos()->toInt());
+        $this->assertEquals(\PHP_INT_MAX, $max->toSeconds());
+        $this->assertEquals(999_999_999, $max->subsecNanos());
     }
 
     public function testNanosecond(): void
     {
         $nano = Duration::nanosecond();
-        $this->assertEquals(0, $nano->toSeconds()->toInt());
-        $this->assertEquals(1, $nano->subsecNanos()->toInt());
+        $this->assertEquals(0, $nano->toSeconds());
+        $this->assertEquals(1, $nano->subsecNanos());
     }
 
     public function testMicrosecond(): void
     {
         $micro = Duration::microsecond();
-        $this->assertEquals(0, $micro->toSeconds()->toInt());
-        $this->assertEquals(1000, $micro->subsecNanos()->toInt());
-        $this->assertEquals(1, $micro->subsecMicros()->toInt());
+        $this->assertEquals(0, $micro->toSeconds());
+        $this->assertEquals(1000, $micro->subsecNanos());
+        $this->assertEquals(1, $micro->subsecMicros());
     }
 
     public function testMillisecond(): void
     {
         $milli = Duration::millisecond();
-        $this->assertEquals(0, $milli->toSeconds()->toInt());
-        $this->assertEquals(1_000_000, $milli->subsecNanos()->toInt());
-        $this->assertEquals(1, $milli->subsecMillis()->toInt());
+        $this->assertEquals(0, $milli->toSeconds());
+        $this->assertEquals(1_000_000, $milli->subsecNanos());
+        $this->assertEquals(1, $milli->subsecMillis());
     }
 
     public function testSecond(): void
     {
         $second = Duration::second();
-        $this->assertEquals(1, $second->toSeconds()->toInt());
-        $this->assertEquals(0, $second->subsecNanos()->toInt());
+        $this->assertEquals(1, $second->toSeconds());
+        $this->assertEquals(0, $second->subsecNanos());
     }
 
     public function testToConversions(): void
     {
         $duration = Duration::new(2, 500_000_000); // 2.5 seconds
 
-        $this->assertEquals(2_500_000_000, $duration->toNanos()->toInt());
-        $this->assertEquals(2_500_000, $duration->toMicros()->toInt());
-        $this->assertEquals(2500, $duration->toMillis()->toInt());
-        $this->assertEquals(2, $duration->toSeconds()->toInt());
+        $this->assertEquals(2_500_000_000, $duration->toNanos());
+        $this->assertEquals(2_500_000, $duration->toMicros());
+        $this->assertEquals(2500, $duration->toMillis());
+        $this->assertEquals(2, $duration->toSeconds());
     }
 
     public function testSubsecondComponents(): void
     {
         $duration = Duration::new(5, 123_456_789);
 
-        $this->assertEquals(123_456_789, $duration->subsecNanos()->toInt());
-        $this->assertEquals(123_456, $duration->subsecMicros()->toInt());
-        $this->assertEquals(123, $duration->subsecMillis()->toInt());
+        $this->assertEquals(123_456_789, $duration->subsecNanos());
+        $this->assertEquals(123_456, $duration->subsecMicros());
+        $this->assertEquals(123, $duration->subsecMillis());
     }
 
     public function testAdd(): void
@@ -219,8 +159,8 @@ final class DurationTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $sum = $result->unwrap();
-        $this->assertEquals(2, $sum->toSeconds()->toInt());
-        $this->assertEquals(500_000_000, $sum->subsecNanos()->toInt());
+        $this->assertEquals(2, $sum->toSeconds());
+        $this->assertEquals(500_000_000, $sum->subsecNanos());
     }
 
     public function testAddWithNanosecondOverflow(): void
@@ -231,8 +171,8 @@ final class DurationTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $sum = $result->unwrap();
-        $this->assertEquals(2, $sum->toSeconds()->toInt());
-        $this->assertEquals(1, $sum->subsecNanos()->toInt());
+        $this->assertEquals(2, $sum->toSeconds());
+        $this->assertEquals(1, $sum->subsecNanos());
     }
 
     public function testSaturatingAdd(): void
@@ -241,7 +181,7 @@ final class DurationTest extends TestCase
         $dur2 = Duration::fromSeconds(3);
         $sum = $dur1->saturatingAdd($dur2);
 
-        $this->assertEquals(5, $sum->toSeconds()->toInt());
+        $this->assertEquals(5, $sum->toSeconds());
     }
 
     public function testSub(): void
@@ -252,7 +192,7 @@ final class DurationTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $diff = $result->unwrap();
-        $this->assertEquals(2, $diff->toSeconds()->toInt());
+        $this->assertEquals(2, $diff->toSeconds());
     }
 
     public function testSubWithNanosecondBorrowing(): void
@@ -263,8 +203,8 @@ final class DurationTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $diff = $result->unwrap();
-        $this->assertEquals(1, $diff->toSeconds()->toInt());
-        $this->assertEquals(900_000_000, $diff->subsecNanos()->toInt());
+        $this->assertEquals(1, $diff->toSeconds());
+        $this->assertEquals(900_000_000, $diff->subsecNanos());
     }
 
     public function testSaturatingSub(): void
@@ -273,7 +213,7 @@ final class DurationTest extends TestCase
         $dur2 = Duration::fromSeconds(3);
         $diff = $dur1->saturatingSub($dur2);
 
-        $this->assertEquals(2, $diff->toSeconds()->toInt());
+        $this->assertEquals(2, $diff->toSeconds());
 
         $underflow = Duration::fromSeconds(3);
         $largerDur = Duration::fromSeconds(5);
@@ -288,7 +228,7 @@ final class DurationTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $product = $result->unwrap();
-        $this->assertEquals(6, $product->toSeconds()->toInt());
+        $this->assertEquals(6, $product->toSeconds());
     }
 
     public function testMulWithFractionalSeconds(): void
@@ -298,18 +238,8 @@ final class DurationTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $product = $result->unwrap();
-        $this->assertEquals(4, $product->toSeconds()->toInt());
-        $this->assertEquals(500_000_000, $product->subsecNanos()->toInt());
-    }
-
-    public function testMulWithInteger(): void
-    {
-        $dur = Duration::fromSeconds(4);
-        $result = $dur->mul(Integer::of(2));
-
-        $this->assertTrue($result->isOk());
-        $product = $result->unwrap();
-        $this->assertEquals(8, $product->toSeconds()->toInt());
+        $this->assertEquals(4, $product->toSeconds());
+        $this->assertEquals(500_000_000, $product->subsecNanos());
     }
 
     public function testSaturatingMul(): void
@@ -317,7 +247,7 @@ final class DurationTest extends TestCase
         $dur = Duration::fromSeconds(2);
         $product = $dur->saturatingMul(3);
 
-        $this->assertEquals(6, $product->toSeconds()->toInt());
+        $this->assertEquals(6, $product->toSeconds());
     }
 
     public function testDiv(): void
@@ -327,7 +257,7 @@ final class DurationTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $quotient = $result->unwrap();
-        $this->assertEquals(5, $quotient->toSeconds()->toInt());
+        $this->assertEquals(5, $quotient->toSeconds());
     }
 
     public function testDivWithRemainder(): void
@@ -337,8 +267,8 @@ final class DurationTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $quotient = $result->unwrap();
-        $this->assertEquals(3, $quotient->toSeconds()->toInt());
-        $this->assertEquals(333_333_333, $quotient->subsecNanos()->toInt());
+        $this->assertEquals(3, $quotient->toSeconds());
+        $this->assertEquals(333_333_333, $quotient->subsecNanos());
     }
 
     public function testDivByZero(): void
@@ -357,16 +287,6 @@ final class DurationTest extends TestCase
 
         $this->assertTrue($result->isErr());
         $this->assertInstanceOf(ZeroDuration::class, $result->unwrapErr());
-    }
-
-    public function testDivWithInteger(): void
-    {
-        $dur = Duration::fromSeconds(20);
-        $result = $dur->div(Integer::of(4));
-
-        $this->assertTrue($result->isOk());
-        $quotient = $result->unwrap();
-        $this->assertEquals(5, $quotient->toSeconds()->toInt());
     }
 
     public function testDivDuration(): void
@@ -420,8 +340,8 @@ final class DurationTest extends TestCase
         $diff1 = $dur1->absDiff($dur2);
         $diff2 = $dur2->absDiff($dur1);
 
-        $this->assertEquals(2, $diff1->toSeconds()->toInt());
-        $this->assertEquals(2, $diff2->toSeconds()->toInt());
+        $this->assertEquals(2, $diff1->toSeconds());
+        $this->assertEquals(2, $diff2->toSeconds());
         $this->assertTrue($diff1->eq($diff2));
     }
 
@@ -460,9 +380,9 @@ final class DurationTest extends TestCase
         $dur2 = Duration::fromSeconds(3);
         $dur3 = Duration::fromSeconds(5);
 
-        $this->assertEquals(1, $dur1->cmp($dur2)->toInt());
-        $this->assertEquals(-1, $dur2->cmp($dur1)->toInt());
-        $this->assertEquals(0, $dur1->cmp($dur3)->toInt());
+        $this->assertEquals(1, $dur1->cmp($dur2));
+        $this->assertEquals(-1, $dur2->cmp($dur1));
+        $this->assertEquals(0, $dur1->cmp($dur3));
     }
 
     public function testCmpWithNanoseconds(): void
@@ -470,8 +390,8 @@ final class DurationTest extends TestCase
         $dur1 = Duration::new(1, 500_000_000);
         $dur2 = Duration::new(1, 250_000_000);
 
-        $this->assertEquals(1, $dur1->cmp($dur2)->toInt());
-        $this->assertEquals(-1, $dur2->cmp($dur1)->toInt());
+        $this->assertEquals(1, $dur1->cmp($dur2));
+        $this->assertEquals(-1, $dur2->cmp($dur1));
     }
 
     public function testMax(): void
@@ -534,30 +454,30 @@ final class DurationTest extends TestCase
     {
         $duration = Duration::fromNanos(123_456_789);
 
-        $this->assertEquals(0, $duration->toSeconds()->toInt());
-        $this->assertEquals(123_456_789, $duration->subsecNanos()->toInt());
-        $this->assertEquals(123_456, $duration->subsecMicros()->toInt());
-        $this->assertEquals(123, $duration->subsecMillis()->toInt());
+        $this->assertEquals(0, $duration->toSeconds());
+        $this->assertEquals(123_456_789, $duration->subsecNanos());
+        $this->assertEquals(123_456, $duration->subsecMicros());
+        $this->assertEquals(123, $duration->subsecMillis());
     }
 
     public function testLargeValues(): void
     {
         $largeDuration = Duration::fromDays(365);
         $expectedSeconds = 365 * 24 * 60 * 60;
-        $this->assertEquals($expectedSeconds, $largeDuration->toSeconds()->toInt());
+        $this->assertEquals($expectedSeconds, $largeDuration->toSeconds());
     }
 
     public function testEdgeCases(): void
     {
         $maxNanos = Duration::new(0, 999_999_999);
-        $this->assertEquals(0, $maxNanos->toSeconds()->toInt());
-        $this->assertEquals(999_999_999, $maxNanos->subsecNanos()->toInt());
+        $this->assertEquals(0, $maxNanos->toSeconds());
+        $this->assertEquals(999_999_999, $maxNanos->subsecNanos());
 
         $oneNano = Duration::nanosecond();
         $result = $maxNanos->add($oneNano);
         $this->assertTrue($result->isOk());
         $overflow = $result->unwrap();
-        $this->assertEquals(1, $overflow->toSeconds()->toInt());
-        $this->assertEquals(0, $overflow->subsecNanos()->toInt());
+        $this->assertEquals(1, $overflow->toSeconds());
+        $this->assertEquals(0, $overflow->subsecNanos());
     }
 }
