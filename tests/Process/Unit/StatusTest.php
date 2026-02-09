@@ -23,11 +23,11 @@ class StatusTest extends TestCase
         ]);
 
         $this->assertEquals('echo hello', $status->command()->toString());
-        $this->assertEquals(1234, $status->pid()->toInt());
+        $this->assertEquals(1234, $status->pid());
         $this->assertFalse($status->isRunning());
         $this->assertFalse($status->isSignaled());
         $this->assertFalse($status->isStopped());
-        $this->assertEquals(0, $status->exitCode()->toInt());
+        $this->assertEquals(0, $status->exitCode());
         $this->assertTrue($status->isSuccess());
         $this->assertFalse($status->isFailure());
     }
@@ -47,7 +47,7 @@ class StatusTest extends TestCase
 
         $this->assertTrue($status->isFailure());
         $this->assertFalse($status->isSuccess());
-        $this->assertEquals(1, $status->exitCode()->toInt());
+        $this->assertEquals(1, $status->exitCode());
     }
 
     public function testStatusRunning(): void
@@ -80,7 +80,7 @@ class StatusTest extends TestCase
         ]);
 
         $this->assertTrue($status->isSignaled());
-        $this->assertEquals(9, $status->termSignal()->toInt());
+        $this->assertEquals(9, $status->termSignal());
     }
 
     public function testStatusStopped(): void
@@ -97,7 +97,7 @@ class StatusTest extends TestCase
         ]);
 
         $this->assertTrue($status->isStopped());
-        $this->assertEquals(19, $status->stopSignal()->toInt());
+        $this->assertEquals(19, $status->stopSignal());
     }
 
     public function testStatusFromLiveProcess(): void

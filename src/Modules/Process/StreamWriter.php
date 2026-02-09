@@ -8,7 +8,6 @@ use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Process\Error\StreamFlushFailed;
 use Jsadaa\PhpCoreLibrary\Modules\Process\Error\StreamWriteFailed;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 
 /**
@@ -18,7 +17,7 @@ final class StreamWriter
 {
     /** @var resource */
     private $stream;
-    private Integer $bufferSize;
+    private int $bufferSize;
     private bool $autoFlush;
     private Str $lineEnding;
 
@@ -27,7 +26,7 @@ final class StreamWriter
      */
     private function __construct(
         $stream,
-        Integer $bufferSize,
+        int $bufferSize,
         bool $autoFlush,
         Str $lineEnding,
     ) {
@@ -44,7 +43,7 @@ final class StreamWriter
     {
         return new self(
             $stream,
-            Integer::of(8192),
+            8192,
             false,
             Str::of(\PHP_EOL),
         );
@@ -59,17 +58,17 @@ final class StreamWriter
     {
         return new self(
             $stream,
-            Integer::of(8192),
+            8192,
             true,
             Str::of(\PHP_EOL),
         );
     }
 
-    public function withBufferSize(int | Integer $size): self
+    public function withBufferSize(int $size): self
     {
         return new self(
             $this->stream,
-            \is_int($size) ? Integer::of($size) : $size,
+            $size,
             $this->autoFlush,
             $this->lineEnding,
         );
@@ -98,21 +97,21 @@ final class StreamWriter
     /**
      * Writes data to the stream.
      *
-     * @return Result<Integer, StreamWriteFailed>
+     * @return Result<int, StreamWriteFailed>
      */
     public function write(string | Str $data): Result
     {
         $dataStr = \is_string($data) ? $data : $data->toString();
 
         if (\strlen($dataStr) === 0) {
-            /** @var Result<Integer, StreamWriteFailed> */
-            return Result::ok(Integer::of(0));
+            /** @var Result<int, StreamWriteFailed> */
+            return Result::ok(0);
         }
 
         $written = @\fwrite($this->stream, $dataStr);
 
         if ($written === false) {
-            /** @var Result<Integer, StreamWriteFailed> */
+            /** @var Result<int, StreamWriteFailed> */
             return Result::err(new StreamWriteFailed());
         }
 
@@ -120,14 +119,14 @@ final class StreamWriter
             $this->flush();
         }
 
-        /** @var Result<Integer, StreamWriteFailed> */
-        return Result::ok(Integer::of($written));
+        /** @var Result<int, StreamWriteFailed> */
+        return Result::ok($written);
     }
 
     /**
      * Writes a line to the stream (appends line ending).
      *
-     * @return Result<Integer, StreamWriteFailed>
+     * @return Result<int, StreamWriteFailed>
      */
     public function writeLine(string | Str $line): Result
     {
@@ -140,7 +139,7 @@ final class StreamWriter
      * Writes multiple lines to the stream.
      *
      * @param Sequence<Str>|array<string> $lines
-     * @return Result<Integer, StreamWriteFailed>
+     * @return Result<int, StreamWriteFailed>
      */
     public function writeLines($lines): Result
     {
@@ -148,50 +147,50 @@ final class StreamWriter
             ? $lines
             : Sequence::of(...\array_map(static fn($l) => Str::of($l), $lines));
 
-        $totalWritten = Integer::of(0);
+        $totalWritten = 0;
 
         foreach ($sequence->iter() as $line) {
             $result = $this->writeLine($line);
 
             if ($result->isErr()) {
-                /** @var Result<Integer, StreamWriteFailed> */
+                /** @var Result<int, StreamWriteFailed> */
                 return $result;
             }
 
-            $totalWritten = $totalWritten->add($result->unwrap());
+            $totalWritten += $result->unwrap();
         }
 
-        /** @var Result<Integer, StreamWriteFailed> */
+        /** @var Result<int, StreamWriteFailed> */
         return Result::ok($totalWritten);
     }
 
     /**
      * Writes data in chunks to avoid memory issues with large data.
      *
-     * @return Result<Integer, StreamWriteFailed>
+     * @return Result<int, StreamWriteFailed>
      */
     public function writeChunked(string | Str $data): Result
     {
         $dataStr = \is_string($data) ? $data : $data->toString();
-        $totalWritten = Integer::of(0);
+        $totalWritten = 0;
         $offset = 0;
         $length = \strlen($dataStr);
-        $chunkSize = $this->bufferSize->toInt();
+        $chunkSize = $this->bufferSize;
 
         while ($offset < $length) {
             $chunk = \substr($dataStr, $offset, $chunkSize);
             $result = $this->write($chunk);
 
             if ($result->isErr()) {
-                /** @var Result<Integer, StreamWriteFailed> */
+                /** @var Result<int, StreamWriteFailed> */
                 return $result;
             }
 
-            $totalWritten = $totalWritten->add($result->unwrap());
+            $totalWritten += $result->unwrap();
             $offset += $chunkSize;
         }
 
-        /** @var Result<Integer, StreamWriteFailed> */
+        /** @var Result<int, StreamWriteFailed> */
         return Result::ok($totalWritten);
     }
 

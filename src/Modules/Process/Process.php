@@ -13,7 +13,6 @@ use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Duration;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Error\TimeOverflow;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 use Jsadaa\PhpCoreLibrary\Primitives\Unit;
 
@@ -65,18 +64,18 @@ final class Process
     }
 
     /**
-     * @return Result<Integer, InvalidPid>
+     * @return Result<int, InvalidPid>
      */
     public function pid(): Result
     {
         $pid = $this->status()->pid();
 
-        if ($pid->gt(0)) {
-            /** @var Result<Integer, InvalidPid> */
+        if ($pid > 0) {
+            /** @var Result<int, InvalidPid> */
             return Result::ok($pid);
         }
 
-        /** @var Result<Integer, InvalidPid> */
+        /** @var Result<int, InvalidPid> */
         return Result::err(new InvalidPid());
     }
 
@@ -181,18 +180,18 @@ final class Process
     /**
      * Writes data to the process's stdin using StreamWriter.
      *
-     * @return Result<Integer, StreamReadFailed|Error\StreamWriteFailed>
+     * @return Result<int, StreamReadFailed|Error\StreamWriteFailed>
      */
     public function writeStdin(string | Str $data): Result
     {
         $writer = $this->stdinWriter();
 
         if ($writer->isErr()) {
-            /** @var Result<Integer, StreamReadFailed|Error\StreamWriteFailed> */
+            /** @var Result<int, StreamReadFailed|Error\StreamWriteFailed> */
             return Result::err($writer->unwrapErr());
         }
 
-        /** @var Result<Integer, StreamReadFailed|Error\StreamWriteFailed> */
+        /** @var Result<int, StreamReadFailed|Error\StreamWriteFailed> */
         return $writer->unwrap()->write($data);
     }
 

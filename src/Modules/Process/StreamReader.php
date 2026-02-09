@@ -10,7 +10,6 @@ use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Duration;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Error\TimeOverflow;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 
 /**
@@ -20,12 +19,12 @@ final class StreamReader
 {
     /** @var resource */
     private $stream;
-    private Integer $bufferSize;
+    private int $bufferSize;
 
     /**
      * @param resource $stream
      */
-    private function __construct($stream, Integer $bufferSize)
+    private function __construct($stream, int $bufferSize)
     {
         $this->stream = $stream;
         $this->bufferSize = $bufferSize;
@@ -34,12 +33,9 @@ final class StreamReader
     /**
      * @param resource $stream
      */
-    public static function from($stream, int | Integer $bufferSize = 8192): self
+    public static function from($stream, int $bufferSize = 8192): self
     {
-        return new self(
-            $stream,
-            \is_int($bufferSize) ? Integer::of($bufferSize) : $bufferSize,
-        );
+        return new self($stream, $bufferSize);
     }
 
     /**
@@ -51,7 +47,7 @@ final class StreamReader
     {
         \stream_set_blocking($this->stream, false);
 
-        $data = \fread($this->stream, $this->bufferSize->toInt());
+        $data = \fread($this->stream, $this->bufferSize);
 
         if ($data === false) {
             /** @var Result<Str, StreamReadFailed> */
@@ -96,7 +92,7 @@ final class StreamReader
             $changed = @\stream_select($read, $write, $except, 0, 50000); // 50ms
 
             if ($changed !== false && $changed > 0) {
-                $data = \fread($this->stream, $this->bufferSize->toInt());
+                $data = \fread($this->stream, $this->bufferSize);
 
                 if ($data === false) {
                     /** @var Result<Str, StreamReadFailed|ProcessTimeout|TimeOverflow> */

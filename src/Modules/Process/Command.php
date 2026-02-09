@@ -15,7 +15,6 @@ use Jsadaa\PhpCoreLibrary\Modules\Process\Error\StreamReadFailed;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Duration;
 use Jsadaa\PhpCoreLibrary\Modules\Time\Error\TimeOverflow;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 
 /**
@@ -85,11 +84,10 @@ final readonly class Command
         );
     }
 
-    public function withTimeout(int | Integer | Duration $timeout): self
+    public function withTimeout(int | Duration $timeout): self
     {
         $duration = match (true) {
             $timeout instanceof Duration => $timeout,
-            $timeout instanceof Integer => Duration::fromSeconds($timeout->toInt()),
             default => Duration::fromSeconds($timeout),
         };
 
@@ -301,7 +299,7 @@ final readonly class Command
             $index = $i++;
 
             if ($index > 0) {
-                $prevProcess = $processes->get(Integer::of($index - 1))->unwrap();
+                $prevProcess = $processes->get($index - 1)->unwrap();
                 $stdoutResult = $prevProcess->stdout();
 
                 if ($stdoutResult->isSome()) {
@@ -311,7 +309,7 @@ final readonly class Command
                 }
             }
 
-            if ($index < $builders->size()->sub(1)->toInt()) {
+            if ($index < $builders->size() - 1) {
                 $currentStreams = $builder->getStreams();
                 $stdoutDesc = $currentStreams->get(FileDescriptor::stdout());
 

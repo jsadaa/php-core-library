@@ -21,7 +21,7 @@ class OutputTest extends TestCase
 
         $this->assertTrue($output->isSuccess());
         $this->assertFalse($output->isFailure());
-        $this->assertEquals(0, $output->exitCode()->toInt());
+        $this->assertEquals(0, $output->exitCode());
         $this->assertEquals('hello', $output->stdout()->toString());
         $this->assertEquals('', $output->stderr()->toString());
     }

@@ -151,7 +151,7 @@ class ProcessTest extends TestCase
 
         $pid = $process->pid();
         $this->assertTrue($pid->isOk());
-        $this->assertTrue($pid->unwrap()->gt(0));
+        $this->assertGreaterThan(0, $pid->unwrap());
         $process->close();
     }
 
@@ -307,7 +307,7 @@ class ProcessTest extends TestCase
         $output = $process->output(Duration::fromSeconds(5));
         $this->assertTrue($output->isOk());
         $this->assertTrue($output->unwrap()->isFailure());
-        $this->assertEquals(42, $output->unwrap()->exitCode()->toInt());
+        $this->assertEquals(42, $output->unwrap()->exitCode());
         $process->close();
     }
 
@@ -469,7 +469,7 @@ class ProcessTest extends TestCase
         $this->assertTrue($result->isOk());
         $this->assertTrue($result->unwrap()->isSuccess());
         $this->assertFalse($result->unwrap()->isFailure());
-        $this->assertEquals(0, $result->unwrap()->exitCode()->toInt());
+        $this->assertEquals(0, $result->unwrap()->exitCode());
     }
 
     public function testStatusFailure(): void

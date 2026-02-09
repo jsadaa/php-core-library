@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 
 /**
@@ -12,23 +11,23 @@ use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
  */
 final readonly class Status {
     private Str $command;
-    private Integer $pid;
+    private int $pid;
     private bool $running;
     private bool $signaled;
     private bool $stopped;
-    private Integer $exitCode;
-    private Integer $termSignal;
-    private Integer $stopSignal;
+    private int $exitCode;
+    private int $termSignal;
+    private int $stopSignal;
 
     private function __construct(
         Str $command,
-        Integer $pid,
+        int $pid,
         bool $running,
         bool $signaled,
         bool $stopped,
-        Integer $exitCode,
-        Integer $termSignal,
-        Integer $stopSignal,
+        int $exitCode,
+        int $termSignal,
+        int $stopSignal,
     ) {
         $this->command = $command;
         $this->pid = $pid;
@@ -50,13 +49,13 @@ final readonly class Status {
 
         return new self(
             Str::of($status['command']),
-            Integer::of($status['pid']),
+            $status['pid'],
             $status['running'],
             $status['signaled'],
             $status['stopped'],
-            Integer::of($status['exitcode']),
-            Integer::of($status['termsig']),
-            Integer::of($status['stopsig']),
+            $status['exitcode'],
+            $status['termsig'],
+            $status['stopsig'],
         );
     }
 
@@ -77,13 +76,13 @@ final readonly class Status {
     {
         return new self(
             Str::of($data['command']),
-            Integer::of($data['pid']),
+            $data['pid'],
             $data['running'],
             $data['signaled'],
             $data['stopped'],
-            Integer::of($data['exitCode']),
-            Integer::of($data['termSignal']),
-            Integer::of($data['stopSignal']),
+            $data['exitCode'],
+            $data['termSignal'],
+            $data['stopSignal'],
         );
     }
 
@@ -92,7 +91,7 @@ final readonly class Status {
         return $this->command;
     }
 
-    public function pid(): Integer
+    public function pid(): int
     {
         return $this->pid;
     }
@@ -112,24 +111,24 @@ final readonly class Status {
         return $this->stopped;
     }
 
-    public function exitCode(): Integer
+    public function exitCode(): int
     {
         return $this->exitCode;
     }
 
-    public function termSignal(): Integer
+    public function termSignal(): int
     {
         return $this->termSignal;
     }
 
-    public function stopSignal(): Integer
+    public function stopSignal(): int
     {
         return $this->stopSignal;
     }
 
     public function isSuccess(): bool
     {
-        return $this->exitCode->eq(0);
+        return $this->exitCode === 0;
     }
 
     public function isFailure(): bool

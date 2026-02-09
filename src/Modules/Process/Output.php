@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace Jsadaa\PhpCoreLibrary\Modules\Process;
 
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 
 /**
@@ -39,7 +38,7 @@ final readonly class Output
         return $this->stderr;
     }
 
-    public function exitCode(): Integer
+    public function exitCode(): int
     {
         return $this->status->exitCode();
     }

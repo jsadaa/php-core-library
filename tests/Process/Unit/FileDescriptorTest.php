@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Jsadaa\PhpCoreLibrary\Tests\Process\Unit;
 
 use Jsadaa\PhpCoreLibrary\Modules\Process\FileDescriptor;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use PHPUnit\Framework\TestCase;
 
 class FileDescriptorTest extends TestCase
@@ -46,9 +45,9 @@ class FileDescriptorTest extends TestCase
         $this->assertEquals(5, $fd->toInt());
     }
 
-    public function testCustomWithInteger(): void
+    public function testCustomWithNativeInt(): void
     {
-        $fd = FileDescriptor::custom(Integer::of(3));
+        $fd = FileDescriptor::custom(3);
         $this->assertEquals(3, $fd->toInt());
     }
 
@@ -65,6 +64,6 @@ class FileDescriptorTest extends TestCase
     public function testNumber(): void
     {
         $fd = FileDescriptor::custom(7);
-        $this->assertEquals(7, $fd->number()->toInt());
+        $this->assertEquals(7, $fd->number());
     }
 }
