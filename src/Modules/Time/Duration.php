@@ -69,59 +69,6 @@ final readonly class Duration
         $this->nanos = $nanos;
     }
 
-    // --- Overflow helpers ---
-
-    /**
-     * @return Result<int, DurationOverflow>
-     * @psalm-pure
-     * @psalm-suppress ImpureMethodCall
-     */
-    private static function checkedAdd(int $a, int $b): Result
-    {
-        if (($b > 0 && $a > \PHP_INT_MAX - $b) || ($b < 0 && $a < \PHP_INT_MIN - $b)) {
-            /** @var Result<int, DurationOverflow> */
-            return Result::err(new DurationOverflow('Overflow on addition'));
-        }
-
-        /** @var Result<int, DurationOverflow> */
-        return Result::ok($a + $b);
-    }
-
-    /**
-     * @return Result<int, DurationOverflow>
-     * @psalm-pure
-     * @psalm-suppress ImpureMethodCall
-     */
-    private static function checkedSub(int $a, int $b): Result
-    {
-        if (($b > 0 && $a < \PHP_INT_MIN + $b) || ($b < 0 && $a > \PHP_INT_MAX + $b)) {
-            /** @var Result<int, DurationOverflow> */
-            return Result::err(new DurationOverflow('Overflow on subtraction'));
-        }
-
-        /** @var Result<int, DurationOverflow> */
-        return Result::ok($a - $b);
-    }
-
-    /**
-     * @return Result<int, DurationOverflow>
-     * @psalm-pure
-     * @psalm-suppress ImpureMethodCall
-     */
-    private static function checkedMul(int $a, int $b): Result
-    {
-        $result = $a * $b;
-
-        /** @psalm-suppress TypeDoesNotContainType PHP promotes int*int to float on overflow */
-        if (\is_float($result)) {
-            /** @var Result<int, DurationOverflow> */
-            return Result::err(new DurationOverflow('Overflow on multiplication'));
-        }
-
-        /** @var Result<int, DurationOverflow> */
-        return Result::ok($result);
-    }
-
     // --- Factory methods ---
 
     /**
@@ -779,5 +726,58 @@ final readonly class Duration
     public static function second(): self
     {
         return new self(1, 0);
+    }
+
+    // --- Overflow helpers ---
+
+    /**
+     * @return Result<int, DurationOverflow>
+     * @psalm-pure
+     * @psalm-suppress ImpureMethodCall
+     */
+    private static function checkedAdd(int $a, int $b): Result
+    {
+        if (($b > 0 && $a > \PHP_INT_MAX - $b) || ($b < 0 && $a < \PHP_INT_MIN - $b)) {
+            /** @var Result<int, DurationOverflow> */
+            return Result::err(new DurationOverflow('Overflow on addition'));
+        }
+
+        /** @var Result<int, DurationOverflow> */
+        return Result::ok($a + $b);
+    }
+
+    /**
+     * @return Result<int, DurationOverflow>
+     * @psalm-pure
+     * @psalm-suppress ImpureMethodCall
+     */
+    private static function checkedSub(int $a, int $b): Result
+    {
+        if (($b > 0 && $a < \PHP_INT_MIN + $b) || ($b < 0 && $a > \PHP_INT_MAX + $b)) {
+            /** @var Result<int, DurationOverflow> */
+            return Result::err(new DurationOverflow('Overflow on subtraction'));
+        }
+
+        /** @var Result<int, DurationOverflow> */
+        return Result::ok($a - $b);
+    }
+
+    /**
+     * @return Result<int, DurationOverflow>
+     * @psalm-pure
+     * @psalm-suppress ImpureMethodCall
+     */
+    private static function checkedMul(int $a, int $b): Result
+    {
+        $result = $a * $b;
+
+        /** @psalm-suppress TypeDoesNotContainType PHP promotes int*int to float on overflow */
+        if (\is_float($result)) {
+            /** @var Result<int, DurationOverflow> */
+            return Result::err(new DurationOverflow('Overflow on multiplication'));
+        }
+
+        /** @var Result<int, DurationOverflow> */
+        return Result::ok($result);
     }
 }

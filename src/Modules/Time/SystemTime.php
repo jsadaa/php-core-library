@@ -30,40 +30,6 @@ final readonly class SystemTime {
         $this->nanos = $nanos;
     }
 
-    // --- Overflow helpers ---
-
-    /**
-     * @return Result<int, TimeOverflow>
-     * @psalm-pure
-     * @psalm-suppress ImpureMethodCall
-     */
-    private static function checkedAdd(int $a, int $b): Result
-    {
-        if (($b > 0 && $a > \PHP_INT_MAX - $b) || ($b < 0 && $a < \PHP_INT_MIN - $b)) {
-            /** @var Result<int, TimeOverflow> */
-            return Result::err(new TimeOverflow('Overflow on addition'));
-        }
-
-        /** @var Result<int, TimeOverflow> */
-        return Result::ok($a + $b);
-    }
-
-    /**
-     * @return Result<int, TimeOverflow>
-     * @psalm-pure
-     * @psalm-suppress ImpureMethodCall
-     */
-    private static function checkedSub(int $a, int $b): Result
-    {
-        if (($b > 0 && $a < \PHP_INT_MIN + $b) || ($b < 0 && $a > \PHP_INT_MAX + $b)) {
-            /** @var Result<int, TimeOverflow> */
-            return Result::err(new TimeOverflow('Overflow on subtraction'));
-        }
-
-        /** @var Result<int, TimeOverflow> */
-        return Result::ok($a - $b);
-    }
-
     // --- Factories ---
 
     /**
@@ -378,5 +344,39 @@ final readonly class SystemTime {
 
         /** @var Result<\DateTimeImmutable, DateTimeConversionFailed> */
         return Result::ok($datetime);
+    }
+
+    // --- Overflow helpers ---
+
+    /**
+     * @return Result<int, TimeOverflow>
+     * @psalm-pure
+     * @psalm-suppress ImpureMethodCall
+     */
+    private static function checkedAdd(int $a, int $b): Result
+    {
+        if (($b > 0 && $a > \PHP_INT_MAX - $b) || ($b < 0 && $a < \PHP_INT_MIN - $b)) {
+            /** @var Result<int, TimeOverflow> */
+            return Result::err(new TimeOverflow('Overflow on addition'));
+        }
+
+        /** @var Result<int, TimeOverflow> */
+        return Result::ok($a + $b);
+    }
+
+    /**
+     * @return Result<int, TimeOverflow>
+     * @psalm-pure
+     * @psalm-suppress ImpureMethodCall
+     */
+    private static function checkedSub(int $a, int $b): Result
+    {
+        if (($b > 0 && $a < \PHP_INT_MIN + $b) || ($b < 0 && $a > \PHP_INT_MAX + $b)) {
+            /** @var Result<int, TimeOverflow> */
+            return Result::err(new TimeOverflow('Overflow on subtraction'));
+        }
+
+        /** @var Result<int, TimeOverflow> */
+        return Result::ok($a - $b);
     }
 }
