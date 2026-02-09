@@ -131,17 +131,17 @@ Returns the number of Unicode characters in the string.
 
 ```php
 $str = Str::of('Hello');
-$length = $str->size()->toInt(); // 5
+$length = $str->size(); // 5
 
 $utf8Str = Str::of('été');
-$length = $utf8Str->size()->toInt(); // 3 (counts characters, not bytes)
+$length = $utf8Str->size(); // 3 (counts characters, not bytes)
 ```
 
 For the byte length, use `byteSize()`:
 
 ```php
 $str = Str::of('été');
-$bytes = $str->byteSize()->toInt(); // 5 (UTF-8 bytes)
+$bytes = $str->byteSize(); // 5 (UTF-8 bytes)
 ```
 
 **Note:** `size()` counts Unicode codepoints, not grapheme clusters. The count may vary depending on the normalization form used. See `Str::normalize()`.
@@ -393,8 +393,8 @@ $chars = $str->chars(); // Sequence ["😀", "😀", "😀"] (properly handles U
 **Note:** This method splits by Unicode code points, so characters in decomposed form will be split into multiple code points.
 
 ```php
-$nfc = Str::of('é')->normalize('NFC')->unwrap()->chars()->size()->toInt(); // 1 "é" in composed form
-$nfd = Str::of('é')->normalize('NFD')->unwrap()->chars()->size()->toInt(); // 2 "é" in decomposed form : "e" + "́"
+$nfc = Str::of('é')->normalize('NFC')->unwrap()->chars()->size(); // 1 "é" in composed form
+$nfd = Str::of('é')->normalize('NFD')->unwrap()->chars()->size(); // 2 "é" in decomposed form : "e" + "́"
 ```
 
 ### Lines
@@ -581,9 +581,43 @@ $unchanged = $str->stripSuffix('Hello'); // 'HelloWorld' (unchanged)
 
 ## Parsing
 
+### Parse Int
+
+Parses the string as a native PHP `int`. Returns `Result<int, ParseError>`.
+
+```php
+$str = Str::of('123');
+$result = $str->parseInt(); // Result::ok(123)
+
+$str = Str::of('abc');
+$result = $str->parseInt(); // Result::err(ParseError(...))
+
+// Direct arithmetic with native int
+$doubled = Str::of('21')
+    ->parseInt()
+    ->map(fn(int $n) => $n * 2); // Result::ok(42)
+```
+
+### Parse Float
+
+Parses the string as a native PHP `float`. Returns `Result<float, ParseError>`.
+
+```php
+$str = Str::of('3.14');
+$result = $str->parseFloat(); // Result::ok(3.14)
+
+$str = Str::of('abc');
+$result = $str->parseFloat(); // Result::err(ParseError(...))
+
+// Direct arithmetic with native float
+$half = Str::of('6.28')
+    ->parseFloat()
+    ->map(fn(float $f) => $f / 2); // Result::ok(3.14)
+```
+
 ### Parse Integer
 
-Parses the string as an integer.
+Parses the string as an `Integer` wrapper type for advanced math chaining.
 
 ```php
 $str = Str::of('123');

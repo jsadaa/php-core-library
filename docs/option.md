@@ -337,10 +337,10 @@ $port = loadConfig()                                         // Option<Config>
     ->andThen(fn($config) => $config->getSection('server'))  // Option<Section>
     ->andThen(fn($section) => $section->getValue('port'))    // Option<string>
     ->andThen(fn($portStr) => Str::of($portStr)
-        ->parseInt()                                         // Result<Integer, ParseError>
-        ->option()                                           // Option<Integer>
+        ->parseInt()                                         // Result<int, ParseError>
+        ->option()                                           // Option<int>
     )
-    ->unwrapOr(Integer::of(8080));                           // Default if any step is None
+    ->unwrapOr(8080);                                        // Default if any step is None
 ```
 
 ### Chaining Operations

@@ -60,7 +60,7 @@ Gets the number of key-value pairs in the Map.
 
 ```php
 $map = Map::of('a', 1)->add('b', 2)->add('c', 3);
-$size = $map->size(); // Integer::of(3)
+$size = $map->size(); // 3
 ```
 
 ### Is Empty
@@ -171,7 +171,7 @@ Removes a key-value pair from the Map. Returns the Map unchanged if the key does
 ```php
 $map = Map::of('a', 1)->add('b', 2)->add('c', 3);
 $smaller = $map->remove('b');
-$smaller->size(); // Integer::of(2)
+$smaller->size(); // 2
 $smaller->containsKey('b'); // false
 ```
 

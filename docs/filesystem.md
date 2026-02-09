@@ -122,7 +122,7 @@ $chunkSize = 1024;
 while (true) {
     $chunk = $file->readChunk($chunkSize)->unwrap();
 
-    if ($chunk->size()->toInt() === 0) {
+    if ($chunk->size() === 0) {
         break;
     }
 
@@ -162,12 +162,12 @@ $integers = $file->bytes()
 
 #### Write
 
-Writes data at the current position. Accepts both `string` and `Str` values. Returns the number of bytes written as `Result<Integer, WriteFailed>`.
+Writes data at the current position. Accepts both `string` and `Str` values. Returns the number of bytes written as `Result<int, WriteFailed>`.
 
 ```php
 $file = File::create('/path/to/output.txt')->unwrap();
 $bytesWritten = $file->write('Hello, world!')->unwrap();
-echo $bytesWritten->toInt(); // 13
+echo $bytesWritten; // 13
 
 // Also accepts Str objects
 $file->write(Str::of('more data'))->unwrap();
@@ -177,7 +177,7 @@ $file->close();
 
 #### Append
 
-Seeks to end of file, then writes data. Returns the number of bytes written as `Result<Integer, WriteFailed>`.
+Seeks to end of file, then writes data. Returns the number of bytes written as `Result<int, WriteFailed>`.
 
 ```php
 $file = File::open('/var/log/app.log')->unwrap();
@@ -256,7 +256,7 @@ Gets the file size using the open handle (via `fstat`).
 ```php
 $file = File::open('/path/to/document.pdf')->unwrap();
 $size = $file->size()->unwrap();
-echo 'File size: ' . $size->toInt() . ' bytes';
+echo 'File size: ' . $size . ' bytes';
 $file->close();
 ```
 
@@ -269,7 +269,7 @@ $file = File::open('/path/to/document.txt')->unwrap();
 $metadata = $file->metadata()->unwrap();
 
 if ($metadata->isFile()) {
-    echo 'Size: ' . $metadata->size()->toInt() . ' bytes';
+    echo 'Size: ' . $metadata->size() . ' bytes';
 }
 
 $file->close();
@@ -279,7 +279,7 @@ Chaining metadata retrieval:
 
 ```php
 $sizeInKb = File::withOpen('/path/to/doc.txt', fn(File $f) =>
-    $f->metadata()->map(fn(Metadata $m) => $m->size()->toInt() / 1024)
+    $f->metadata()->map(fn(Metadata $m) => $m->size() / 1024)
 );
 ```
 
@@ -370,7 +370,7 @@ Reads file contents as a `Result<Str, FileNotFound|ReadFailed|InvalidFileType>`.
 ```php
 // Monadic pipeline: read -> transform -> chain
 $lineCount = FileSystem::read('/etc/hosts')
-    ->map(fn(Str $content) => $content->lines()->size()->toInt());
+    ->map(fn(Str $content) => $content->lines()->size());
 
 // With fallback via orElse
 $content = FileSystem::read('/etc/hosts.local')
@@ -385,7 +385,7 @@ $result = FileSystem::read('/etc/hosts');
 if ($result->isOk()) {
     $content = $result->unwrap();
     $lines = $content->lines();
-    echo 'Lines: ' . $lines->size()->toInt();
+    echo 'Lines: ' . $lines->size();
 }
 ```
 
@@ -569,15 +569,15 @@ Gets metadata for a path.
 
 ```php
 $metadata = FileSystem::metadata('/etc/hosts')->unwrap();
-echo 'Size: ' . $metadata->size()->toInt() . ' bytes';
-echo 'Modified: ' . date('Y-m-d H:i:s', $metadata->modified()->seconds()->toInt());
+echo 'Size: ' . $metadata->size() . ' bytes';
+echo 'Modified: ' . date('Y-m-d H:i:s', $metadata->modified()->seconds());
 ```
 
 Chaining metadata retrieval with transformation:
 
 ```php
 $isLarge = FileSystem::metadata('/path/to/file.bin')
-    ->map(fn(Metadata $m) => $m->size()->toInt() > 1_000_000);
+    ->map(fn(Metadata $m) => $m->size() > 1_000_000);
 
 // Retrieve permissions, falling back to a default
 $perms = FileSystem::metadata('/path/to/file.txt')
@@ -630,7 +630,7 @@ Chaining with Option:
 
 ```php
 $modifiedEpoch = $times->modified()
-    ->map(fn(SystemTime $t) => $t->seconds()->toInt());
+    ->map(fn(SystemTime $t) => $t->seconds());
 
 $modifiedEpoch->match(
     fn(int $ts) => date('Y-m-d H:i:s', $ts),
@@ -695,11 +695,11 @@ Monadic style:
 
 ```php
 $fileSize = Metadata::of('/etc/hosts')
-    ->map(fn(Metadata $m) => $m->size()->toInt());
+    ->map(fn(Metadata $m) => $m->size());
 
 // Chain into further operations
 $isRecent = Metadata::of('/var/log/syslog')
-    ->map(fn(Metadata $m) => $m->modified()->seconds()->toInt())
+    ->map(fn(Metadata $m) => $m->modified()->seconds())
     ->map(fn(int $ts) => $ts > time() - 3600);
 ```
 
@@ -720,7 +720,7 @@ $metadata->isDir();
 $metadata->isSymLink();
 
 // Size
-$metadata->size(); // Integer
+$metadata->size(); // int
 
 // Permissions (mode bits from stat)
 $metadata->permissions(); // Permissions
@@ -754,7 +754,7 @@ $perms->isReadable();   // true (checks 0444 bits)
 $perms->isWritable();   // true (checks 0222 bits)
 $perms->isExecutable(); // true (checks 0111 bits)
 
-$perms->mode(); // Integer (raw mode value)
+$perms->mode(); // int (raw mode value)
 ```
 
 ### Modification
@@ -823,7 +823,7 @@ $content = FileSystem::read('/path/to/file.txt')->match(
 ```php
 // map: transform the Ok value
 $lineCount = FileSystem::read('/path/to/file.txt')
-    ->map(fn(Str $content) => $content->lines()->size()->toInt());
+    ->map(fn(Str $content) => $content->lines()->size());
 
 // andThen: chain into another Result-returning operation
 $config = FileSystem::read('/path/to/config.json')

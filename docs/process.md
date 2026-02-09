@@ -226,7 +226,7 @@ $builder = ProcessBuilder::command('env')
 $result = $builder->spawn();
 
 $result->match(
-    fn(Process $process) => 'Process started with PID: ' . $process->pid()->unwrap()->toInt(),
+    fn(Process $process) => 'Process started with PID: ' . $process->pid()->unwrap(),
     fn($error) => match (true) {
         $error instanceof InvalidCommand => 'Empty command',
         $error instanceof InvalidWorkingDirectory => $error->getMessage(),
@@ -254,7 +254,7 @@ $process = ProcessBuilder::command('sleep')
 $process->isRunning(); // true
 
 // Get PID
-$pid = $process->pid()->unwrap()->toInt();
+$pid = $process->pid()->unwrap();
 
 // Wait for completion (with optional timeout)
 $status = $process->wait(Duration::fromSeconds(10));
@@ -283,7 +283,7 @@ $output = $process->output(Duration::fromSeconds(5));
 if ($output->isOk()) {
     echo $output->unwrap()->stdout()->toString(); // "hello\n"
     echo $output->unwrap()->stderr()->toString(); // ""
-    echo $output->unwrap()->exitCode()->toInt();  // 0
+    echo $output->unwrap()->exitCode();  // 0
 }
 
 $process->close();
@@ -402,10 +402,10 @@ $process = ProcessBuilder::command('cat')
 $writer = StreamWriter::from($process->stdin()->unwrap());
 
 // Write data
-$writer->write('Hello'); // Result<Integer, StreamWriteFailed>
+$writer->write('Hello'); // Result<int, StreamWriteFailed>
 
 // Write a line (appends line ending)
-$writer->writeLine('World'); // Result<Integer, StreamWriteFailed>
+$writer->writeLine('World'); // Result<int, StreamWriteFailed>
 
 // Write multiple lines
 $writer->writeLines(['Line 1', 'Line 2', 'Line 3']);
@@ -522,7 +522,7 @@ $output = Command::of('ls')->withArg('-la')->run()->unwrap();
 
 $output->stdout();    // Str - standard output content
 $output->stderr();    // Str - standard error content
-$output->exitCode();  // Integer - exit code
+$output->exitCode();  // int - exit code
 $output->isSuccess(); // bool - exit code == 0
 $output->isFailure(); // bool - exit code != 0
 
@@ -546,13 +546,13 @@ $process = ProcessBuilder::command('sleep')
 $status = $process->status();
 
 $status->command();    // Str
-$status->pid();        // Integer
+$status->pid();        // int
 $status->isRunning();  // bool
 $status->isSignaled(); // bool
 $status->isStopped();  // bool
-$status->exitCode();   // Integer
-$status->termSignal(); // Integer
-$status->stopSignal(); // Integer
+$status->exitCode();   // int
+$status->termSignal(); // int
+$status->stopSignal(); // int
 $status->isSuccess();  // bool (exitCode == 0)
 $status->isFailure();  // bool (exitCode != 0)
 ```

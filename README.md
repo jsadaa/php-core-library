@@ -144,7 +144,7 @@ A `Set` is an immutable collection of unique values with mathematical set operat
 ```php
 // Create a Set (duplicates are removed)
 $languages = Set::of('PHP', 'Rust', 'Go', 'PHP');
-$languages->size(); // Integer::of(3)
+$languages->size(); // 3
 
 // Set operations
 $backend = Set::of('PHP', 'Rust', 'Go', 'Java');
@@ -155,8 +155,8 @@ $onlyBackend = $backend->difference($systems); // Set { 'PHP', 'Java' }
 $all = $backend->append($systems);             // Union of both
 
 // Functional operations
-$lengths = $languages->map(fn($lang) => Str::of($lang)->size()->toInt()); // Set { 3, 4, 2 }
-$short = $languages->filter(fn($lang) => Str::of($lang)->size()->le(3)); // Set { 'PHP', 'Go' }
+$lengths = $languages->map(fn($lang) => Str::of($lang)->size()); // Set { 3, 4, 2 }
+$short = $languages->filter(fn($lang) => Str::of($lang)->size() <= 3); // Set { 'PHP', 'Go' }
 $hasRust = $languages->contains('Rust'); // true
 
 // Subset/superset checks
@@ -380,7 +380,7 @@ $maybeContent = FileSystem::read('/optional/file.txt')
 
 // inspect / inspectErr — side effects without altering the chain (logging, debugging)
 $result = FileSystem::read('/path/to/file.txt')
-    ->inspect(fn(Str $s) => error_log("Read " . $s->size()->toInt() . " chars"))
+    ->inspect(fn(Str $s) => error_log("Read " . $s->size() . " chars"))
     ->inspectErr(fn($e) => error_log("Read failed: " . $e->getMessage()))
     ->map(fn(Str $s) => $s->toUppercase());
 
@@ -413,7 +413,7 @@ $str = Str::of('Hello World');
 $empty = Str::new();
 
 // Character access and content checks
-$len = $str->size();                   // 11 (character count)
+$len = $str->size();                   // 11 (int, character count)
 $first = $str->get(0);                // Option::some('H')
 $contains = $str->contains('World');  // true
 $starts = $str->startsWith('Hello');  // true
@@ -433,9 +433,13 @@ $words = $str->splitWhitespace();        // Sequence of words
 $chars = $str->chars();                  // Sequence containing ['H','e','l','l','o',...]
 
 // Parsing to other types — returns Result for safe error handling
-$number = Str::of('42')->parseInteger();    // Result::ok(Integer::of(42))
-$float = Str::of('3.14')->parseDouble();    // Result::ok(Double::of(3.14))
+$number = Str::of('42')->parseInt();        // Result::ok(42) — native int
+$float = Str::of('3.14')->parseFloat();     // Result::ok(3.14) — native float
 $bool = Str::of('true')->parseBool();       // Result::ok(true)
+
+// Wrapper variants for math chaining
+$integer = Str::of('42')->parseInteger();   // Result::ok(Integer::of(42))
+$double = Str::of('3.14')->parseDouble();   // Result::ok(Double::of(3.14))
 
 // andThen chaining on parse results
 $result = Str::of('  42  ')
@@ -460,7 +464,7 @@ $initial = Str::of('Hello')
 - UTF-8 handling: byte counting, substring extraction, normalization, and encoding support
 - Text transformation: case conversion, padding, trimming, replacement
 - Text analysis: matching, finding, splitting in various ways
-- `parseInteger()`, `parseDouble()`, `parseBool()` return `Result` for safe chaining with `andThen()`
+- `parseInt()`, `parseFloat()`, `parseBool()` return `Result` with native types; `parseInteger()`, `parseDouble()` return wrapper types for math chaining
 - `find()`, `get()` return `Option` for safe chaining with `andThen()`
 
 For complete documentation with examples, see [Str Documentation](./docs/str.md).
@@ -912,8 +916,7 @@ $backToSystemTime = SystemTime::fromDateTimeImmutable($dateTime)->unwrap();
 // andThen chaining on Result — time arithmetic can fail (negative durations, overflow)
 $elapsed = SystemTime::now()
     ->durationSince($start)                              // Result<Duration, ...>
-    ->map(fn(Duration $d) => $d->seconds())              // Result<Integer, ...>
-    ->map(fn(Integer $s) => $s->toInt());                // Result<int, ...>
+    ->map(fn(Duration $d) => $d->toSeconds());           // Result<int, ...>
 
 // Duration arithmetic with andThen
 $timeout = Duration::fromSeconds(30)
@@ -946,6 +949,31 @@ This enforces you to really think about your implementation and the types you ar
 - Immutable data structures with method chaining
 - Functional programming patterns
 - Error handling with Option and Result types instead of exceptions or nulls
+
+### Type Strategy — Native Types vs Wrapper Types
+
+The library distinguishes between **wrapper types** used as rich toolboxes and **native types** used for simple values:
+
+- **`Str`** is the primary wrapper type — used everywhere for UTF-8 safety, 50+ chainable methods, and immutability guarantees. `size()` and `byteSize()` return native `int`.
+- **`Integer` / `Double`** are **opt-in math toolboxes** — use them when you need advanced chaining (overflow checking, logarithms, trigonometry, bitwise operations, etc.). They are not imposed by module APIs.
+- **Module APIs** (`Sequence`, `Map`, `Set`, `Duration`, `SystemTime`, `File`, `Metadata`, `Permissions`, `Process`) return **native `int` / `float`** for simple values like sizes, counts, timestamps, and PIDs.
+- **Bridges**: `Integer::of($value)` enters the math world, `->toInt()` exits. `Str::parseInt()` / `Str::parseFloat()` return native types; `Str::parseInteger()` / `Str::parseDouble()` return wrapper types.
+
+```php
+// Module APIs return native types
+$seq->size();              // int
+$duration->toSeconds();    // int
+$metadata->size();         // int
+
+// Integer/Double for advanced math chaining
+$result = Integer::of(100)
+    ->div(3)                              // Result::ok(Integer::of(33))
+    ->andThen(fn(Integer $n) => $n->div(2)); // Result::ok(Integer::of(16))
+
+// Parsing bridges
+Str::of('42')->parseInt();       // Result::ok(42)
+Str::of('42')->parseInteger();   // Result::ok(Integer::of(42))
+```
 
 ### Monadic Composition with `Option` and `Result`
 
@@ -1126,7 +1154,7 @@ This library is designed as a cohesive ecosystem where modules complement each o
 - **IO** uses `Result`, `Str`, and `Str::format()` for type-safe standard I/O
 - **Json** wraps PHP native JSON functions with `Result` and `Str` integration
 - **Path** integrates with `Option` and `Result` for path validation and manipulation
-- **Time** provides `SystemTime` and `Duration` with overflow-safe arithmetic using `Integer`
+- **Time** provides `SystemTime` and `Duration` with overflow-safe native arithmetic
 
 All modules follow consistent patterns for error handling, immutability, and functional composition, making them work naturally together while remaining useful independently.
 

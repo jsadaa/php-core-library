@@ -33,7 +33,7 @@ $set = Set::of('apple', 'banana', 'cherry');
 
 // Duplicates are ignored
 $set = Set::of(1, 2, 2, 3, 3, 3);
-$set->size(); // Integer::of(3)
+$set->size(); // 3
 ```
 
 ### From Array
@@ -43,7 +43,7 @@ Creates a new Set from an existing array.
 ```php
 $array = [1, 2, 3, 2, 1];
 $set = Set::ofArray($array);
-$set->size(); // Integer::of(3)
+$set->size(); // 3
 ```
 
 ## Basic Operations
@@ -54,7 +54,7 @@ Gets the number of elements in the Set.
 
 ```php
 $set = Set::of(1, 2, 3);
-$size = $set->size(); // Integer::of(3)
+$size = $set->size(); // 3
 ```
 
 ### Is Empty

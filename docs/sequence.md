@@ -168,7 +168,7 @@ $seq = Sequence::of(1, 2, 3, 4, 5);
 $evenNumbers = $seq->filter(fn($n) => $n % 2 === 0); // Sequence [2, 4]
 
 $seq = Sequence::of('apple', 'banana', 'cherry');
-$longWords = $seq->filter(fn($s) => Str::of($s)->size()->gt(5)); // Sequence [banana, cherry]
+$longWords = $seq->filter(fn($s) => Str::of($s)->size() > 5); // Sequence [banana, cherry]
 ```
 
 **Note:** Array keys are not preserved in the resulting collection.
@@ -289,7 +289,7 @@ $empty = Sequence::new();
 $noFirst = $empty->first(); // Option::none()
 
 // Chaining: filter then take first
-$firstLong = $seq->filter(fn(Str $s) => $s->size()->gt(5))
+$firstLong = $seq->filter(fn(Str $s) => $s->size() > 5)
     ->first()
     ->map(fn(Str $s) => $s->toUppercase()); // Option::some(Str::of('BANANA'))
 ```
