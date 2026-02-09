@@ -9,7 +9,6 @@ use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Error\IndexOutOfBounds;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Set\Set;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 
 /**
  * An ordered collection of elements of the same type.
@@ -139,7 +138,7 @@ final readonly class Sequence
      */
     public function eq(self $other): bool
     {
-        if ($this->size()->eq($other->size()) === false) {
+        if ($this->size() !== $other->size()) {
             return false;
         }
 
@@ -155,11 +154,11 @@ final readonly class Sequence
     /**
      * Get the length of the collection
      *
-     * @return Integer The length of the collection
+     * @return int The length of the collection
      */
-    public function size(): Integer
+    public function size(): int
     {
-        return Integer::of(\count($this->collection));
+        return \count($this->collection);
     }
 
     /**
@@ -174,9 +173,9 @@ final readonly class Sequence
     public function zip(self $other): self
     {
         $zipped = [];
-        $length = $this->size()->min($other->size());
+        $length = \min($this->size(), $other->size());
 
-        for ($i = 0; $i < $length->toInt(); $i++) {
+        for ($i = 0; $i < $length; $i++) {
             $zipped[] = Pair::of($this->collection[$i], $other->collection[$i]);
         }
 
@@ -260,13 +259,11 @@ final readonly class Sequence
     /**
      * Get an element from the collection at the given index
      *
-     * @param int|Integer $index The index of the element to get
+     * @param int $index The index of the element to get
      * @return Option<T> The element at the given index, or None if the index is out of bounds
      */
-    public function get(int | Integer $index): Option
+    public function get(int $index): Option
     {
-        $index = $index instanceof Integer ? $index->toInt() : $index;
-
         return isset($this->collection[$index])
             ? Option::some($this->collection[$index])
             : Option::none();
@@ -294,13 +291,13 @@ final readonly class Sequence
      * Get the index of the first occurrence of the given element
      *
      * @param mixed $element The element to search for
-     * @return Option<Integer> The index of the first occurrence of the element, or None if not found
+     * @return Option<int> The index of the first occurrence of the element, or None if not found
      */
     public function indexOf(mixed $element): Option
     {
         $index = \array_search($element, $this->collection, true);
 
-        return $index !== false ? Option::some(Integer::of($index)) : Option::none();
+        return $index !== false ? Option::some($index) : Option::none();
     }
 
     /**
@@ -351,15 +348,13 @@ final readonly class Sequence
      *
      * If the size provided is a negative, it will be treated as zero and will return an empty Sequence.
      *
-     * @param positive-int|Integer $size The size of the windows (must be positive)
+     * @param positive-int $size The size of the windows (must be positive)
      * @return self<Sequence<T>> A new collection containing the windows
      */
-    public function windows(int | Integer $size): self
+    public function windows(int $size): self
     {
-        $size = $size instanceof Integer ? $size : Integer::of($size);
-        $size = $size->max(0);
-
-        if ($size->eq(0)) {
+        /** @psalm-suppress DocblockTypeContradiction -- defensive guard for runtime safety */
+        if ($size <= 0) {
             return self::new();
         }
 
@@ -367,12 +362,12 @@ final readonly class Sequence
         $count = $this->size();
 
         // If the collection is smaller than the window size, return an empty collection
-        if ($count->lt($size)) {
+        if ($count < $size) {
             return self::new();
         }
 
-        for ($i = 0; $i <= $count->sub($size)->toInt(); $i++) {
-            $window = \array_slice($this->collection, $i, $size->toInt());
+        for ($i = 0; $i <= $count - $size; $i++) {
+            $window = \array_slice($this->collection, $i, $size);
             $windows[] = self::of(...$window);
         }
 
@@ -478,14 +473,12 @@ final readonly class Sequence
     /**
      * Insert an element at the given index
      *
-     * @param int|Integer $index The index at which to insert the element
+     * @param int $index The index at which to insert the element
      * @param T $item The element to insert
      * @return self<T> A new collection with the element inserted
      */
-    public function insertAt(int | Integer $index, mixed $item): self
+    public function insertAt(int $index, mixed $item): self
     {
-        $index = $index instanceof Integer ? $index->toInt() : $index;
-
         $newCollection = $this->collection;
         \array_splice($newCollection, $index, 0, [$item]);
 
@@ -509,19 +502,17 @@ final readonly class Sequence
     /**
      * Remove an element at the specified index
      *
-     * @param int<0, max>|Integer $index The index of the element to remove
+     * @param int<0, max> $index The index of the element to remove
      * @return self<T> A new collection with the element removed
      */
-    public function removeAt(int | Integer $index): self
+    public function removeAt(int $index): self
     {
-        $index = $index instanceof Integer ? $index : Integer::of($index);
-
-        if ($index->lt(0) || $index->ge($this->size()) || $this->isEmpty()) {
+        if ($index < 0 || $index >= $this->size() || $this->isEmpty()) {
             return new self($this->collection);
         }
 
         $newCollection = $this->collection;
-        $_ = \array_splice($newCollection, $index->toInt(), 1);
+        \array_splice($newCollection, $index, 1);
 
         return new self($newCollection);
     }
@@ -622,28 +613,27 @@ final readonly class Sequence
     /**
      * Resize the collection to a given size, filling with a specified value if necessary.
      *
-     * If the provided size is a negative Integer, it will be treated as zero.
+     * If the provided size is negative, it will be treated as zero.
      *
-     * @param positive-int|Integer $size The size to resize to.
+     * @param positive-int $size The size to resize to.
      * @param T $value The value to fill with if the collection is growing.
      * @return self<T> The resized collection.
      */
-    public function resize(int | Integer $size, mixed $value): self
+    public function resize(int $size, mixed $value): self
     {
-        $size = $size instanceof Integer ? $size : Integer::of($size);
-        $size = $size->max(0);
+        $size = \max($size, 0);
 
         if ($this->isEmpty()) {
-            return new self(\array_fill(0, $size->toInt(), $value));
+            return new self(\array_fill(0, $size, $value));
         }
 
-        if ($size->lt($this->size())) {
-            return new self(\array_slice($this->collection, 0, $size->toInt()));
+        if ($size < $this->size()) {
+            return new self(\array_slice($this->collection, 0, $size));
         }
 
         $newCollection = \array_merge(
             $this->collection,
-            \array_fill(0, $size->sub($this->size())->toInt(), $value),
+            \array_fill(0, $size - $this->size(), $value),
         );
 
         return new self($newCollection);
@@ -652,20 +642,16 @@ final readonly class Sequence
     /**
      * Truncates the Sequence to the specified size.
      *
-     * @param int<0, max>|Integer $size The size to truncate to.
+     * @param int<0, max> $size The size to truncate to.
      * @return self<T> The new Sequence with the specified size.
      */
-    public function truncate(int | Integer $size): self
+    public function truncate(int $size): self
     {
-        $size = $size instanceof Integer ? $size : Integer::of($size);
-
-        if ($size->le(0)) {
+        if ($size <= 0) {
             return new self([]);
         }
 
-        $newCollection = \array_slice($this->collection, 0, $size->toInt());
-
-        return new self($newCollection);
+        return new self(\array_slice($this->collection, 0, $size));
     }
 
     /**
@@ -723,61 +709,56 @@ final readonly class Sequence
     /**
      * Takes elements from the beginning of the Sequence up to the specified count and returns a new Sequence.
      *
-     * If the provided count is a negative Integer, it will be treated as zero.
+     * If the provided count is negative, it will be treated as zero.
      *
-     * @param int<0, max>|Integer $count The number of elements to take.
+     * @param int<0, max> $count The number of elements to take.
      * @return self<T> The new Sequence containing the taken elements.
      */
-    public function take(int | Integer $count): self
+    public function take(int $count): self
     {
-        $count = $count instanceof Integer ? $count : Integer::of($count);
-        $count = $count->max(0);
+        $count = \max($count, 0);
 
-        return new self(\array_slice($this->collection, 0, $count->toInt()));
+        return new self(\array_slice($this->collection, 0, $count));
     }
 
     /**
      * Skips elements from the beginning of the Sequence up to the specified count and returns a new Sequence.
      *
-     * If the provided count is a negative Integer, it will be treated as zero.
+     * If the provided count is negative, it will be treated as zero.
      *
-     * @param int<0, max>|Integer $count The number of elements to skip.
+     * @param int<0, max> $count The number of elements to skip.
      * @return self<T> The new Sequence containing the elements after skipping.
      */
-    public function skip(int | Integer $count): self
+    public function skip(int $count): self
     {
-        $count = $count instanceof Integer ? $count : Integer::of($count);
-        $count = $count->max(0);
+        $count = \max($count, 0);
 
-        return new self(\array_slice($this->collection, $count->toInt()));
+        return new self(\array_slice($this->collection, $count));
     }
 
     /**
      * Swaps two elements in the Sequence and returns a new Sequence.
      *
-     * @param int|Integer $index1 The index of the first element to swap.
-     * @param int|Integer $index2 The index of the second element to swap.
+     * @param int $index1 The index of the first element to swap.
+     * @param int $index2 The index of the second element to swap.
      * @return Result<self<T>, IndexOutOfBounds> The result of the swap operation.
      */
-    public function swap(int | Integer $index1, int | Integer $index2): Result
+    public function swap(int $index1, int $index2): Result
     {
-        $index1 = $index1 instanceof Integer ? $index1 : Integer::of($index1);
-        $index2 = $index2 instanceof Integer ? $index2 : Integer::of($index2);
-
-        if ($index1->lt(0) || $index1->ge($this->size())) {
+        if ($index1 < 0 || $index1 >= $this->size()) {
             /** @var Result<self<T>, IndexOutOfBounds> */
-            return Result::err(new IndexOutOfBounds($index1->toInt(), $this->size()->toInt()));
+            return Result::err(new IndexOutOfBounds($index1, $this->size()));
         }
 
-        if ($index2->lt(0) || $index2->ge($this->size())) {
+        if ($index2 < 0 || $index2 >= $this->size()) {
             /** @var Result<self<T>, IndexOutOfBounds> */
-            return Result::err(new IndexOutOfBounds($index2->toInt(), $this->size()->toInt()));
+            return Result::err(new IndexOutOfBounds($index2, $this->size()));
         }
 
         $collection = $this->collection;
-        $temp = $collection[$index1->toInt()];
-        $collection[$index1->toInt()] = $collection[$index2->toInt()];
-        $collection[$index2->toInt()] = $temp;
+        $temp = $collection[$index1];
+        $collection[$index1] = $collection[$index2];
+        $collection[$index2] = $temp;
 
         /** @var Result<self<T>, IndexOutOfBounds> */
         return Result::ok(new self($collection));

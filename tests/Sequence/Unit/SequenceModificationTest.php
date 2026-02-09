@@ -282,7 +282,7 @@ final class SequenceModificationTest extends TestCase
             'Original Sequence should remain unchanged',
         );
         $this->assertSame([1, 2, 3], $truncatedSequence->toArray());
-        $this->assertSame(3, $truncatedSequence->size()->toInt());
+        $this->assertSame(3, $truncatedSequence->size());
     }
 
     public function testTruncateToLargerSize(): void
@@ -291,7 +291,7 @@ final class SequenceModificationTest extends TestCase
         $truncatedSequence = $seq->truncate(5);
 
         $this->assertSame([1, 2, 3], $truncatedSequence->toArray());
-        $this->assertSame(3, $truncatedSequence->size()->toInt());
+        $this->assertSame(3, $truncatedSequence->size());
     }
 
     public function testTruncateToSameSize(): void
@@ -332,7 +332,7 @@ final class SequenceModificationTest extends TestCase
         $seq = Sequence::of(1, 2, 3, 4, 5);
         $windows = $seq->windows(2);
 
-        $this->assertSame(4, $windows->size()->toInt());
+        $this->assertSame(4, $windows->size());
 
         $firstWindow = $windows->get(0)->match(static fn($v) => $v, static fn() => null);
         $this->assertInstanceOf(Sequence::class, $firstWindow);
@@ -349,7 +349,7 @@ final class SequenceModificationTest extends TestCase
         $seq = Sequence::of('a', 'b', 'c');
         $windows = $seq->windows(3);
 
-        $this->assertSame(1, $windows->size()->toInt());
+        $this->assertSame(1, $windows->size());
 
         $window = $windows->get(0)->match(static fn($v) => $v, static fn() => null);
         $this->assertSame(['a', 'b', 'c'], $window->toArray());
@@ -368,7 +368,7 @@ final class SequenceModificationTest extends TestCase
         $seq = Sequence::of('a', 'b', 'c');
         $windows = $seq->windows(1);
 
-        $this->assertSame(3, $windows->size()->toInt());
+        $this->assertSame(3, $windows->size());
 
         $allWindows = $windows
             ->map(static fn($window) => $window->toArray())

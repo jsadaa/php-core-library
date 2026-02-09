@@ -271,7 +271,7 @@ final class SequenceAccessTest extends TestCase
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
-            static fn($v) => $v->toInt(),
+            static fn($v) => $v,
             static fn() => null,
         );
         $this->assertSame(2, $value);
@@ -284,7 +284,7 @@ final class SequenceAccessTest extends TestCase
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
-            static fn($v) => $v->toInt(),
+            static fn($v) => $v,
             static fn() => null,
         );
         $this->assertSame(0, $value);
@@ -297,7 +297,7 @@ final class SequenceAccessTest extends TestCase
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
-            static fn($v) => $v->toInt(),
+            static fn($v) => $v,
             static fn() => null,
         );
         $this->assertSame(2, $value);
@@ -326,7 +326,7 @@ final class SequenceAccessTest extends TestCase
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
-            static fn($v) => $v->toInt(),
+            static fn($v) => $v,
             static fn() => null,
         );
         $this->assertSame(0, $value);
@@ -342,7 +342,7 @@ final class SequenceAccessTest extends TestCase
 
         $this->assertTrue($option->isSome());
         $value = $option->match(
-            static fn($v) => $v->toInt(),
+            static fn($v) => $v,
             static fn() => null,
         );
         $this->assertSame(1, $value);

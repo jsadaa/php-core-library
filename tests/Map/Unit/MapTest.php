@@ -14,11 +14,11 @@ class MapTest extends TestCase
     {
         $map = Map::new();
         $this->assertTrue($map->isEmpty());
-        $this->assertEquals(0, $map->size()->toInt());
+        $this->assertEquals(0, $map->size());
 
         $map = Map::of('key', 'value');
         $this->assertFalse($map->isEmpty());
-        $this->assertEquals(1, $map->size()->toInt());
+        $this->assertEquals(1, $map->size());
         $this->assertTrue($map->containsKey('key'));
         $this->assertEquals('value', $map->get('key')->unwrap());
     }
@@ -29,13 +29,13 @@ class MapTest extends TestCase
             ->add('a', 1)
             ->add('b', 2);
 
-        $this->assertEquals(2, $map->size()->toInt());
+        $this->assertEquals(2, $map->size());
         $this->assertEquals(1, $map->get('a')->unwrap());
         $this->assertEquals(2, $map->get('b')->unwrap());
 
         // Test overwrite
         $map = $map->add('a', 3);
-        $this->assertEquals(2, $map->size()->toInt());
+        $this->assertEquals(2, $map->size());
         $this->assertEquals(3, $map->get('a')->unwrap());
     }
 
@@ -46,7 +46,7 @@ class MapTest extends TestCase
             ->add('b', 2)
             ->remove('a');
 
-        $this->assertEquals(1, $map->size()->toInt());
+        $this->assertEquals(1, $map->size());
         $this->assertFalse($map->containsKey('a'));
         $this->assertTrue($map->containsKey('b'));
     }
@@ -58,12 +58,12 @@ class MapTest extends TestCase
             ->add('b', 2);
 
         $keys = $map->keys();
-        $this->assertEquals(2, $keys->size()->toInt());
+        $this->assertEquals(2, $keys->size());
         $this->assertTrue($keys->contains('a'));
         $this->assertTrue($keys->contains('b'));
 
         $values = $map->values();
-        $this->assertEquals(2, $values->size()->toInt());
+        $this->assertEquals(2, $values->size());
         $this->assertTrue($values->contains(1));
         $this->assertTrue($values->contains(2));
     }
@@ -92,7 +92,7 @@ class MapTest extends TestCase
         $obj = new \stdClass();
         $map = Map::of($obj, 10);
 
-        $this->assertEquals(1, $map->size()->toInt());
+        $this->assertEquals(1, $map->size());
         $this->assertTrue($map->containsKey($obj));
         $this->assertEquals(10, $map->get($obj)->unwrap());
     }
@@ -117,7 +117,7 @@ class MapTest extends TestCase
         $obj = new \stdClass();
         $map = Map::of($obj, 1)->add($obj, 2);
 
-        $this->assertEquals(1, $map->size()->toInt());
+        $this->assertEquals(1, $map->size());
         $this->assertEquals(2, $map->get($obj)->unwrap());
     }
 
@@ -127,7 +127,7 @@ class MapTest extends TestCase
         $b = new \stdClass();
         $map = Map::of($a, 1)->add($b, 2)->remove($a);
 
-        $this->assertEquals(1, $map->size()->toInt());
+        $this->assertEquals(1, $map->size());
         $this->assertFalse($map->containsKey($a));
         $this->assertTrue($map->containsKey($b));
     }
@@ -140,7 +140,7 @@ class MapTest extends TestCase
 
         $result = $map->remove($b);
         $this->assertSame($map, $result);
-        $this->assertEquals(1, $result->size()->toInt());
+        $this->assertEquals(1, $result->size());
     }
 
     public function testObjectKeyContainsValue(): void
@@ -159,7 +159,7 @@ class MapTest extends TestCase
         $map = Map::of($a, 10)->add($b, 20);
 
         $values = $map->values();
-        $this->assertEquals(2, $values->size()->toInt());
+        $this->assertEquals(2, $values->size());
         $this->assertTrue($values->contains(10));
         $this->assertTrue($values->contains(20));
     }
@@ -185,7 +185,7 @@ class MapTest extends TestCase
         $map = Map::of($a, 100)->add($b, 10);
         $filtered = $map->filter(static fn($key, $value) => $value >= 50);
 
-        $this->assertEquals(1, $filtered->size()->toInt());
+        $this->assertEquals(1, $filtered->size());
         $this->assertTrue($filtered->containsKey($a));
         $this->assertFalse($filtered->containsKey($b));
     }
@@ -233,7 +233,7 @@ class MapTest extends TestCase
         $map2 = Map::of($b, 20)->add($c, 3);
         $merged = $map1->append($map2);
 
-        $this->assertEquals(3, $merged->size()->toInt());
+        $this->assertEquals(3, $merged->size());
         $this->assertEquals(1, $merged->get($a)->unwrap());
         $this->assertEquals(20, $merged->get($b)->unwrap());
         $this->assertEquals(3, $merged->get($c)->unwrap());
@@ -275,7 +275,7 @@ class MapTest extends TestCase
         $b = new \stdClass();
         $map = Map::fromKeys([$a, $b], 0);
 
-        $this->assertEquals(2, $map->size()->toInt());
+        $this->assertEquals(2, $map->size());
         $this->assertEquals(0, $map->get($a)->unwrap());
         $this->assertEquals(0, $map->get($b)->unwrap());
     }
@@ -285,7 +285,7 @@ class MapTest extends TestCase
         $obj = new \stdClass();
         $map = Map::of('scalar', 1)->add($obj, 2);
 
-        $this->assertEquals(2, $map->size()->toInt());
+        $this->assertEquals(2, $map->size());
         $this->assertEquals(1, $map->get('scalar')->unwrap());
         $this->assertEquals(2, $map->get($obj)->unwrap());
     }
@@ -307,7 +307,7 @@ class MapTest extends TestCase
 
         $result = $map->flatMap(static fn($key, $value) => Map::of($key, $value * 2));
 
-        $this->assertEquals(2, $result->size()->toInt());
+        $this->assertEquals(2, $result->size());
         $this->assertEquals(20, $result->get($a)->unwrap());
         $this->assertEquals(40, $result->get($b)->unwrap());
     }

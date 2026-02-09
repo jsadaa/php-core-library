@@ -110,7 +110,7 @@ final class SequenceOperationsTest extends TestCase
             return $obj;
         });
 
-        $this->assertSame(3, $mappedSequence->size()->toInt());
+        $this->assertSame(3, $mappedSequence->size());
 
         $firstObj = $mappedSequence->get(0)->match(static fn($v) => $v, static fn() => null);
         $this->assertInstanceOf(\stdClass::class, $firstObj);
@@ -340,7 +340,7 @@ final class SequenceOperationsTest extends TestCase
         $reversedSequence = $seq->reverse();
 
         $this->assertSame([42], $reversedSequence->toArray());
-        $this->assertSame(1, $reversedSequence->size()->toInt());
+        $this->assertSame(1, $reversedSequence->size());
     }
 
     public function testReverseWithObjects(): void
@@ -393,7 +393,7 @@ final class SequenceOperationsTest extends TestCase
         $seq = Sequence::of('a', 'b');
         $result = $seq->flatMap(static fn($c) => [[$c], [$c, $c]]);
 
-        $this->assertSame(4, $result->size()->toInt());
+        $this->assertSame(4, $result->size());
         $this->assertTrue(\is_array($result->get(0)->match(static fn($v) => $v, static fn() => null)));
     }
 
@@ -405,7 +405,7 @@ final class SequenceOperationsTest extends TestCase
         $seq = Sequence::of($obj1);
         $result = $seq->flatMap(static fn($obj) => [$obj, $obj2]);
 
-        $this->assertSame(2, $result->size()->toInt());
+        $this->assertSame(2, $result->size());
         $this->assertSame($obj1, $result->get(0)->match(static fn($v) => $v, static fn() => null));
         $this->assertSame($obj2, $result->get(1)->match(static fn($v) => $v, static fn() => null));
     }
@@ -415,7 +415,7 @@ final class SequenceOperationsTest extends TestCase
         $seq = Sequence::of(1, 2);
         $result = $seq->flatMap(static fn($n) => [Sequence::of($n, $n * 2)]);
 
-        $this->assertSame(2, $result->size()->toInt());
+        $this->assertSame(2, $result->size());
         $firstItem = $result->get(0)->match(static fn($v) => $v, static fn() => null);
         $this->assertInstanceOf(Sequence::class, $firstItem);
     }
@@ -440,7 +440,7 @@ final class SequenceOperationsTest extends TestCase
         $flattened = $nestedSequence->flatten();
 
         $this->assertSame([1, 2, 3, 4], $flattened->toArray());
-        $this->assertSame(4, $flattened->size()->toInt());
+        $this->assertSame(4, $flattened->size());
     }
 
     public function testFlattenWithEmptySequence(): void
@@ -714,7 +714,7 @@ final class SequenceOperationsTest extends TestCase
 
         $zipped = $seq1->zip($seq2);
 
-        $this->assertSame(3, $zipped->size()->toInt());
+        $this->assertSame(3, $zipped->size());
         $this->assertSame([1, 2, 3], $seq1->toArray(), 'Original Sequence1 should remain unchanged');
         $this->assertSame(['a', 'b', 'c'], $seq2->toArray(), 'Original Sequence2 should remain unchanged');
 
@@ -739,7 +739,7 @@ final class SequenceOperationsTest extends TestCase
 
         $zipped = $seq1->zip($seq2);
 
-        $this->assertSame(2, $zipped->size()->toInt());
+        $this->assertSame(2, $zipped->size());
 
         $firstPair = $zipped->get(0)->match(static fn($v) => $v, static fn() => null);
         $this->assertSame(1, $firstPair->first());
@@ -772,7 +772,7 @@ final class SequenceOperationsTest extends TestCase
 
         $zipped = $seq1->zip($seq2);
 
-        $this->assertSame(2, $zipped->size()->toInt());
+        $this->assertSame(2, $zipped->size());
 
         $firstPair = $zipped->get(0)->match(static fn($v) => $v, static fn() => null);
         $this->assertSame($obj1, $firstPair->first());

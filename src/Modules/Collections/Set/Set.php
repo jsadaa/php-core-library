@@ -7,7 +7,6 @@ namespace Jsadaa\PhpCoreLibrary\Modules\Collections\Set;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Map\Map;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 
 /**
  * A collection of unique values.
@@ -120,7 +119,7 @@ final readonly class Set
      */
     public function eq(self $other): bool
     {
-        if ($this->size()->toInt() !== $other->size()->toInt()) {
+        if ($this->size() !== $other->size()) {
             return false;
         }
 
@@ -152,7 +151,7 @@ final readonly class Set
      * Returns the number of elements in the set.
      *
      */
-    public function size(): Integer
+    public function size(): int
     {
         return $this->map->size();
     }

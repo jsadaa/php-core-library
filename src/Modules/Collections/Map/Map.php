@@ -8,7 +8,6 @@ use Jsadaa\PhpCoreLibrary\Modules\Collections\Pair;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Sequence\Sequence;
 use Jsadaa\PhpCoreLibrary\Modules\Collections\Set\Set;
 use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 
 /**
  * An immutable collection of key-value pairs where keys are unique.
@@ -422,7 +421,7 @@ final readonly class Map
      */
     public function eq(self $other): bool
     {
-        if ($this->size()->toInt() !== $other->size()->toInt()) {
+        if ($this->size() !== $other->size()) {
             return false;
         }
 
@@ -512,9 +511,9 @@ final readonly class Map
      * Return the length of the map
      *
      */
-    public function size(): Integer
+    public function size(): int
     {
-        return Integer::of(\count($this->scalars) + \count($this->objects));
+        return \count($this->scalars) + \count($this->objects);
     }
 
     /**

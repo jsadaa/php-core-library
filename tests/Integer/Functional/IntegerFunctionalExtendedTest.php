@@ -55,7 +55,7 @@ final class IntegerFunctionalExtendedTest extends TestCase
         // Generate primes up to 50
         $primes = $generatePrimes(50);
 
-        $this->assertSame(15, $primes->size()->toInt(), 'There should be 15 primes up to 50');
+        $this->assertSame(15, $primes->size(), 'There should be 15 primes up to 50');
 
         $expectedPrimes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
         $actualPrimes = $primes->map(static fn(Integer $i) => $i->toInt())->toArray();

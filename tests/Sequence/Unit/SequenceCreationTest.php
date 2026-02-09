@@ -64,7 +64,7 @@ final class SequenceCreationTest extends TestCase
         $seq = Sequence::of(42);
 
         $this->assertSame([42], $seq->toArray());
-        $this->assertSame(1, $seq->size()->toInt());
+        $this->assertSame(1, $seq->size());
     }
 
     public function testCreateEmptySequenceWithFromMethod(): void

@@ -67,7 +67,7 @@ final class SequenceFunctionalTest extends TestCase
             ->unique()
             ->size();
 
-        $this->assertSame(10, $uniqueSkillCount->toInt());
+        $this->assertSame(10, $uniqueSkillCount);
     }
 
     public function testDataTransformationPipeline(): void
@@ -107,7 +107,7 @@ final class SequenceFunctionalTest extends TestCase
             })
             ->sortBy(static fn($a, $b) => $b->totalAmount <=> $a->totalAmount);
 
-        $this->assertSame(3, $userSummaries->size()->toInt());
+        $this->assertSame(3, $userSummaries->size());
 
         $firstUser = $userSummaries->get(0)->match(static fn($u) => $u, static fn() => null);
         $this->assertSame(1, $firstUser->userId);
@@ -132,7 +132,7 @@ final class SequenceFunctionalTest extends TestCase
             ->windows(3)
             ->map(static function($window) {
                 // Calculate average of each window
-                return $window->fold(static fn($sum, $value) => $sum + $value, 0) / $window->size()->toInt();
+                return $window->fold(static fn($sum, $value) => $sum + $value, 0) / $window->size();
             });
 
         // Expected moving averages: (10+12+15)/3, (12+15+14)/3, etc.
@@ -147,7 +147,7 @@ final class SequenceFunctionalTest extends TestCase
             (20 + 18 + 22) / 3,
         ];
 
-        $this->assertSame(\count($expectedAverages), $movingAverages->size()->toInt());
+        $this->assertSame(\count($expectedAverages), $movingAverages->size());
 
         for ($i = 0; $i < \count($expectedAverages); $i++) {
             $actual = $movingAverages->get($i)->match(static fn($v) => $v, static fn() => null);
@@ -224,8 +224,7 @@ final class SequenceFunctionalTest extends TestCase
             ->map(static function($dept) {
                 $highPaidCount = $dept['employees']
                     ->filter(static fn($emp) => $emp['salary'] > 80000)
-                    ->size()
-                    ->toInt();
+                    ->size();
 
                 return [
                     'department' => $dept['name'],

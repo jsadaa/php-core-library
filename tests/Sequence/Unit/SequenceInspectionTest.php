@@ -36,27 +36,27 @@ final class SequenceInspectionTest extends TestCase
     {
         $seq = Sequence::new();
 
-        $this->assertSame(0, $seq->size()->toInt());
+        $this->assertSame(0, $seq->size());
     }
 
     public function testLenOnNonEmptySequence(): void
     {
         $seq = Sequence::of(1, 2, 3, 4, 5);
 
-        $this->assertSame(5, $seq->size()->toInt());
+        $this->assertSame(5, $seq->size());
 
         $newSequence = $seq->add(6);
-        $this->assertSame(5, $seq->size()->toInt(), 'Original Sequence length should remain unchanged');
-        $this->assertSame(6, $newSequence->size()->toInt());
+        $this->assertSame(5, $seq->size(), 'Original Sequence length should remain unchanged');
+        $this->assertSame(6, $newSequence->size());
     }
 
     public function testLenAfterPushingItem(): void
     {
         $seq = Sequence::of(1, 2);
-        $this->assertSame(2, $seq->size()->toInt());
+        $this->assertSame(2, $seq->size());
 
         $seq = $seq->add(3);
-        $this->assertSame(3, $seq->size()->toInt());
+        $this->assertSame(3, $seq->size());
     }
 
     public function testContainsExistingItem(): void
