@@ -55,7 +55,7 @@ final class FileSystemReadTest extends TestCase
         $this->assertTrue($result->isOk());
         $bytes = $result->unwrap();
 
-        $this->assertSame(\strlen($this->testContent), $bytes->size()->toInt());
+        $this->assertSame(\strlen($this->testContent), $bytes->size());
         $this->assertSame(\ord('T'), $bytes->get(0)->unwrap());
     }
 
@@ -67,7 +67,7 @@ final class FileSystemReadTest extends TestCase
         $this->assertTrue($result->isOk());
         $bytes = $result->unwrap();
 
-        $this->assertSame(6, $bytes->size()->toInt());
+        $this->assertSame(6, $bytes->size());
         $this->assertSame(0x00, $bytes->get(0)->unwrap());
         $this->assertSame(0xFF, $bytes->get(4)->unwrap());
     }
@@ -89,7 +89,7 @@ final class FileSystemReadTest extends TestCase
         $this->assertTrue($result->isOk());
         $entries = $result->unwrap();
 
-        $this->assertEquals(5, $entries->size()->toInt()); // 5 entries in root
+        $this->assertEquals(5, $entries->size()); // 5 entries in root
 
         $entries->forEach(function($entry) {
             $this->assertInstanceOf(Path::class, $entry);

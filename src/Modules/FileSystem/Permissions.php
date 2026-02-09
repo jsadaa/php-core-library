@@ -7,7 +7,6 @@ namespace Jsadaa\PhpCoreLibrary\Modules\FileSystem;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\PermissionDenied;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Unit;
 
 /**
@@ -26,7 +25,7 @@ use Jsadaa\PhpCoreLibrary\Primitives\Unit;
  */
 final readonly class Permissions {
     private function __construct(
-        private Integer $mode,
+        private int $mode,
     ) {}
 
     /**
@@ -35,12 +34,12 @@ final readonly class Permissions {
      * This factory method creates a Permissions object with specified mode.
      * The mode is an octal number representing Unix-style permissions.
      *
-     * @param int|Integer $mode The file mode (e.g., 0644)
+     * @param int $mode The file mode (e.g., 0644)
      * @return self A new Permissions instance
      * @psalm-pure
      */
-    public static function create(int | Integer $mode = 0644): self {
-        return new self($mode instanceof Integer ? $mode : Integer::of($mode));
+    public static function create(int $mode = 0644): self {
+        return new self($mode);
     }
 
     /**
@@ -59,21 +58,21 @@ final readonly class Permissions {
         $mode = @\fileperms($path);
 
         if ($mode === false) {
-            return new self(Integer::of(0));
+            return new self(0);
         }
 
-        return new self(Integer::of($mode));
+        return new self($mode);
     }
 
     /**
      * Get the file mode
      *
-     * Returns the file mode as an Integer object (octal representation).
+     * Returns the file mode as an integer (octal representation).
      * This is the underlying Unix-style permission mode.
      *
-     * @return Integer The file mode
+     * @return int The file mode
      */
-    public function mode(): Integer
+    public function mode(): int
     {
         return $this->mode;
     }
@@ -86,9 +85,9 @@ final readonly class Permissions {
      *
      * @return bool True if the permissions indicate writability (readonly is false), false otherwise
      */
-    public function isWritable(): bool  // Maintenant cohérent avec les autres
+    public function isWritable(): bool
     {
-        return $this->mode->and(0222)->eq(0) === false;
+        return ($this->mode & 0222) !== 0;
     }
 
     /**
@@ -101,7 +100,7 @@ final readonly class Permissions {
      */
     public function isReadable(): bool
     {
-        return $this->mode->and(0444)->eq(0) === false;
+        return ($this->mode & 0444) !== 0;
     }
 
     /**
@@ -114,7 +113,7 @@ final readonly class Permissions {
      */
     public function isExecutable(): bool
     {
-        return $this->mode->and(0111)->eq(0) === false;
+        return ($this->mode & 0111) !== 0;
     }
 
     /**
@@ -122,12 +121,12 @@ final readonly class Permissions {
      *
      * Returns a new Permissions instance with the specified file mode,
      *
-     * @param int|Integer $mode The new file mode
+     * @param int $mode The new file mode
      * @return self A new Permissions instance with the modified file mode
      */
-    public function setMode(int | Integer $mode): self
+    public function setMode(int $mode): self
     {
-        return new self($mode instanceof Integer ? $mode : Integer::of($mode));
+        return new self($mode);
     }
 
     /**
@@ -145,12 +144,12 @@ final readonly class Permissions {
 
         // Set file permissions based on the mode
         /** @psalm-suppress ImpureFunctionCall */
-        if (!@\chmod($path, $this->mode->toInt())) {
+        if (!@\chmod($path, $this->mode)) {
             /** @var Result<Unit, PermissionDenied> */
             return Result::err(
                 new PermissionDenied(\sprintf(
                     'Failed to set permissions %d on %s',
-                    $this->mode->toInt(),
+                    $this->mode,
                     $path,
                 )),
             );

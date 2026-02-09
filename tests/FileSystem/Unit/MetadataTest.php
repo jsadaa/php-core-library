@@ -159,7 +159,7 @@ final class MetadataTest extends TestCase
         $this->assertInstanceOf(Permissions::class, $permissions);
 
         $mode = $permissions->mode();
-        $this->assertGreaterThan(0, $mode->toInt());
+        $this->assertGreaterThan(0, $mode);
     }
 
     public function testTimestampsConsistency(): void
@@ -191,7 +191,7 @@ final class MetadataTest extends TestCase
         $this->assertTrue($result->isOk());
         $metadata = $result->unwrap();
         $this->assertTrue($metadata->isFile());
-        $this->assertEquals(12, $metadata->size()->toInt());
+        $this->assertEquals(12, $metadata->size());
     }
 
     public function testMetadataFromPathObject(): void
@@ -202,6 +202,6 @@ final class MetadataTest extends TestCase
         $this->assertTrue($result->isOk());
         $metadata = $result->unwrap();
         $this->assertTrue($metadata->isFile());
-        $this->assertEquals(12, $metadata->size()->toInt());
+        $this->assertEquals(12, $metadata->size());
     }
 }

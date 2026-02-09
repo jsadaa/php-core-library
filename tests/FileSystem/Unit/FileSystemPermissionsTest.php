@@ -95,7 +95,7 @@ final class FileSystemPermissionsTest extends TestCase
         $mode = 0755;
         $permissions = Permissions::create($mode);
 
-        $this->assertSame($mode, $permissions->mode()->toInt());
+        $this->assertSame($mode, $permissions->mode());
     }
 
     public function testPermissionsFromFileMetadata(): void
@@ -112,6 +112,6 @@ final class FileSystemPermissionsTest extends TestCase
         $permissions = $metadata->permissions();
 
         // On some systems the file might get additional bits set, so we use bitmask comparison
-        $this->assertSame(0644, $permissions->mode()->toInt() & 0777);
+        $this->assertSame(0644, $permissions->mode() & 0777);
     }
 }

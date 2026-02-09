@@ -72,7 +72,7 @@ final class FileSystemFunctionalTest extends TestCase
 
         $configDir = $projectRoot->join(Path::of('config'));
         $entries = FileSystem::readDir($configDir)->unwrap();
-        $this->assertEquals(1, $entries->size()->toInt());
+        $this->assertEquals(1, $entries->size());
     }
 
     public function testLogRotationWorkflow(): void
@@ -101,12 +101,12 @@ final class FileSystemFunctionalTest extends TestCase
         $logFile = File::open($currentLogFile)->unwrap();
         $size = $logFile->size()->unwrap();
         $logFile->close();
-        $this->assertGreaterThan(100, $size->toInt());
+        $this->assertGreaterThan(100, $size);
 
         // Simulate log rotation when file gets too large
         $maxSize = 50; // Very small size for testing
 
-        if ($size->toInt() > $maxSize) {
+        if ($size > $maxSize) {
             $timestamp = \date('Y-m-d_H-i-s');
             $rotatedLogFile = $logDir->join(Path::of("app-$timestamp.log"));
 
@@ -186,10 +186,10 @@ final class FileSystemFunctionalTest extends TestCase
         // Transform data (filter adults and format output)
         $adults = [];
 
-        for ($i = 1; $i < $lines->size()->toInt(); $i++) {
+        for ($i = 1; $i < $lines->size(); $i++) {
             $line = $lines->get($i)->unwrap();
 
-            if ($line->size()->toInt() === 0) continue;
+            if ($line->size() === 0) continue;
 
             $fields = $line->split(',');
             $age = (int) $fields->get(3)->unwrap()->toString();
@@ -293,7 +293,7 @@ final class FileSystemFunctionalTest extends TestCase
         }
 
         $backupEntries = FileSystem::readDir($backupDir)->unwrap();
-        $this->assertEquals(2, $backupEntries->size()->toInt());
+        $this->assertEquals(2, $backupEntries->size());
 
         $documentPath = $sourceDir->join(Path::of('document.txt'));
         FileSystem::write($documentPath, 'CORRUPTED DATA')->unwrap();
@@ -350,7 +350,7 @@ final class FileSystemFunctionalTest extends TestCase
         }
 
         $finalEntries = FileSystem::readDir($tempWorkDir)->unwrap();
-        $this->assertEquals(1, $finalEntries->size()->toInt());
+        $this->assertEquals(1, $finalEntries->size());
     }
 
     public function testSymlinkManagement(): void
@@ -484,7 +484,7 @@ final class FileSystemFunctionalTest extends TestCase
 
         foreach ($files as $filePath) {
             $size = File::open($filePath)->unwrap()->size()->unwrap();
-            $totalSize += $size->toInt();
+            $totalSize += $size;
         }
 
         $this->assertGreaterThan(1000, $totalSize); // Should have substantial content
@@ -517,14 +517,14 @@ final class FileSystemFunctionalTest extends TestCase
         }
 
         $backupEntries = FileSystem::readDir($backupDir)->unwrap();
-        $this->assertEquals(10, $backupEntries->size()->toInt());
+        $this->assertEquals(10, $backupEntries->size());
 
         foreach ($files as $filePath) {
             FileSystem::removeFile($filePath)->unwrap();
         }
 
         $remainingEntries = FileSystem::readDir($batchDir)->unwrap();
-        $this->assertEquals(1, $remainingEntries->size()->toInt());
+        $this->assertEquals(1, $remainingEntries->size());
     }
 
     public function testFileSystemErrorHandling(): void

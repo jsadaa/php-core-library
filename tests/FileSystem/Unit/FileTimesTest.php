@@ -27,9 +27,9 @@ final class FileTimesTest extends TestCase
                 (new \DateTimeImmutable())->setTimestamp($creationTime),
             )->unwrap());
 
-        $this->assertSame($accessTime, $fileTimes->accessed()->unwrap()->seconds()->toInt());
-        $this->assertSame($modificationTime, $fileTimes->modified()->unwrap()->seconds()->toInt());
-        $this->assertSame($creationTime, $fileTimes->created()->unwrap()->seconds()->toInt());
+        $this->assertSame($accessTime, $fileTimes->accessed()->unwrap()->seconds());
+        $this->assertSame($modificationTime, $fileTimes->modified()->unwrap()->seconds());
+        $this->assertSame($creationTime, $fileTimes->created()->unwrap()->seconds());
     }
 
     public function testAccessTimeAsDateTime(): void

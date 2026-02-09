@@ -7,7 +7,6 @@ namespace Jsadaa\PhpCoreLibrary\Tests\FileSystem\Unit;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\PermissionDenied;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Permissions;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
 use PHPUnit\Framework\TestCase;
@@ -55,20 +54,13 @@ final class PermissionsTest extends TestCase
     public function testCreateWithDefaultMode(): void
     {
         $permissions = Permissions::create();
-        $this->assertEquals(0644, $permissions->mode()->toInt());
+        $this->assertEquals(0644, $permissions->mode());
     }
 
     public function testCreateWithSpecificMode(): void
     {
         $permissions = Permissions::create(0755);
-        $this->assertEquals(0755, $permissions->mode()->toInt());
-    }
-
-    public function testCreateWithIntegerMode(): void
-    {
-        $mode = Integer::of(0644);
-        $permissions = Permissions::create($mode);
-        $this->assertEquals(0644, $permissions->mode()->toInt());
+        $this->assertEquals(0755, $permissions->mode());
     }
 
     public function testFromPath(): void
@@ -100,7 +92,7 @@ final class PermissionsTest extends TestCase
         $path = Path::of($this->tempDir . '/nonExistent.txt');
         $permissions = Permissions::of($path);
 
-        $this->assertEquals(0, $permissions->mode()->toInt());
+        $this->assertEquals(0, $permissions->mode());
     }
 
     public function testIsReadable(): void
@@ -152,14 +144,13 @@ final class PermissionsTest extends TestCase
     public function testSetMode(): void
     {
         $permissions = Permissions::create(0644);
-        $this->assertEquals(0644, $permissions->mode()->toInt());
+        $this->assertEquals(0644, $permissions->mode());
 
         $newPermissions = $permissions->setMode(0755);
-        $this->assertEquals(0755, $newPermissions->mode()->toInt());
+        $this->assertEquals(0755, $newPermissions->mode());
 
-        $integerMode = Integer::of(0444);
-        $readOnlyPermissions = $permissions->setMode($integerMode);
-        $this->assertEquals(0444, $readOnlyPermissions->mode()->toInt());
+        $readOnlyPermissions = $permissions->setMode(0444);
+        $this->assertEquals(0444, $readOnlyPermissions->mode());
     }
 
     public function testSetModeAffectsPermissionChecks(): void

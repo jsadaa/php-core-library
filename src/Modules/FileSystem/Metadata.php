@@ -9,7 +9,6 @@ use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Error\InvalidMetadata;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 
 /**
  * Represents a snapshot of metadata about a file or directory.
@@ -24,7 +23,7 @@ final readonly class Metadata {
         private Path $path,
         private FileType $fileType,
         private Permissions $permissions,
-        private Integer $size,
+        private int $size,
         private SystemTime $modified,
         private SystemTime $accessed,
         private SystemTime $created,
@@ -66,7 +65,7 @@ final readonly class Metadata {
             $path,
             FileType::fromMode($stat['mode']),
             Permissions::create($stat['mode']),
-            Integer::of($stat['size']),
+            $stat['size'],
             SystemTime::fromTimestamp($stat['mtime']),
             SystemTime::fromTimestamp($stat['atime']),
             SystemTime::fromTimestamp($stat['ctime']),
@@ -125,7 +124,7 @@ final readonly class Metadata {
      * For directories, the value is platform-dependent.
      * For symbolic links, returns the size of the link itself.
      */
-    public function size(): Integer
+    public function size(): int
     {
         return $this->size;
     }

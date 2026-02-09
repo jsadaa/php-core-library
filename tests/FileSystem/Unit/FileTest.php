@@ -15,7 +15,6 @@ use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Metadata;
 use Jsadaa\PhpCoreLibrary\Modules\FileSystem\Permissions;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 use Jsadaa\PhpCoreLibrary\Primitives\Unit;
 use PHPUnit\Framework\TestCase;
@@ -190,11 +189,11 @@ final class FileTest extends TestCase
         $file->close();
     }
 
-    public function testReadChunkWithInteger(): void
+    public function testReadChunkWithSmallSize(): void
     {
         $file = File::open($this->tempFile)->unwrap();
 
-        $result = $file->readChunk(Integer::of(4));
+        $result = $file->readChunk(4);
         $this->assertTrue($result->isOk());
         $this->assertSame('Line', $result->unwrap()->toString());
 
@@ -210,7 +209,7 @@ final class FileTest extends TestCase
         $bytes = $result->unwrap();
 
         $this->assertInstanceOf(Sequence::class, $bytes);
-        $this->assertEquals(6, $bytes->size()->toInt());
+        $this->assertEquals(6, $bytes->size());
         $this->assertEquals(0x00, $bytes->get(0)->unwrap());
         $this->assertEquals(0x01, $bytes->get(1)->unwrap());
         $this->assertEquals(0xFF, $bytes->get(4)->unwrap());
@@ -225,7 +224,7 @@ final class FileTest extends TestCase
         $result = $file->bytes();
 
         $this->assertTrue($result->isOk());
-        $this->assertEquals(0, $result->unwrap()->size()->toInt());
+        $this->assertEquals(0, $result->unwrap()->size());
 
         $file->close();
     }
@@ -241,8 +240,8 @@ final class FileTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $bytesWritten = $result->unwrap();
-        $this->assertInstanceOf(Integer::class, $bytesWritten);
-        $this->assertEquals(13, $bytesWritten->toInt());
+        $this->assertIsInt($bytesWritten);
+        $this->assertEquals(13, $bytesWritten);
 
         // Verify content via readAll
         $content = $file->readAll()->unwrap();
@@ -259,7 +258,7 @@ final class FileTest extends TestCase
         $result = $file->write(Str::of('typed content'));
 
         $this->assertTrue($result->isOk());
-        $this->assertEquals(13, $result->unwrap()->toInt());
+        $this->assertEquals(13, $result->unwrap());
 
         $file->close();
     }
@@ -272,8 +271,8 @@ final class FileTest extends TestCase
 
         $this->assertTrue($result->isOk());
         $bytesWritten = $result->unwrap();
-        $this->assertInstanceOf(Integer::class, $bytesWritten);
-        $this->assertEquals(13, $bytesWritten->toInt());
+        $this->assertIsInt($bytesWritten);
+        $this->assertEquals(13, $bytesWritten);
 
         // Verify content
         $content = $file->readAll()->unwrap();
@@ -347,11 +346,11 @@ final class FileTest extends TestCase
         $file->close();
     }
 
-    public function testSeekWithInteger(): void
+    public function testSeekToSpecificOffset(): void
     {
         $file = File::open($this->tempFile)->unwrap();
 
-        $result = $file->seek(Integer::of(7));
+        $result = $file->seek(7);
         $this->assertTrue($result->isOk());
 
         $chunk = $file->readChunk(6)->unwrap();
@@ -398,7 +397,7 @@ final class FileTest extends TestCase
         $metadata = $result->unwrap();
         $this->assertInstanceOf(Metadata::class, $metadata);
         $this->assertTrue($metadata->isFile());
-        $this->assertEquals(\strlen($this->testContent), $metadata->size()->toInt());
+        $this->assertEquals(\strlen($this->testContent), $metadata->size());
 
         $file->close();
     }
@@ -409,7 +408,7 @@ final class FileTest extends TestCase
         $result = $file->size();
 
         $this->assertTrue($result->isOk());
-        $this->assertEquals(\strlen($this->testContent), $result->unwrap()->toInt());
+        $this->assertEquals(\strlen($this->testContent), $result->unwrap());
 
         $file->close();
     }
@@ -420,7 +419,7 @@ final class FileTest extends TestCase
         $result = $file->size();
 
         $this->assertTrue($result->isOk());
-        $this->assertEquals(0, $result->unwrap()->toInt());
+        $this->assertEquals(0, $result->unwrap());
 
         $file->close();
     }
@@ -431,7 +430,7 @@ final class FileTest extends TestCase
         $result = $file->size();
 
         $this->assertTrue($result->isOk());
-        $this->assertEquals(6, $result->unwrap()->toInt());
+        $this->assertEquals(6, $result->unwrap());
 
         $file->close();
     }

@@ -18,7 +18,6 @@ use Jsadaa\PhpCoreLibrary\Modules\Option\Option;
 use Jsadaa\PhpCoreLibrary\Modules\Path\Path;
 use Jsadaa\PhpCoreLibrary\Modules\Result\Result;
 use Jsadaa\PhpCoreLibrary\Modules\Time\SystemTime;
-use Jsadaa\PhpCoreLibrary\Primitives\Integer\Integer;
 use Jsadaa\PhpCoreLibrary\Primitives\Str\Str;
 use Jsadaa\PhpCoreLibrary\Primitives\Unit;
 
@@ -175,9 +174,8 @@ final class File
      *
      * @return Result<Str, ReadFailed>
      */
-    public function readChunk(int | Integer $size): Result
+    public function readChunk(int $size): Result
     {
-        $size = $size instanceof Integer ? $size->toInt() : $size;
         $data = @\fread($this->handle, $size);
 
         if ($data === false) {
@@ -230,7 +228,7 @@ final class File
     /**
      * Write data at the current position.
      *
-     * @return Result<Integer, WriteFailed>
+     * @return Result<int, WriteFailed>
      */
     public function write(string | Str $data): Result
     {
@@ -238,12 +236,12 @@ final class File
         $bytes = @\fwrite($this->handle, $data);
 
         if ($bytes === false) {
-            /** @var Result<Integer, WriteFailed> */
+            /** @var Result<int, WriteFailed> */
             return Result::err(new WriteFailed(\sprintf('Failed to write to: %s', $this->path->toString())));
         }
 
-        /** @var Result<Integer, WriteFailed> */
-        return Result::ok(Integer::of($bytes));
+        /** @var Result<int, WriteFailed> */
+        return Result::ok($bytes);
     }
 
     /**
@@ -251,7 +249,7 @@ final class File
      *
      * Seeks to end, writes, then stays at the new position.
      *
-     * @return Result<Integer, WriteFailed>
+     * @return Result<int, WriteFailed>
      */
     public function append(string | Str $data): Result
     {
@@ -365,10 +363,8 @@ final class File
      *
      * @return Result<Unit, ReadFailed>
      */
-    public function seek(int | Integer $offset): Result
+    public function seek(int $offset): Result
     {
-        $offset = $offset instanceof Integer ? $offset->toInt() : $offset;
-
         if (\fseek($this->handle, $offset) === -1) {
             /** @var Result<Unit, ReadFailed> */
             return Result::err(new ReadFailed(\sprintf('Failed to seek in: %s', $this->path->toString())));
@@ -418,19 +414,19 @@ final class File
     /**
      * Get the file size using the open handle.
      *
-     * @return Result<Integer, ReadFailed>
+     * @return Result<int, ReadFailed>
      */
     public function size(): Result
     {
         $stat = @\fstat($this->handle);
 
         if ($stat === false) {
-            /** @var Result<Integer, ReadFailed> */
+            /** @var Result<int, ReadFailed> */
             return Result::err(new ReadFailed(\sprintf('Failed to get size of: %s', $this->path->toString())));
         }
 
-        /** @var Result<Integer, ReadFailed> */
-        return Result::ok(Integer::of($stat['size']));
+        /** @var Result<int, ReadFailed> */
+        return Result::ok($stat['size']);
     }
 
     /**
@@ -476,8 +472,8 @@ final class File
             return Result::ok(Unit::new());
         }
 
-        $accessedTimestamp = $accessed->isSome() ? $accessed->unwrap()->seconds()->toInt() : $currentAccessed;
-        $modifiedTimestamp = $modified->isSome() ? $modified->unwrap()->seconds()->toInt() : $currentModified;
+        $accessedTimestamp = $accessed->isSome() ? $accessed->unwrap()->seconds() : $currentAccessed;
+        $modifiedTimestamp = $modified->isSome() ? $modified->unwrap()->seconds() : $currentModified;
 
         if (!@\touch($pathStr, $modifiedTimestamp, $accessedTimestamp)) {
             /** @var Result<Unit, TimestampFailed> */
