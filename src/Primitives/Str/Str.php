@@ -156,21 +156,21 @@ final readonly class Str implements \Stringable
     /**
      * Returns the number of Unicode characters in the string
      *
-     * @return Integer The number of characters
+     * @return int The number of characters
      */
-    public function size(): Integer
+    public function size(): int
     {
-        return Integer::of(\mb_strlen($this->value, self::UTF8));
+        return \mb_strlen($this->value, self::UTF8);
     }
 
     /**
      * Returns the length of the string in bytes
      *
-     * @return Integer The number of bytes
+     * @return int The number of bytes
      */
-    public function byteSize(): Integer
+    public function byteSize(): int
     {
-        return Integer::of(\strlen($this->value));
+        return \strlen($this->value);
     }
 
     /**
@@ -968,6 +968,97 @@ final readonly class Str implements \Stringable
     }
 
     /**
+     * Attempt to convert the string to a native int
+     *
+     * @return Result<int, ParseError> The int value or an error
+     */
+    public function parseInt(): Result
+    {
+        if ($this->isEmpty()) {
+            /** @var Result<int, ParseError> */
+            return Result::err(
+                new ParseError('Cannot convert empty string to integer - string must contain numeric digits'),
+            );
+        }
+
+        if (!\preg_match('/^[+-]?\d+$/', $this->value)) {
+            /** @var Result<int, ParseError> */
+            return Result::err(
+                new ParseError(
+                    \sprintf('String "%s" does not represent a valid integer - must be a whole number with optional sign', $this->value),
+                ),
+            );
+        }
+
+        $value = (int) $this->value;
+        $stringValue = (string) $value;
+
+        if ($stringValue !== $this->value && \is_numeric($this->value)) {
+            /** @var Result<int, ParseError> */
+            return Result::err(
+                new ParseError(
+                    \sprintf(
+                        'Number "%s" is too large for PHP\'s integer type. Max value: %s, Min value: %s',
+                        $this->value,
+                        \PHP_INT_MAX,
+                        \PHP_INT_MIN,
+                    ),
+                ),
+            );
+        }
+
+        /** @var Result<int, ParseError> */
+        return Result::ok($value);
+    }
+
+    /**
+     * Attempt to convert the string to a native float
+     *
+     * @return Result<float, ParseError> The float value or an error
+     */
+    public function parseFloat(): Result
+    {
+        if ($this->isEmpty()) {
+            /** @var Result<float, ParseError> */
+            return Result::err(
+                new ParseError('Cannot convert empty string to float - string must contain a numeric value'),
+            );
+        }
+
+        if (!\is_numeric($this->value)) {
+            /** @var Result<float, ParseError> */
+            return Result::err(
+                new ParseError(
+                    \sprintf('String "%s" does not represent a valid float - expected format is [-+]?[0-9]*\.?[0-9]+', $this->value),
+                ),
+            );
+        }
+
+        $floatValue = (float) $this->value;
+
+        if (\is_infinite($floatValue)) {
+            /** @var Result<float, ParseError> */
+            return Result::err(
+                new ParseError(
+                    \sprintf('Value "%s" is too large for a float (resulted in INF)', $this->value),
+                ),
+            );
+        }
+
+        if (\is_nan($floatValue)) {
+            /** @var Result<float, ParseError> */
+            return Result::err(
+                new ParseError(
+                    \sprintf('Value "%s" resulted in NaN which is not a valid float', $this->value),
+                ),
+            );
+        }
+
+        /** @var Result<float, ParseError> */
+        return Result::ok($floatValue);
+    }
+
+    /**
      * Attempt to convert the string to a boolean
      *
      * "true", "1" are considered true
@@ -1260,20 +1351,20 @@ final readonly class Str implements \Stringable
      */
     public function getRange(int | Integer $start, int | Integer $length): Option
     {
-        $start = $start instanceof Integer ? $start : Integer::of($start);
-        $length = $length instanceof Integer ? $length : Integer::of($length);
+        $startInt = $start instanceof Integer ? $start->toInt() : $start;
+        $lengthInt = $length instanceof Integer ? $length->toInt() : $length;
         $size = $this->chars()->size();
 
-        if ($start->lt(0) || $start->ge($size)) {
+        if ($startInt < 0 || $startInt >= $size) {
             return Option::none();
         }
 
-        if ($start->add($length)->gt($size)) {
-            $length = $size->sub($start);
+        if ($startInt + $lengthInt > $size) {
+            $lengthInt = $size - $startInt;
         }
 
         return Option::some(
-            new self(\mb_substr($this->value, $start->toInt(), $length->toInt(), self::UTF8)),
+            new self(\mb_substr($this->value, $startInt, $lengthInt, self::UTF8)),
         );
     }
 
@@ -1488,7 +1579,7 @@ final readonly class Str implements \Stringable
     {
         $result = '';
         $chars = $this->chars();
-        $count = $chars->size()->toInt();
+        $count = $chars->size();
 
         $chars = $chars->map(static fn(Char $char) => $char->toString())->toArray();
 

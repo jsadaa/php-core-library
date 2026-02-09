@@ -29,7 +29,7 @@ final class StrFunctionalTest extends TestCase
         $firstPart = $processed->take(15);
         $this->assertSame('the-quick-brown', $firstPart->toString());
 
-        $lastPart = $processed->skip($processed->size()->toInt() - 8);
+        $lastPart = $processed->skip($processed->size() - 8);
         $this->assertSame('lazy-dog', $lastPart->toString());
     }
 
@@ -38,23 +38,23 @@ final class StrFunctionalTest extends TestCase
         $csvData = Str::of("name,age,city\njohn,25,new york\nsarah,32,los angeles\nmike,41,chicago");
 
         $lines = $csvData->split("\n");
-        $this->assertSame(4, $lines->size()->toInt());
+        $this->assertSame(4, $lines->size());
 
         // Parse header
         $header = $lines->get(0)->unwrapOr(null);
         $headerFields = $header->split(',');
-        $this->assertSame(3, $headerFields->size()->toInt());
+        $this->assertSame(3, $headerFields->size());
 
         // Parse data rows
         $dataRows = Sequence::new();
 
-        for ($i = 1; $i < $lines->size()->toInt(); $i++) {
+        for ($i = 1; $i < $lines->size(); $i++) {
             $row = $lines->get($i)->unwrapOr(null);
             $fields = $row->split(',');
 
             $rowData = [];
 
-            for ($j = 0; $j < $headerFields->size()->toInt(); $j++) {
+            for ($j = 0; $j < $headerFields->size(); $j++) {
                 $fieldName = $headerFields->get($j)->unwrapOr(null)->toString();
                 $fieldValue = $fields->get($j)->unwrapOr(null)->toString();
                 $rowData[$fieldName] = $fieldValue;
@@ -63,7 +63,7 @@ final class StrFunctionalTest extends TestCase
             $dataRows = $dataRows->add($rowData);
         }
 
-        $this->assertSame(3, $dataRows->size()->toInt());
+        $this->assertSame(3, $dataRows->size());
         $firstRow = $dataRows->get(0)->unwrap();
         $this->assertSame('john', $firstRow['name']);
         $this->assertSame('25', $firstRow['age']);
@@ -85,7 +85,7 @@ final class StrFunctionalTest extends TestCase
 
         $matches = $text->matches('/Hola|Hello|Bonjour|Hallo|你好|مرحبا|Привет|こんにちは/u');
 
-        $this->assertSame(8, $matches->size()->toInt());
+        $this->assertSame(8, $matches->size());
 
         $replaced = $text->replace(Str::of('English: '), Str::of('Greeting: '))
             ->replace(Str::of('French: '), Str::of('Greeting: '))
@@ -97,7 +97,7 @@ final class StrFunctionalTest extends TestCase
             ->replace(Str::of('Japanese: '), Str::of('Greeting: '));
 
         $greetingMatches = $replaced->matches('/Greeting:/u');
-        $this->assertSame(8, $greetingMatches->size()->toInt());
+        $this->assertSame(8, $greetingMatches->size());
     }
 
     public function testUrlBuilding(): void
@@ -151,11 +151,11 @@ final class StrFunctionalTest extends TestCase
 
         // Extract email addresses using regex
         $emailMatches = $jsonText->matches('/(\w+@\w+\.\w+)/u');
-        $this->assertSame(3, $emailMatches->size()->toInt());
+        $this->assertSame(3, $emailMatches->size());
 
         // Extract patterns with their positions
         $nameIndices = $jsonText->matchIndices('/"name":"(\w+)"/u');
-        $this->assertSame(3, $nameIndices->size()->toInt());
+        $this->assertSame(3, $nameIndices->size());
 
         $this->assertTrue($jsonText->contains('name'));
         $this->assertTrue($jsonText->contains('email'));

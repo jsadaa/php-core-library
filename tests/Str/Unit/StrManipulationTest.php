@@ -26,7 +26,7 @@ final class StrManipulationTest extends TestCase
             'New string should contain inserted string',
         );
 
-        $this->assertSame($str->chars()->size()->toInt() + \mb_strlen(' world'), $newStr->chars()->size()->toInt());
+        $this->assertSame($str->chars()->size() + \mb_strlen(' world'), $newStr->chars()->size());
     }
 
     public function testTake(): void
@@ -130,7 +130,7 @@ final class StrManipulationTest extends TestCase
             'New string should contain inserted string',
         );
 
-        $this->assertSame($str->chars()->size()->toInt() + \mb_strlen('X'), $newStr->chars()->size()->toInt());
+        $this->assertSame($str->chars()->size() + \mb_strlen('X'), $newStr->chars()->size());
     }
 
     public function testInsertAtBeginning(): void
@@ -319,7 +319,7 @@ final class StrManipulationTest extends TestCase
 
         $this->assertStringStartsWith('Hi', $replaced->toString());
         $this->assertSame('Hilo W😀rld', $replaced->toString());
-        $this->assertSame($str->chars()->size()->toInt() - 1, $replaced->chars()->size()->toInt());
+        $this->assertSame($str->chars()->size() - 1, $replaced->chars()->size());
     }
 
     public function testClear(): void
@@ -355,7 +355,7 @@ final class StrManipulationTest extends TestCase
             'Original string should remain unchanged',
         );
         $this->assertSame('Hello World', $appended->toString());
-        $this->assertSame($str->chars()->size()->toInt() + Str::of(' World')->chars()->size()->toInt(), $appended->chars()->size()->toInt());
+        $this->assertSame($str->chars()->size() + Str::of(' World')->chars()->size(), $appended->chars()->size());
     }
 
     public function testAppendWithUtf8(): void
@@ -364,7 +364,7 @@ final class StrManipulationTest extends TestCase
         $appended = $str->append(Str::of(' W😄rld'));
 
         $this->assertSame('Hello W😄rld', $appended->toString());
-        $this->assertSame($str->chars()->size()->toInt() + Str::of(' W😄rld')->chars()->size()->toInt(), $appended->chars()->size()->toInt());
+        $this->assertSame($str->chars()->size() + Str::of(' W😄rld')->chars()->size(), $appended->chars()->size());
     }
 
     public function testAppendEmptyString(): void
@@ -373,7 +373,7 @@ final class StrManipulationTest extends TestCase
         $appended = $str->append(Str::new());
 
         $this->assertSame('Hello', $appended->toString());
-        $this->assertSame($str->chars()->size()->toInt(), $appended->chars()->size()->toInt());
+        $this->assertSame($str->chars()->size(), $appended->chars()->size());
     }
 
     public function testAppendToEmptyString(): void
@@ -382,7 +382,7 @@ final class StrManipulationTest extends TestCase
         $appended = $str->append(Str::of('Hello'));
 
         $this->assertSame('Hello', $appended->toString());
-        $this->assertSame(Str::of('Hello')->chars()->size()->toInt(), $appended->chars()->size()->toInt());
+        $this->assertSame(Str::of('Hello')->chars()->size(), $appended->chars()->size());
     }
 
     public function testPrepend(): void
@@ -396,7 +396,7 @@ final class StrManipulationTest extends TestCase
             'Original string should remain unchanged',
         );
         $this->assertSame('Hello World', $prepended->toString());
-        $this->assertSame($str->chars()->size()->toInt() + Str::of('Hello ')->chars()->size()->toInt(), $prepended->chars()->size()->toInt());
+        $this->assertSame($str->chars()->size() + Str::of('Hello ')->chars()->size(), $prepended->chars()->size());
     }
 
     public function testPrependWithUtf8(): void
@@ -405,7 +405,7 @@ final class StrManipulationTest extends TestCase
         $prepended = $str->prepend(Str::of('H😄llo '));
 
         $this->assertSame('H😄llo World', $prepended->toString());
-        $this->assertSame($str->chars()->size()->toInt() + Str::of('H😄llo ')->chars()->size()->toInt(), $prepended->chars()->size()->toInt());
+        $this->assertSame($str->chars()->size() + Str::of('H😄llo ')->chars()->size(), $prepended->chars()->size());
     }
 
     public function testPrependEmptyString(): void
@@ -414,7 +414,7 @@ final class StrManipulationTest extends TestCase
         $prepended = $str->prepend(Str::new());
 
         $this->assertSame('World', $prepended->toString());
-        $this->assertSame($str->chars()->size()->toInt(), $prepended->chars()->size()->toInt());
+        $this->assertSame($str->chars()->size(), $prepended->chars()->size());
     }
 
     public function testPrependToEmptyString(): void
@@ -423,6 +423,6 @@ final class StrManipulationTest extends TestCase
         $prepended = $str->prepend(Str::of('Hello'));
 
         $this->assertSame('Hello', $prepended->toString());
-        $this->assertSame(Str::of('Hello')->chars()->size()->toInt(), $prepended->chars()->size()->toInt());
+        $this->assertSame(Str::of('Hello')->chars()->size(), $prepended->chars()->size());
     }
 }

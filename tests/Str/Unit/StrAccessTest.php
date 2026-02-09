@@ -135,7 +135,7 @@ final class StrAccessTest extends TestCase
         $str = Str::of('Hello');
         $chars = $str->chars();
 
-        $this->assertSame(5, $chars->size()->toInt());
+        $this->assertSame(5, $chars->size());
         $this->assertSame(['H', 'e', 'l', 'l', 'o'], $chars->map(static fn(Char $char) => $char->toString())->toArray());
     }
 
@@ -144,7 +144,7 @@ final class StrAccessTest extends TestCase
         $str = Str::of('Héllö');
         $chars = $str->chars();
 
-        $this->assertSame(5, $chars->size()->toInt());
+        $this->assertSame(5, $chars->size());
         $this->assertEquals(['H', 'é', 'l', 'l', 'ö'], $chars->map(static fn(Char $char) => $char->toString())->toArray());
     }
 
@@ -153,7 +153,7 @@ final class StrAccessTest extends TestCase
         $str = Str::of('Hello😀');
         $chars = $str->chars();
 
-        $this->assertSame(6, $chars->size()->toInt());
+        $this->assertSame(6, $chars->size());
         $this->assertEquals(['H', 'e', 'l', 'l', 'o', '😀'], $chars->map(static fn(Char $char) => $char->toString())->toArray());
     }
 
@@ -170,7 +170,7 @@ final class StrAccessTest extends TestCase
         $str = Str::of('AB');
         $bytes = $str->bytes();
 
-        $this->assertSame(2, $bytes->size()->toInt());
+        $this->assertSame(2, $bytes->size());
         $this->assertSame([65, 66], $bytes->map(static fn(Integer $byte) => $byte->toInt())->toArray());
     }
 
@@ -180,7 +180,7 @@ final class StrAccessTest extends TestCase
         $bytes = $str->bytes();
 
         // UTF-8 representation of é is 2 bytes (195, 169)
-        $this->assertSame(2, $bytes->size()->toInt());
+        $this->assertSame(2, $bytes->size());
         $this->assertSame([195, 169], $bytes->map(static fn(Integer $byte) => $byte->toInt())->toArray());
     }
 
@@ -197,7 +197,7 @@ final class StrAccessTest extends TestCase
         $str = Str::of("Line 1\nLine 2\nLine 3");
         $lines = $str->lines();
 
-        $this->assertSame(3, $lines->size()->toInt());
+        $this->assertSame(3, $lines->size());
         $this->assertSame(
             ['Line 1', 'Line 2', 'Line 3'],
             $lines->map(static fn(Str $line) => $line->toString())->toArray(),
@@ -209,7 +209,7 @@ final class StrAccessTest extends TestCase
         $str = Str::new();
         $lines = $str->lines();
 
-        $this->assertSame(0, $lines->size()->toInt());
+        $this->assertSame(0, $lines->size());
     }
 
     public function testMatches(): void
@@ -217,7 +217,7 @@ final class StrAccessTest extends TestCase
         $str = Str::of('apple banana cherry apple');
         $matches = $str->matches("/a\w+/u");
 
-        $this->assertEquals(3, $matches->size()->toInt());
+        $this->assertEquals(3, $matches->size());
         $this->assertSame(['apple', 'anana', 'apple'], $matches->map(static fn(Str $match) => $match->toString())->toArray());
     }
 
@@ -234,13 +234,13 @@ final class StrAccessTest extends TestCase
         $str = Str::of('été automne hiver été');
         $matches = $str->matches("/é\w+/u");
 
-        $this->assertSame(2, $matches->size()->toInt());
+        $this->assertSame(2, $matches->size());
         $this->assertSame(['été', 'été'], $matches->map(static fn(Str $match) => $match->toString())->toArray());
 
         $str2 = Str::of('😄 hello 😁 world 😀');
         $matches2 = $str2->matches('/😄|😁|😀/u')->map(static fn(Str $match) => $match->toString());
 
-        $this->assertSame(3, $matches2->size()->toInt());
+        $this->assertSame(3, $matches2->size());
         $this->assertContains('😄', $matches2->toArray());
         $this->assertContains('😁', $matches2->toArray());
         $this->assertContains('😀', $matches2->toArray());
@@ -248,7 +248,7 @@ final class StrAccessTest extends TestCase
         $str3 = Str::of('Hello مرحبا world');
         $matches3 = $str3->matches("/م\w+/u")->map(static fn(Str $match) => $match->toString());
 
-        $this->assertSame(1, $matches3->size()->toInt());
+        $this->assertSame(1, $matches3->size());
         $this->assertContains('مرحبا', $matches3->toArray());
     }
 
@@ -269,7 +269,7 @@ final class StrAccessTest extends TestCase
         $str = Str::of('Hello 😄 world 😁 test 😀');
         $indices = $str->matchIndices('/😄|😁|😀/u');
 
-        $this->assertSame(3, $indices->size()->toInt());
+        $this->assertSame(3, $indices->size());
 
         $this->assertSame('😄', $indices->get(0)->unwrap()->second()->toString());
         $this->assertSame('😁', $indices->get(1)->unwrap()->second()->toString());
@@ -282,7 +282,7 @@ final class StrAccessTest extends TestCase
         $str2 = Str::of('en English, zh 中文, ar العربية, ru Русский');
         $indices2 = $str2->matchIndices("/[\p{Han}\p{Arabic}\p{Cyrillic}]+/u");
 
-        $this->assertSame(3, $indices2->size()->toInt());
+        $this->assertSame(3, $indices2->size());
 
         $this->assertSame('中文', $indices2->get(0)->unwrap()->second()->toString());
         $this->assertSame('العربية', $indices2->get(1)->unwrap()->second()->toString());

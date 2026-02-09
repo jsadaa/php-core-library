@@ -12,29 +12,29 @@ final class StrInspectionTest extends TestCase
     {
         $str = Str::of('Hello');
 
-        $this->assertSame(5, $str->chars()->size()->toInt());
+        $this->assertSame(5, $str->chars()->size());
     }
 
     public function testCharCountWithAccents(): void
     {
         $str = Str::of('Héllö');
-        $this->assertSame(5, $str->chars()->size()->toInt(), 'Length should match the number of visible characters');
+        $this->assertSame(5, $str->chars()->size(), 'Length should match the number of visible characters');
 
         $str2 = Str::of('café à la crème');
-        $this->assertSame(15, $str2->chars()->size()->toInt(), 'Length should count each accented character as a single character');
+        $this->assertSame(15, $str2->chars()->size(), 'Length should count each accented character as a single character');
     }
 
     public function testCharCountWithEmojis(): void
     {
         $str = Str::of('Hello 😀😁😊');
-        $this->assertSame(9, $str->chars()->size()->toInt(), 'Length matches the expected behavior');
+        $this->assertSame(9, $str->chars()->size(), 'Length matches the expected behavior');
 
         $str2 = Str::of('👨‍👩‍👧‍👦👨‍💻');
         // For complex emojis with ZWJ
-        $this->assertEquals(10, $str2->chars()->size()->toInt());
+        $this->assertEquals(10, $str2->chars()->size());
 
         $str3 = Str::of('⚠️🚀✅❤️⭐');
-        $this->assertEquals(7, $str3->chars()->size()->toInt());
+        $this->assertEquals(7, $str3->chars()->size());
     }
 
     public function testIsEmptyWithEmptyString(): void

@@ -299,8 +299,8 @@ final class StrTransformationTest extends TestCase
         // even if they may have different binary representations
         // With no automatic normalization, NFD and NFC may have different number of code points
         // but they should be visually equivalent
-        $nfcLen = $nfc->chars()->size()->toInt();
-        $nfdLen = $nfd->chars()->size()->toInt();
+        $nfcLen = $nfc->chars()->size();
+        $nfdLen = $nfd->chars()->size();
 
         // Instead of expecting same length, compare their visual representation
         // This approach acknowledges that without automatic normalization,
@@ -374,7 +374,7 @@ final class StrTransformationTest extends TestCase
         $this->assertStringStartsWith('😀', $padded->toString());
         $this->assertStringEndsWith('Hello', $padded->toString());
         $this->assertGreaterThan($str->chars()->size(), $padded->chars()->size());
-        $this->assertSame(10, $padded->chars()->size()->toInt());
+        $this->assertSame(10, $padded->chars()->size());
     }
 
     public function testPadEnd(): void

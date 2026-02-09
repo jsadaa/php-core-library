@@ -16,7 +16,7 @@ final class StrSplittingTest extends TestCase
         $parts = $str->split(',');
 
         $this->assertInstanceOf(Sequence::class, $parts);
-        $this->assertSame(3, $parts->size()->toInt());
+        $this->assertSame(3, $parts->size());
 
         $this->assertInstanceOf(Str::class, $parts->get(0)->unwrapOr(null));
         $this->assertSame('apple', $parts->get(0)->unwrapOr(null)->toString());
@@ -29,7 +29,7 @@ final class StrSplittingTest extends TestCase
         $str = Str::of('apple😀banana😀cherry');
         $parts = $str->split('😀');
 
-        $this->assertSame(3, $parts->size()->toInt());
+        $this->assertSame(3, $parts->size());
         $this->assertSame('apple', $parts->get(0)->unwrapOr(null)->toString());
         $this->assertSame('banana', $parts->get(1)->unwrapOr(null)->toString());
         $this->assertSame('cherry', $parts->get(2)->unwrapOr(null)->toString());
@@ -40,7 +40,7 @@ final class StrSplittingTest extends TestCase
         $str = Str::of('Hello world');
         $parts = $str->split(',');
 
-        $this->assertSame(1, $parts->size()->toInt());
+        $this->assertSame(1, $parts->size());
         $this->assertSame('Hello world', $parts->get(0)->unwrapOr(null)->toString());
     }
 
@@ -58,7 +58,7 @@ final class StrSplittingTest extends TestCase
 
         $parts = $str->split('');
 
-        $this->assertSame(5, $parts->size()->toInt());
+        $this->assertSame(5, $parts->size());
         $this->assertSame('H', $parts->get(0)->unwrapOr(null)->toString());
         $this->assertSame('e', $parts->get(1)->unwrapOr(null)->toString());
         $this->assertSame('l', $parts->get(2)->unwrapOr(null)->toString());
@@ -72,7 +72,7 @@ final class StrSplittingTest extends TestCase
         $parts = $str->splitAt(5);
 
         $this->assertInstanceOf(Sequence::class, $parts);
-        $this->assertSame(2, $parts->size()->toInt());
+        $this->assertSame(2, $parts->size());
 
         $this->assertInstanceOf(Str::class, $parts->get(0)->unwrapOr(null));
         $this->assertSame('Hello', $parts->get(0)->unwrapOr(null)->toString());
@@ -84,7 +84,7 @@ final class StrSplittingTest extends TestCase
         $str = Str::of('Hello 😀 world');
         $parts = $str->splitAt(6);
 
-        $this->assertSame(2, $parts->size()->toInt());
+        $this->assertSame(2, $parts->size());
 
         $this->assertInstanceOf(Str::class, $parts->get(0)->unwrapOr(null));
         $this->assertInstanceOf(Str::class, $parts->get(1)->unwrapOr(null));
@@ -124,7 +124,7 @@ final class StrSplittingTest extends TestCase
         $str = Str::of('Hello');
         $parts = $str->splitAt(0);
 
-        $this->assertSame(2, $parts->size()->toInt());
+        $this->assertSame(2, $parts->size());
         $this->assertSame('', $parts->get(0)->unwrapOr(null)->toString());
         $this->assertSame('Hello', $parts->get(1)->unwrapOr(null)->toString());
     }
@@ -134,7 +134,7 @@ final class StrSplittingTest extends TestCase
         $str = Str::of('Hello');
         $parts = $str->splitAt(5);
 
-        $this->assertSame(2, $parts->size()->toInt());
+        $this->assertSame(2, $parts->size());
         $this->assertSame('Hello', $parts->get(0)->unwrapOr(null)->toString());
         $this->assertSame('', $parts->get(1)->unwrapOr(null)->toString());
     }
@@ -144,7 +144,7 @@ final class StrSplittingTest extends TestCase
         $str = Str::of('Hello world	test string');
         $parts = $str->splitWhitespace();
 
-        $this->assertSame(4, $parts->size()->toInt());
+        $this->assertSame(4, $parts->size());
         $this->assertSame('Hello', $parts->get(0)->unwrapOr(null)->toString());
         $this->assertSame('world', $parts->get(1)->unwrapOr(null)->toString());
         $this->assertSame('test', $parts->get(2)->unwrapOr(null)->toString());
@@ -156,7 +156,7 @@ final class StrSplittingTest extends TestCase
         $str = Str::of('Hello  world  test');
         $parts = $str->splitWhitespace();
 
-        $this->assertSame(3, $parts->size()->toInt());
+        $this->assertSame(3, $parts->size());
         $this->assertSame('Hello', $parts->get(0)->unwrapOr(null)->toString());
         $this->assertSame('world', $parts->get(1)->unwrapOr(null)->toString());
         $this->assertSame('test', $parts->get(2)->unwrapOr(null)->toString());
@@ -167,7 +167,7 @@ final class StrSplittingTest extends TestCase
         $str = Str::of('Hello  😀  Test');
         $parts = $str->splitWhitespace();
 
-        $this->assertSame(3, $parts->size()->toInt());
+        $this->assertSame(3, $parts->size());
         $this->assertSame('Hello', $parts->get(0)->unwrapOr(null)->toString());
         $this->assertSame('😀', $parts->get(1)->unwrapOr(null)->toString());
         $this->assertSame('Test', $parts->get(2)->unwrapOr(null)->toString());

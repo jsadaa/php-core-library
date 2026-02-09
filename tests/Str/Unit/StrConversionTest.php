@@ -161,4 +161,78 @@ final class StrConversionTest extends TestCase
         $this->assertTrue($result->isErr());
         $this->assertInstanceOf(ParseError::class, $result->unwrapErr());
     }
+
+    // -- parseInt (native int bridge) --
+
+    public function testParseIntNativeWithValidInput(): void
+    {
+        $result = Str::of('42')->parseInt();
+        $this->assertTrue($result->isOk());
+        $this->assertSame(42, $result->unwrap());
+    }
+
+    public function testParseIntNativeWithNegativeNumber(): void
+    {
+        $result = Str::of('-99')->parseInt();
+        $this->assertTrue($result->isOk());
+        $this->assertSame(-99, $result->unwrap());
+    }
+
+    public function testParseIntNativeWithInvalidInput(): void
+    {
+        $result = Str::of('abc')->parseInt();
+        $this->assertTrue($result->isErr());
+        $this->assertInstanceOf(ParseError::class, $result->unwrapErr());
+    }
+
+    public function testParseIntNativeWithEmptyString(): void
+    {
+        $result = Str::new()->parseInt();
+        $this->assertTrue($result->isErr());
+        $this->assertInstanceOf(ParseError::class, $result->unwrapErr());
+    }
+
+    public function testParseIntNativeWithFloatString(): void
+    {
+        $result = Str::of('3.14')->parseInt();
+        $this->assertTrue($result->isErr());
+        $this->assertInstanceOf(ParseError::class, $result->unwrapErr());
+    }
+
+    // -- parseFloat (native float bridge) --
+
+    public function testParseFloatNativeWithValidInput(): void
+    {
+        $result = Str::of('3.14')->parseFloat();
+        $this->assertTrue($result->isOk());
+        $this->assertSame(3.14, $result->unwrap());
+    }
+
+    public function testParseFloatNativeWithNegativeNumber(): void
+    {
+        $result = Str::of('-2.5')->parseFloat();
+        $this->assertTrue($result->isOk());
+        $this->assertSame(-2.5, $result->unwrap());
+    }
+
+    public function testParseFloatNativeWithIntegerString(): void
+    {
+        $result = Str::of('100')->parseFloat();
+        $this->assertTrue($result->isOk());
+        $this->assertSame(100.0, $result->unwrap());
+    }
+
+    public function testParseFloatNativeWithInvalidInput(): void
+    {
+        $result = Str::of('not-a-number')->parseFloat();
+        $this->assertTrue($result->isErr());
+        $this->assertInstanceOf(ParseError::class, $result->unwrapErr());
+    }
+
+    public function testParseFloatNativeWithEmptyString(): void
+    {
+        $result = Str::new()->parseFloat();
+        $this->assertTrue($result->isErr());
+        $this->assertInstanceOf(ParseError::class, $result->unwrapErr());
+    }
 }
