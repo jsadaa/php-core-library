@@ -73,7 +73,7 @@ $thirdItem = $seq
         fn() => "Not found"
     ); // "Found: 3"
 
-// andThen chaining on Option — get, find, first, last all return Option
+// Chaining on Option — get, find, first, last all return Option
 $result = $seq
     ->find(fn($n) => $n > 3)                             // Option::some(4)
     ->andThen(fn(int $n) => $seq->get($n))               // Option::some(5) — use 4 as index
@@ -202,22 +202,22 @@ $filtered = $some->filter(fn($x) => $x % 2 === 0); // Some(42) — 42 is even
 $filtered = $some->filter(fn($x) => $x > 100);     // None — predicate fails
 ```
 
-#### `andThen()` — monadic chaining for operations that return Option
-
-The key method for composing operations that themselves return `Option`. Unlike `map()` which wraps the result in `Some`, `andThen()` expects the callback to return an `Option` — preventing nested `Option<Option<T>>`.
+#### Monadic chaining for operations that return Option
 
 ```php
-// andThen chains operations that return Option
+// Chains operations that return Option
 $seq = Sequence::of(10, 20, 30);
 
-$result = $seq->get(1)                                  // Option::some(20)
+$result = $seq
+    ->get(1)                                            // Option::some(20)
     ->andThen(fn($val) => $val > 10                     // Chain only if Some
         ? Option::some($val * 2)
         : Option::none()
     );                                                   // Option::some(40)
 
-// andThen propagates None automatically — short-circuit
-$result = $seq->get(99)                                  // Option::none()
+// Propagates None automatically — short-circuit
+$result = $seq
+    ->get(99)                                            // Option::none()
     ->andThen(fn($val) => Option::some($val * 2));       // Option::none() — never called
 
 // Real-world: safe nested access on a Path
@@ -233,7 +233,7 @@ $domain = $users
     ->find(fn(string $email) => str_contains($email, 'bob'))  // Option::some('bob@test.org')
     ->map(fn(string $email) => Str::of($email))               // Option::some(Str('bob@test.org'))
     ->andThen(fn(Str $s) => $s->find('@'))                    // Option::some(Integer(3))
-    ->map(fn(Integer $pos) => $pos->toInt());                 // Option::some(3)
+    ->map(fn(int $pos) => $pos);                              // Option::some(3)
 
 // Map::get returns Option — chain lookups across maps
 $users = Map::of('alice', 42)->add('bob', 38);
@@ -249,27 +249,30 @@ $grade = $users->get('unknown')                          // Option::none()
 #### Other useful methods
 
 ```php
-// orElse — provide a fallback Option when None
+// Provide a fallback Option when None
 $config = Map::of('port', '8080');
-$port = $config->get('port')                             // Option::some('8080')
+$port = $config
+    ->get('port')                                         // Option::some('8080')
     ->orElse(fn() => Option::some('3000'));               // Option::some('8080') — not called
 
-$port = $config->get('missing')                          // Option::none()
+$port = $config
+    ->get('missing')                                      // Option::none()
     ->orElse(fn() => Option::some('3000'));               // Option::some('3000') — fallback
 
-// or — simpler version with a static fallback
+// Simpler version with a static fallback
 $value = Option::none()->or(Option::some('default'));    // Option::some('default')
 
-// okOr — convert Option to Result (bridge between the two monads)
+// Convert Option to Result (bridge between the two monads)
 $result = $seq->get(1)->okOr(new \RuntimeException('Index out of bounds'));
 // Some(20) becomes Result::ok(20), None becomes Result::err(RuntimeException)
 
-// inspect — side effect without altering the chain (useful for logging/debugging)
-$value = $seq->get(0)
+// Side effect without altering the chain (useful for logging/debugging)
+$value = $seq
+    ->get(0)
     ->inspect(fn($v) => error_log("Found value: $v"))    // Logs "Found value: 10"
     ->map(fn($v) => $v * 2);                             // Option::some(20)
 
-// flatten — unwrap nested Option<Option<T>>
+// Unwrap nested Option<Option<T>>
 $nested = Option::some(Option::some(42));
 $flat = $nested->flatten();                              // Option::some(42)
 
@@ -312,9 +315,7 @@ $mapped = $ok->map(fn($x) => $x * 2);   // Ok(84)
 $mapped = $err->map(fn($x) => $x * 2);  // Err("Not found") — callback never called
 ```
 
-#### `andThen()` — railway-oriented programming
-
-The key method for composing operations that themselves return `Result`. Each step only executes if the previous one succeeded. Once an `Err` appears, all subsequent steps are skipped and the error propagates.
+#### Railway-oriented programming
 
 ```php
 // Basic chaining — short-circuit on first error
@@ -362,14 +363,14 @@ $dbHost->match(
 #### Other useful methods
 
 ```php
-// mapErr — transform the error without touching the Ok value
+// Transform the error without touching the Ok value
 $result = Str::of('not a number')
     ->parseInteger()                                     // Result::err(ParseError)
     ->mapErr(fn($e) => new \RuntimeException(            // Result::err(RuntimeException)
         "Invalid input: " . $e->getMessage()
     ));
 
-// orElse — try an alternative on error
+// Try an alternative on error
 $config = FileSystem::read('/etc/app/config.json')
     ->orElse(fn($e) => FileSystem::read('/etc/app/config.default.json'))
     ->orElse(fn($e) => Result::ok(Str::of('{}')));      // Ultimate fallback
@@ -378,18 +379,19 @@ $config = FileSystem::read('/etc/app/config.json')
 $maybeContent = FileSystem::read('/optional/file.txt')
     ->option();                                          // Ok(x) => Some(x), Err(_) => None
 
-// inspect / inspectErr — side effects without altering the chain (logging, debugging)
+// Side effects without altering the chain (logging, debugging)
 $result = FileSystem::read('/path/to/file.txt')
     ->inspect(fn(Str $s) => error_log("Read " . $s->size() . " chars"))
     ->inspectErr(fn($e) => error_log("Read failed: " . $e->getMessage()))
     ->map(fn(Str $s) => $s->toUppercase());
 
-// flatten — unwrap nested Result<Result<T, E>, E>
+// Unwrap nested Result<Result<T, E>, E>
 $nested = Result::ok(Result::ok(42));
 $flat = $nested->flatten();                              // Result::ok(42)
 
-// isOkAnd / isErrAnd — check variant AND condition
-$isPositive = Integer::of(10)->div(2)
+// Check variant AND condition
+$isPositive = Integer::of(10)
+    ->div(2)
     ->isOkAnd(fn(Integer $n) => $n->gt(0));              // true
 ```
 
@@ -441,18 +443,13 @@ $bool = Str::of('true')->parseBool();       // Result::ok(true)
 $integer = Str::of('42')->parseInteger();   // Result::ok(Integer::of(42))
 $double = Str::of('3.14')->parseDouble();   // Result::ok(Double::of(3.14))
 
-// andThen chaining on parse results
+// Chaining on parse results
 $result = Str::of('  42  ')
     ->trim()                                             // Str('42')
     ->parseInteger()                                     // Result::ok(Integer::of(42))
     ->andThen(fn(Integer $n) => $n->mul(2)->div(3));     // Result::ok(Integer::of(28))
 
-// find returns Option — chain with andThen
-$atPos = Str::of('user@example.com')
-    ->find('@')                                          // Option::some(Integer(4))
-    ->map(fn(Integer $pos) => $pos->toInt());            // Option::some(4)
-
-// get returns Option — chain for safe character access
+// Get returns Option — chain for safe character access
 $initial = Str::of('Hello')
     ->get(0)                                             // Option::some(Char('H'))
     ->map(fn(Char $c) => $c->toLowercase());             // Option::some(Char('h'))
@@ -529,7 +526,7 @@ $rounded = Double::of(3.7)->round();              // Integer::of(4)
 $isFinite = Double::of(42.5)->isFinite();         // true
 $approxEqual = $double->approxEq(42.500000001);     // true - within epsilon
 
-// andThen chaining on arithmetic results — div() returns Result
+// Chaining on arithmetic results — div() returns Result
 $result = Double::of(100.0)
     ->div(3.0)                                           // Result::ok(Double::of(33.333...))
     ->andThen(fn(Double $d) => $d->div(0.0));            // Result::err(DivisionByZero)
@@ -591,7 +588,7 @@ $sqrt = Integer::of(16)->sqrt();                 // Integer::of(4)
 $andResult = Integer::of(10)->and(6);            // Integer::of(2) - (1010 & 0110 = 0010)
 $leftShift = Integer::of(5)->leftShift(1);       // Integer::of(10) - (101 << 1 = 1010)
 
-// andThen chaining on arithmetic results — div() returns Result
+// Chaining on arithmetic results — div() returns Result
 $result = Integer::of(100)
     ->div(3)                                             // Result::ok(Integer::of(33))
     ->andThen(fn(Integer $n) => $n->div(2))              // Result::ok(Integer::of(16))
@@ -609,7 +606,7 @@ $result = Integer::of(42)
 
 The `Integer` type provides safe and predictable arithmetic operations with comprehensive error handling. Key features include:
 
-- `div()` returns `Result` for safe chaining with `andThen()` on failable arithmetic
+- `div()` returns `Result` for safe chaining on failable arithmetic
 - Multiple arithmetic modes: standard, overflowing (with error reporting), and saturating
 - Comprehensive mathematical functions and bitwise operations
 - Immutable design that prevents unexpected side effects
@@ -652,12 +649,12 @@ $result = File::withOpen('/path/to/data.txt', fn(File $f) => $f->readAll()->unwr
 $entries = FileSystem::readDir('/var/log')->unwrap();
 $logFiles = $entries->filter(fn(Path $entry) => $entry->isFile());
 
-// andThen chaining — read, decode JSON, extract value in one pipeline
+// Chaining — read, decode JSON, extract value in one pipeline
 $dbConfig = FileSystem::read('/etc/app/config.json')         // Result<Str, ...>
     ->andThen(fn(Str $s) => Json::decode($s->toString()))    // Result<array, ...>
     ->map(fn(array $c) => $c['database'] ?? []);             // Result<array, ...>
 
-// orElse — fallback to default config on error
+// Fallback to default config on error
 $config = FileSystem::read('/app/config.json')
     ->orElse(fn($e) => FileSystem::read('/app/config.default.json'))
     ->orElse(fn($e) => Result::ok(Str::of('{}')));          // Ultimate fallback
@@ -707,14 +704,14 @@ $process->writeStdin('Hello from PHP');
 $process->kill();
 $process->close();
 
-// andThen chaining — run a command and transform output
+// Chaining — run a command and transform output
 $branch = Command::of('git')
     ->withArg('rev-parse')->withArg('--abbrev-ref')->withArg('HEAD')
     ->output()                                           // Result<Output, ...>
     ->map(fn(Output $o) => $o->stdout())                 // Result<Str, ...>
     ->map(fn(Str $s) => $s->trim()->toString());         // Result<string, ...>
 
-// mapErr — normalize errors from different operations
+// Normalize errors from different operations
 $result = Command::of('node')
     ->withArg('--version')
     ->output()
@@ -773,7 +770,7 @@ Json::encode($resource);       // Result::err(EncodingError)
 Json::decode('{bad}');         // Result::err(DecodingError)
 Json::validate('{bad}');       // Result::err(ValidationError)
 
-// andThen chaining — validate then decode
+// Chaining — validate then decode
 $config = Json::validate($rawJson)                       // Result<string, ValidationError>
     ->andThen(fn(string $json) => Json::decode($json))   // Result<array, DecodingError>
     ->map(fn(array $data) => $data['settings'] ?? []);   // Result<array, ...>
@@ -811,7 +808,7 @@ IO::eprintln('Error: {}', 'file not found');
 // Read from stdin with prompt
 $result = IO::readLine(Str::of('Enter name: '));
 
-// andThen chaining — read, parse, validate in one pipeline
+// Chaining — read, parse, validate in one pipeline
 $port = IO::readLine(Str::of('Port: '))
     ->andThen(fn(Str $s) => $s->trim()->parseInteger())
     ->andThen(fn(Integer $n) => $n->gt(0) && $n->lt(65536)
@@ -865,7 +862,7 @@ if ($path->isAbsolute()) {
 // Canonicalization (resolves symlinks and . / ..)
 $canonical = $path->canonicalize()->unwrap();
 
-// andThen chaining on Option — safe nested navigation
+// Chaining on Option — safe nested navigation
 $grandParentName = Path::of('/var/www/html/index.php')
     ->parent()                                           // Option::some(Path('/var/www/html'))
     ->andThen(fn(Path $p) => $p->parent())               // Option::some(Path('/var/www'))
@@ -878,7 +875,7 @@ $isPhp = Path::of('/var/www/index.php')
     ->map(fn(Str $ext) => $ext->toString() === 'php')    // Option::some(true)
     ->unwrapOr(false);                                   // true
 
-// okOr — convert Option to Result when you need error context
+// Convert Option to Result when you need error context
 $parent = Path::of('/')
     ->parent()                                           // Option::none() (root has no parent)
     ->okOr(new \RuntimeException('Path has no parent')); // Result::err(RuntimeException)
@@ -913,12 +910,12 @@ $doubled = $precise->mul(2)->unwrap(); // 3 seconds
 $dateTime = $now->toDateTimeImmutable()->unwrap();
 $backToSystemTime = SystemTime::fromDateTimeImmutable($dateTime)->unwrap();
 
-// andThen chaining on Result — time arithmetic can fail (negative durations, overflow)
+// Chaining on Result — time arithmetic can fail (negative durations, overflow)
 $elapsed = SystemTime::now()
     ->durationSince($start)                              // Result<Duration, ...>
     ->map(fn(Duration $d) => $d->toSeconds());           // Result<int, ...>
 
-// Duration arithmetic with andThen
+// Duration arithmetic
 $timeout = Duration::fromSeconds(30)
     ->div(0)                                             // Result::err(DivisionByZero)
     ->orElse(fn($e) => Result::ok(Duration::fromSeconds(1))); // Fallback to 1s
