@@ -440,7 +440,7 @@ $endsWith = $str->endsWith('Hello'); // false
 
 ### Find
 
-Finds the index of the first occurrence of a substring. Returns `Option<Integer>`.
+Finds the index of the first occurrence of a substring. Returns `Option<int>`.
 
 ```php
 $str = Str::of('Hello World');
@@ -449,7 +449,7 @@ $notFound = $str->find('PHP'); // Option::none()
 
 // Chaining: find position, then extract substring
 $after = Str::of('key=value')->find('=')
-    ->map(fn(Integer $pos) => Str::of('key=value')->skip($pos->toInt() + 1));
+    ->map(fn(int $pos) => Str::of('key=value')->skip($pos + 1));
     // Option::some(Str::of('value'))
 ```
 

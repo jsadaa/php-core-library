@@ -1391,14 +1391,14 @@ final readonly class Str implements \Stringable
      * Finds the first occurrence of a substring in the string
      *
      * @param string|Str $needle The substring to search for
-     * @return Option<Integer> The index of the first occurrence, or None if not found
+     * @return Option<int> The index of the first occurrence, or None if not found
      */
     public function find(string | self $needle): Option
     {
         $needle = $needle instanceof self ? $needle->toString() : $needle;
         $pos = \mb_strpos($this->value, $needle, 0, self::UTF8);
 
-        return $pos === false ? Option::none() : Option::some(Integer::of($pos));
+        return $pos === false ? Option::none() : Option::some($pos);
     }
 
     /**
